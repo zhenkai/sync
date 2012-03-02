@@ -31,7 +31,6 @@
 using namespace boost;
 namespace ll = boost::lambda;
 
-namespace ns3 {
 namespace Sync {
 
 
@@ -44,17 +43,17 @@ FullState::~FullState ()
 {
 }
 
-Time
+ns3::Time
 FullState::getTimeFromLastUpdate () const
 {
-  return Simulator::Now () - m_lastUpdated;
+  return ns3::Simulator::Now () - m_lastUpdated;
 }
   
 // from State
 void
 FullState::update (NameInfoConstPtr info, const SeqNo &seq)
 {
-  m_lastUpdated = Simulator::Now ();
+  m_lastUpdated = ns3::Simulator::Now ();
 
   LeafContainer::iterator item = m_leaves.find (*info);
   if (item == m_leaves.end ())
@@ -70,11 +69,10 @@ FullState::update (NameInfoConstPtr info, const SeqNo &seq)
 void
 FullState::remove (NameInfoConstPtr info)
 {
-  m_lastUpdated = Simulator::Now ();
+  m_lastUpdated = ns3::Simulator::Now ();
 
   m_leaves.erase (*info);
 }
 
 
 } // Sync
-} // ns3

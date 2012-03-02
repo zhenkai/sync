@@ -27,7 +27,6 @@
 #include <openssl/evp.h>
 #include <boost/cstdint.hpp>
 
-namespace ns3 {
 namespace Sync {
 
 const std::size_t HASH_SIZE = 160;
@@ -92,6 +91,5 @@ private:
 struct DigestCalculationError : virtual boost::exception { };
 
 } // Sync
-} // ns3
 
 #endif // SYNC_DIGEST_H

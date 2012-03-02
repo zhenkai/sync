@@ -25,7 +25,6 @@
 
 #include "sync-leaf.h"
 
-namespace ns3 {
 namespace Sync {
 
 /**
@@ -86,6 +85,5 @@ private:
 typedef boost::shared_ptr<DiffLeaf> DiffLeafPtr;
 
 } // Sync
-} // ns3
 
 #endif // SYNC_DIFF_LEAF_H

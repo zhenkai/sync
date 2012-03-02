@@ -23,7 +23,6 @@
 #ifndef SYNC_DIFF_STATE_CONTAINER_H
 #define SYNC_DIFF_STATE_CONTAINER_H
 
-namespace ns3 {
 namespace Sync {
 
 #include "diff-state.h"
@@ -75,6 +74,5 @@ struct LeafContainer : public mi::multi_index_container<
 
 
 } // Sync
-} // ns3
 
 #endif // SYNC_DIFF_STATE_CONTAINER_H

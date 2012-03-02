@@ -25,10 +25,7 @@
 
 #include "sync-name-info.h"
 #include "ns3/ptr.h"
-
-namespace ns3 {
-
-class CcnxNameComponents;
+#include "ns3/ccnx-name-components.h"
 
 namespace Sync {
 
@@ -40,7 +37,7 @@ public:
    * @param name routable prefix
    */
   static NameInfoConstPtr
-  FindOrCreate (Ptr<const CcnxNameComponents> name);
+  FindOrCreate (ns3::Ptr<const ns3::CcnxNameComponents> name);
 
   virtual ~CcnxNameInfo () { };
   
@@ -62,12 +59,11 @@ private:
    */
   CcnxNameInfo () {}
   CcnxNameInfo& operator = (const CcnxNameInfo &info) { return *this; }
-  CcnxNameInfo (Ptr<const CcnxNameComponents> name);
+  CcnxNameInfo (ns3::Ptr<const ns3::CcnxNameComponents> name);
   
-  Ptr<const CcnxNameComponents> m_name;
+  ns3::Ptr<const ns3::CcnxNameComponents> m_name;
 };
 
 } // Sync
-} // ns3
 
 #endif // SYNC_CCNX_NAME_INFO_H

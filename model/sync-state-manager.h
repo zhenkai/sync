@@ -25,7 +25,6 @@
 
 #include "sync-diff-state-container.h"
 
-namespace ns3 {
 namespace Sync {
 
 class StateManager
@@ -39,6 +38,5 @@ private:
 
 
 } // Sync
-} // ns3
 
 #endif // SYNC_STATE_MANAGER_H

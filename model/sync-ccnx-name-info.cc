@@ -29,11 +29,10 @@
 using namespace std;
 using namespace boost;
 
-namespace ns3 {
 namespace Sync {
 
 NameInfoConstPtr
-CcnxNameInfo::FindOrCreate (Ptr<const CcnxNameComponents> name)
+CcnxNameInfo::FindOrCreate (ns3::Ptr<const ns3::CcnxNameComponents> name)
 {
   string key = lexical_cast<string> (*name);
 
@@ -44,11 +43,11 @@ CcnxNameInfo::FindOrCreate (Ptr<const CcnxNameComponents> name)
   return item.first->second;
 }
 
-CcnxNameInfo::CcnxNameInfo (Ptr<const CcnxNameComponents> name)
+CcnxNameInfo::CcnxNameInfo (ns3::Ptr<const ns3::CcnxNameComponents> name)
   : m_name (name)
 {
   m_id = m_ids ++; // set ID for a newly inserted element
-  m_digest << *name;
+  // m_digest << *name;
 }
 
 string
@@ -71,6 +70,4 @@ CcnxNameInfo::operator == (const NameInfo &info) const
 }
 
 
-
 } // Sync
-} // ns3

@@ -25,7 +25,6 @@
 
 #include <boost/lexical_cast.hpp>
 
-namespace ns3 {
 namespace Sync {
 
 NameInfo::NameMap NameInfo::m_names;
@@ -39,4 +38,3 @@ size_t  NameInfo::m_ids = 0;
 // NameInfo::getDigest<PrefixInfo> () const;
 
 } // Sync
-} // ns3

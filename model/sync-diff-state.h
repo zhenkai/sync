@@ -25,7 +25,6 @@
 
 #include "sync-state.h"
 
-namespace ns3 {
 namespace Sync {
 
 class DiffState;
@@ -91,6 +90,5 @@ private:
 };
 
 } // Sync
-} // ns3
 
 #endif // SYNC_DIFF_STATE_H

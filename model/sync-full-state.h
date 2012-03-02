@@ -26,7 +26,6 @@
 #include "ns3/nstime.h"
 #include "sync-state.h"
 
-namespace ns3 {
 namespace Sync {
 
 /**
@@ -47,7 +46,7 @@ public:
    *
    * This value can be used to randomize reconciliation waiting time in SyncApp
    */
-  Time
+  ns3::Time
   getTimeFromLastUpdate () const;
   
   // from State
@@ -58,11 +57,10 @@ public:
   remove (NameInfoConstPtr info);
   
 private:
-  Time m_lastUpdated; ///< @brief Time when state was updated last time
+  ns3::Time m_lastUpdated; ///< @brief Time when state was updated last time
 };
 
 
 } // Sync
-} // ns3
 
 #endif // SYNC_STATE_H

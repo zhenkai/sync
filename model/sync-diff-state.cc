@@ -27,7 +27,6 @@
 
 using namespace boost;
 
-namespace ns3 {
 namespace Sync {
 
 DiffState::DiffState ()
@@ -80,4 +79,3 @@ DiffState::remove (NameInfoConstPtr info)
 
 
 } // ns3
-} // Sync

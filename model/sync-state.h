@@ -25,8 +25,6 @@
 
 #include "sync-state-leaf-container.h"
 
-namespace ns3 {
-
 /**
  * \defgroup sync SYNC protocol
  *
@@ -65,6 +63,5 @@ protected:
 };
 
 } // Sync
-} // ns3
 
 #endif // SYNC_STATE_H

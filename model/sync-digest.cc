@@ -28,7 +28,6 @@
 
 using namespace boost;
 
-namespace ns3 {
 namespace Sync {
 
 Digest::Digest ()
@@ -106,5 +105,4 @@ Digest::operator << (const Digest &src)
 
 
 } // Sync
-} // ns3
 

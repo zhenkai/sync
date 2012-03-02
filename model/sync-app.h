@@ -23,9 +23,6 @@
 #ifndef SYNC_APP_H
 #define SYNC_APP_H
 
-namespace ns3
-{
-
 namespace Sync
 {
 
@@ -36,7 +33,5 @@ private:
 };
 
 } // Sync
-
-} // ns3
 
 #endif // SYNC_APP_H

@@ -25,11 +25,7 @@
 
 #include <boost/cstdint.hpp>
 
-namespace ns3
-{
-
-namespace Sync
-{
+namespace Sync {
 
 /**
  * @brief Sequence number abstraction
@@ -101,7 +97,5 @@ public:
 };
 
 } // Sync
-
-} // ns3
 
 #endif // SYNC_SEQ_NO_H

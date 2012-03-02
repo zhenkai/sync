@@ -26,7 +26,6 @@
 #include "sync-seq-no.h"
 #include "sync-name-info.h"
 
-namespace ns3 {
 namespace Sync {
 
 /**
@@ -88,6 +87,5 @@ private:
 typedef boost::shared_ptr<Leaf> LeafPtr;
 
 } // Sync
-} // ns3
 
 #endif // SYNC_LEAF_H

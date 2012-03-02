@@ -26,8 +26,8 @@
 #include <boost/shared_ptr.hpp>
 #include <map>
 #include <string>
+#include "sync-digest.h"
 
-namespace ns3 {
 namespace Sync {
 
 /**
@@ -80,6 +80,5 @@ typedef boost::shared_ptr<const NameInfo> NameInfoConstPtr;
 
 
 } // Sync
-} // ns3
 
 #endif // SYNC_NAME_INFO_H

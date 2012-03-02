@@ -36,7 +36,6 @@
 
 namespace mi = boost::multi_index;
 
-namespace ns3 {
 namespace Sync {
 
 struct NameInfoHash : public std::unary_function<NameInfo, std::size_t>
@@ -69,6 +68,5 @@ struct LeafContainer : public mi::multi_index_container<
 };
 
 } // Sync
-} // ns3
 
 #endif // SYNC_STATE_LEAF_CONTAINER
