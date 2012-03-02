@@ -20,50 +20,54 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#ifndef SYNC_CCNX_NAME_INFO_H
-#define SYNC_CCNX_NAME_INFO_H
-
-#include "sync-name-info.h"
-#include "ns3/ptr.h"
+#include "sync-ns3-name-info.h"
 #include "ns3/ccnx-name-components.h"
+
+#include <boost/lexical_cast.hpp>
+#include <utility>
+
+using namespace std;
+using namespace boost;
 
 namespace Sync {
 
-class CcnxNameInfo : public NameInfo
+NameInfoConstPtr
+Ns3NameInfo::FindOrCreate (ns3::Ptr<const ns3::CcnxNameComponents> name)
 {
-public:
-  /**
-   * @brief Lookup existing or create new NameInfo object
-   * @param name routable prefix
-   */
-  static NameInfoConstPtr
-  FindOrCreate (ns3::Ptr<const ns3::CcnxNameComponents> name);
+  string key = lexical_cast<string> (*name);
 
-  virtual ~CcnxNameInfo () { };
-  
-  // from NameInfo
-  virtual bool
-  operator == (const NameInfo &info) const;
+  NameInfoPtr value = NameInfoPtr (new Ns3NameInfo (name));
+  pair<NameMap::iterator,bool> item =
+    m_names.insert (make_pair (key, value));
 
-  virtual std::string
-  toString () const;
+  return item.first->second;
+}
 
-private:
-  // implementing a singleton pattern. 
-  /**
-   * @brief Disabled default constructor. NameInfo object should be created through FindOrCreate static call.
-   */
+Ns3NameInfo::Ns3NameInfo (ns3::Ptr<const ns3::CcnxNameComponents> name)
+  : m_name (name)
+{
+  m_id = m_ids ++; // set ID for a newly inserted element
+  // m_digest << *name;
+}
 
-  /**
-   * @brief Disabled default
-   */
-  CcnxNameInfo () {}
-  CcnxNameInfo& operator = (const CcnxNameInfo &info) { return *this; }
-  CcnxNameInfo (ns3::Ptr<const ns3::CcnxNameComponents> name);
-  
-  ns3::Ptr<const ns3::CcnxNameComponents> m_name;
-};
+string
+Ns3NameInfo::toString () const
+{
+  return lexical_cast<std::string> (*m_name);
+}
+
+bool
+Ns3NameInfo::operator == (const NameInfo &info) const
+{
+  try
+    {
+      return *m_name == *dynamic_cast<const Ns3NameInfo&> (info).m_name;
+    }
+  catch (...)
+    {
+      return false;
+    }
+}
+
 
 } // Sync
-
-#endif // SYNC_CCNX_NAME_INFO_H
