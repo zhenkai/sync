@@ -23,6 +23,8 @@
 #ifndef SYNC_SEQ_NO_H
 #define SYNC_SEQ_NO_H
 
+#include <boost/cstdint.hpp>
+
 namespace ns3
 {
 

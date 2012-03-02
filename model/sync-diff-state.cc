@@ -21,6 +21,7 @@
  */
 
 #include "sync-diff-state.h"
+#include "sync-diff-leaf.h"
 
 #include <boost/make_shared.hpp>
 
@@ -30,7 +31,6 @@ namespace ns3 {
 namespace Sync {
 
 DiffState::DiffState ()
-  : m_next (0)
 {
 }
 
@@ -43,7 +43,7 @@ DiffState::diff () const
 {
   DiffStatePtr ret = make_shared<DiffState> ();
 
-  DiffState *state = m_next;
+  DiffStatePtr state = m_next;
   while (state != 0)
     {
       *ret += *state;
@@ -60,24 +60,22 @@ DiffState::operator += (const DiffState &state)
 }
   
 // from State
-virtual void
+void
 DiffState::update (NameInfoConstPtr info, const SeqNo &seq)
 {
-  LeafContainer::iterator item = m_leafs.find (info);
-  if (item != m_leafs.end ())
-    m_leafs.remove (item);
-  
-  m_leafs.insert (make_shared<DiffLeaf> (info, cref (seq)));
+  m_leaves.erase (*info);
+
+  DiffLeafPtr leaf = make_shared<DiffLeaf> (info, cref (seq));
+  m_leaves.insert (leaf);
 }
 
-virtual void
+void
 DiffState::remove (NameInfoConstPtr info)
 {
-  LeafContainer::iterator item = m_leafs.find (info);
-  if (item != m_leafs.end ())
-    m_leafs.remove (item);
+  m_leaves.erase (*info);
 
-  m_leafs.insert (make_shared<DiffLeaf> (info));
+  DiffLeafPtr leaf = make_shared<DiffLeaf> (info);
+  m_leaves.insert (leaf);
 }
 
 

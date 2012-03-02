@@ -24,25 +24,51 @@
 #include "ns3/ccnx-name-components.h"
 
 #include <boost/lexical_cast.hpp>
+#include <utility>
+
+using namespace std;
+using namespace boost;
 
 namespace ns3 {
 namespace Sync {
 
+NameInfoConstPtr
+CcnxNameInfo::FindOrCreate (Ptr<const CcnxNameComponents> name)
+{
+  string key = lexical_cast<string> (*name);
+
+  NameInfoPtr value = NameInfoPtr (new CcnxNameInfo (name));
+  pair<NameMap::iterator,bool> item =
+    m_names.insert (make_pair (key, value));
+
+  return item.first->second;
+}
 
 CcnxNameInfo::CcnxNameInfo (Ptr<const CcnxNameComponents> name)
   : m_name (name)
 {
+  m_id = m_ids ++; // set ID for a newly inserted element
 }
 
-CcnxNameInfo::~CcnxNameInfo ()
-{
-}
-
-std::string
+string
 CcnxNameInfo::toString () const
 {
-  return boost::lexical_cast<std::string> (*m_name);
+  return lexical_cast<std::string> (*m_name);
 }
+
+bool
+CcnxNameInfo::operator == (const NameInfo &info) const
+{
+  try
+    {
+      return *m_name == *dynamic_cast<const CcnxNameInfo&> (info).m_name;
+    }
+  catch (...)
+    {
+      return false;
+    }
+}
+
 
 
 } // Sync

@@ -36,18 +36,35 @@ class CcnxNameInfo : public NameInfo
 {
 public:
   /**
-   * @brief Constructor
-   * @param name full (routable) name for the participant
+   * @brief Lookup existing or create new NameInfo object
+   * @param name routable prefix
    */
-  CcnxNameInfo (Ptr<const CcnxNameComponents> name);
-  virtual ~CcnxNameInfo ();
+  static NameInfoConstPtr
+  FindOrCreate (Ptr<const CcnxNameComponents> name);
+
+  virtual ~CcnxNameInfo () { };
   
   // from NameInfo
+  virtual bool
+  operator == (const NameInfo &info) const;
+
   virtual std::string
   toString () const;
-  
+
 private:
-  Ptr<const CcnxNameCompnents> m_name;
+  // implementing a singleton pattern. 
+  /**
+   * @brief Disabled default constructor. NameInfo object should be created through FindOrCreate static call.
+   */
+
+  /**
+   * @brief Disabled default
+   */
+  CcnxNameInfo () {}
+  CcnxNameInfo& operator = (const CcnxNameInfo &info) { return *this; }
+  CcnxNameInfo (Ptr<const CcnxNameComponents> name);
+  
+  Ptr<const CcnxNameComponents> m_name;
 };
 
 } // Sync

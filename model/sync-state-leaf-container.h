@@ -23,6 +23,8 @@
 #ifndef SYNC_STATE_LEAF_CONTAINER
 #define SYNC_STATE_LEAF_CONTAINER
 
+#include "sync-leaf.h"
+
 #include <boost/multi_index_container.hpp>
 // #include <boost/multi_index/tag.hpp>
 // #include <boost/multi_index/ordered_index.hpp>
@@ -37,6 +39,17 @@ namespace mi = boost::multi_index;
 namespace ns3 {
 namespace Sync {
 
+struct NameInfoHash : public std::unary_function<NameInfo, std::size_t>
+{
+  std::size_t
+  operator() (const NameInfo &prefix) const
+  {
+    return prefix.getHashId ();
+  }
+};
+
+struct hashed { };
+
 /**
  * \ingroup sync
  * @brief Container for SYNC leaves
@@ -46,9 +59,9 @@ struct LeafContainer : public mi::multi_index_container<
     mi::indexed_by<
       // For fast access to elements using NameInfo
       mi::hashed_unique<
+        mi::tag<hashed>,
         mi::const_mem_fun<Leaf, const NameInfo&, &Leaf::getInfo>,
-        LeafHash (),
-        LeafEqual () 
+        NameInfoHash
       >
     >
    >

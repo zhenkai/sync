@@ -56,14 +56,14 @@ FullState::update (NameInfoConstPtr info, const SeqNo &seq)
 {
   m_lastUpdated = Simulator::Now ();
 
-  LeafContainer::iterator item = m_leafs.find (*info);
-  if (item == m_leafs.end ())
+  LeafContainer::iterator item = m_leaves.find (*info);
+  if (item == m_leaves.end ())
     {
-      m_leafs.insert (make_shared<Leaf> (info, cref (seq)));
+      m_leaves.insert (make_shared<Leaf> (info, cref (seq)));
     }
   else
     {
-      m_leafs.modify (item, ll::bind (&Leaf::setSeq, ll::_1, cref (seq)));
+      m_leaves.modify (item, ll::bind (&Leaf::setSeq, *ll::_1, seq));
     }
 }
 
@@ -72,7 +72,7 @@ FullState::remove (NameInfoConstPtr info)
 {
   m_lastUpdated = Simulator::Now ();
 
-  m_leafs.remove (info);
+  m_leaves.erase (*info);
 }
 
 

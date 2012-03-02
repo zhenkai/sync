@@ -23,28 +23,60 @@
 #ifndef SYNC_NAME_INFO_H
 #define SYNC_NAME_INFO_H
 
+#include <boost/shared_ptr.hpp>
+#include <map>
+#include <string>
+
 namespace ns3 {
 namespace Sync {
 
 /**
- * @brief Abstraction of the leaf name
+ * @ingroup sync
+ * @brief Templated class for the leaf name
  */
 class NameInfo
 {
+private:
+  typedef boost::shared_ptr<const NameInfo> const_ptr;
+  
 public:
-  virtual ~NameInfo () = 0;
+  virtual ~NameInfo () { };
+
+  /**
+   * @brief Get ID of the record (should be locally-unique, but not really necessary---this is be used for hashing purposes)
+   */
+  size_t
+  getHashId () const { return m_id; }
+  
+  virtual bool
+  operator == (const NameInfo &info) const = 0;
+
   /**
    * @brief Calculates digest of the name
    */
   // Digest
   // getDigest () const;
 
+  /**
+   * @brief Convert prefix to string
+   * @returns string representation of prefix
+   */
   virtual std::string
   toString () const = 0;
+
+protected:
+  // actual stuff
+  size_t m_id; ///< @brief Identifies NameInfo throughout the library (for hash container, doesn't need to be strictly unique)
+
+  // static stuff
+  typedef std::map<std::string, const_ptr> NameMap;
+  static size_t  m_ids;
+  static NameMap m_names;
 };
 
 typedef boost::shared_ptr<NameInfo> NameInfoPtr;
 typedef boost::shared_ptr<const NameInfo> NameInfoConstPtr;
+
 
 } // Sync
 } // ns3

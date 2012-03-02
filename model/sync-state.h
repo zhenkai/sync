@@ -41,7 +41,7 @@ namespace Sync {
 class State
 {
 public:
-  virtual ~State () = 0;
+  virtual ~State () { };
   
   /**
    * @brief Add or update leaf to the state tree

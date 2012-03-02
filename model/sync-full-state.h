@@ -23,6 +23,7 @@
 #ifndef SYNC_FULL_STATE_H
 #define SYNC_FULL_STATE_H
 
+#include "ns3/nstime.h"
 #include "sync-state.h"
 
 namespace ns3 {

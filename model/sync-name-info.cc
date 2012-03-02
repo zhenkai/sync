@@ -19,3 +19,24 @@
  *         卞超轶 Chaoyi Bian <bcy@pku.edu.cn>
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
+
+#include "sync-name-info.h"
+#include "ns3/ccnx-name-components.h"
+
+#include <boost/lexical_cast.hpp>
+
+namespace ns3 {
+namespace Sync {
+
+NameInfo::NameMap NameInfo::m_names;
+size_t  NameInfo::m_ids = 0;
+
+/**
+ * @brief Calculates digest of the name
+ */
+// tempalte<>
+// Digest
+// NameInfo::getDigest<PrefixInfo> () const;
+
+} // Sync
+} // ns3

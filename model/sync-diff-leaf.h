@@ -52,7 +52,7 @@ public:
    */
   DiffLeaf (boost::shared_ptr<const NameInfo> info, const SeqNo &seq)
     : Leaf (info, seq)
-    , m_op (Operation::UPDATE)
+    , m_op (UPDATE)
   {
   }
 
@@ -65,7 +65,7 @@ public:
    */
   DiffLeaf (boost::shared_ptr<const NameInfo> info)
     : Leaf (info, SeqNo (0,0))
-    , m_op (Operation::REMOVE)
+    , m_op (REMOVE)
   {
   }
 
@@ -82,6 +82,8 @@ public:
 private:
   Operation m_op;
 };
+
+typedef boost::shared_ptr<DiffLeaf> DiffLeafPtr;
 
 } // Sync
 } // ns3

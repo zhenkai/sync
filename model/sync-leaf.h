@@ -24,12 +24,10 @@
 #define SYNC_LEAF_H
 
 #include "sync-seq-no.h"
-#include <boost/shared_ptr.hpp>
+#include "sync-name-info.h"
 
 namespace ns3 {
 namespace Sync {
-
-class NameInfo;
 
 /**
  * \ingroup sync
