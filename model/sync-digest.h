@@ -49,9 +49,6 @@ public:
    */
   ~Digest ();
 
-  // Digest &
-  // operator << (
-
   /**
    * @brief Obtain a short version of the hash (just first sizeof(size_t) bytes
    *
@@ -68,6 +65,18 @@ public:
   bool
   operator == (Digest &digest);
 
+  /**
+   * @brief Combine digests
+   * @param src digest to combine with
+   *
+   * The result of this combination is  hash (hash (...))
+   */
+  Digest &
+  operator << (const Digest &src);
+
+
+  
+  
 private:
   /**
    * @brief Finalize digest. All subsequent calls to "operator <<" will fire an exception

@@ -24,6 +24,9 @@
 #include <string.h>
 
 #include "ns3/assert.h"
+#include <boost/exception/errinfo_at_line.hpp>
+
+using namespace boost;
 
 namespace ns3 {
 namespace Sync {
@@ -36,7 +39,7 @@ Digest::Digest ()
 
   int ok = EVP_DigestInit_ex (m_context, EVP_sha1 (), 0);
   if (!ok)
-    throw DigestCalculationError ();
+    throw DigestCalculationError () << errinfo_at_line (__LINE__);
 }
 
 Digest::~Digest ()
@@ -57,7 +60,7 @@ Digest::Finalize ()
   int ok = EVP_DigestFinal_ex (m_context,
 			       m_buffer, &m_hashLength);
   if (!ok)
-    throw DigestCalculationError ();
+    throw DigestCalculationError () << errinfo_at_line (__LINE__);
 }
   
 std::size_t
@@ -85,6 +88,20 @@ Digest::operator == (Digest &digest)
   NS_ASSERT (m_hashLength == digest.m_hashLength);
 
   return memcmp (m_buffer, digest.m_buffer, m_hashLength) == 0;
+}
+
+
+Digest &
+Digest::operator << (const Digest &src)
+{
+  if (src.m_buffer == 0)
+    throw DigestCalculationError () << errinfo_at_line (__LINE__);
+
+  bool ok = EVP_DigestUpdate (m_context, src.m_buffer, src.m_hashLength);
+  if (!ok)
+    throw DigestCalculationError () << errinfo_at_line (__LINE__);
+  
+  return *this;
 }
 
 
