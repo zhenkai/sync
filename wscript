@@ -5,6 +5,9 @@
 
 # def configure(conf):
 #     conf.check_nonfatal(header_name='stdint.h', define_name='HAVE_STDINT_H')
+def configure(conf):
+    conf.check_cfg(atleast_pkgconfig_version='0.20')
+    conf.check_cfg(package='openssl', args=['--cflags', '--libs'], uselib_store='SSL')
 
 def build (bld):
     deps = ['core', 'network', 'NDNabstraction']
@@ -12,7 +15,7 @@ def build (bld):
         deps.append ('visualizer')
 
     module = bld.create_ns3_module ('sync', deps)
-    module.uselib = 'BOOST BOOST_IOSTREAMS'
+    module.uselib = 'BOOST BOOST_IOSTREAMS SSL'
 
     # tests = bld.create_ns3_module_test_library('sync')
     # tests.source = [

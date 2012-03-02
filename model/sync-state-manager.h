@@ -23,20 +23,22 @@
 #ifndef SYNC_STATE_MANAGER_H
 #define SYNC_STATE_MANAGER_H
 
-namespace ns3
-{
+#include "sync-diff-state-container.h"
 
-namespace Sync
-{
+namespace ns3 {
+namespace Sync {
 
 class StateManager
 {
 public:
 private:
+  FullState m_state;
+  FullState m_localState;
+  DiffStateContainer m_log;  
 };
 
-} // Sync
 
+} // Sync
 } // ns3
 
 #endif // SYNC_STATE_MANAGER_H
