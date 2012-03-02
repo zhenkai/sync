@@ -48,6 +48,7 @@ CcnxNameInfo::CcnxNameInfo (Ptr<const CcnxNameComponents> name)
   : m_name (name)
 {
   m_id = m_ids ++; // set ID for a newly inserted element
+  m_digest << *name;
 }
 
 string

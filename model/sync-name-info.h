@@ -54,8 +54,8 @@ public:
   /**
    * @brief Calculates digest of the name
    */
-  // Digest
-  // getDigest () const;
+  const Digest &
+  getDigest () const { return m_digest; }
 
   /**
    * @brief Convert prefix to string
@@ -67,6 +67,7 @@ public:
 protected:
   // actual stuff
   size_t m_id; ///< @brief Identifies NameInfo throughout the library (for hash container, doesn't need to be strictly unique)
+  Digest m_digest;
 
   // static stuff
   typedef std::map<std::string, const_ptr> NameMap;
