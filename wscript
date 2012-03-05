@@ -1,15 +1,27 @@
 # -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
 
-# def options(opt):
-#     pass
+def options(opt):
+    opt.load('compiler_c')
+    opt.load('compiler_cxx')
+    opt.tool_options('boost', tooldir=["waf-tools"])
 
-# def configure(conf):
-#     conf.check_nonfatal(header_name='stdint.h', define_name='HAVE_STDINT_H')
 def configure(conf):
+    conf.load("compiler_cxx")
     conf.check_cfg(atleast_pkgconfig_version='0.20')
     conf.check_cfg(package='openssl', args=['--cflags', '--libs'], uselib_store='SSL')
 
+    conf.check_tool('boost')
+    conf.check_boost(lib='signals filesystem iostreams regex')
+    if not conf.env.LIB_BOOST:
+        conf.check_boost(lib='signals filesystem iostreams regex', libpath="/usr/lib64")
+
 def build (bld):
+    module = bld.new_task_gen(features=['cxx', 'cxxshlib'])
+    module.source = bld.path.ant_glob(['model/*.cc',
+                                       'helper/*.cc'])
+    module.uselib = 'BOOST BOOST_IOSTREAMS SSL'
+
+def build_ns3 (bld):
     deps = ['core', 'network', 'NDNabstraction']
     if bld.env['ENABLE_PYTHON_BINDINGS']:
         deps.append ('visualizer')
