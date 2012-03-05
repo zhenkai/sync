@@ -124,6 +124,8 @@ private:
 
 struct DigestCalculationError : virtual boost::exception { };
 
+typedef boost::shared_ptr<Digest> DigestPtr;
+typedef boost::shared_ptr<const Digest> DigestConstPtr;
 
 Digest &
 Digest::operator << (const std::string &str)

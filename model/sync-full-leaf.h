@@ -64,6 +64,7 @@ private:
 };
 
 typedef boost::shared_ptr<FullLeaf> FullLeafPtr;
+typedef boost::shared_ptr<const FullLeaf> FullLeafConstPtr;
 
 } // Sync
 

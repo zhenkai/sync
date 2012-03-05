@@ -54,11 +54,18 @@ public:
     m_next = next;
   }
 
-  // void
-  // setDigest (Hash digest);
+  /**
+   * @brief Set digest for the diff state (obtained from a corresponding full state)
+   * @param digest A read only smart pointer to a digest object (that should be unmodified anywhere else)
+   */
+  void
+  setDigest (DigestConstPtr digest) { m_digest = digest; }
 
-  // Hash
-  // getDigest () const;
+  /**
+   * @brief Get digest for the diff state
+   */
+  DigestConstPtr
+  getDigest () const { return m_digest; }
 
   /**
    * @brief Accumulate differences from `this' state to the most current state
@@ -86,7 +93,7 @@ public:
   
 private:
   DiffStatePtr m_next;
-  // Hash m_digest;
+  DigestConstPtr m_digest;
 };
 
 } // Sync

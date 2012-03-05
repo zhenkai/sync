@@ -48,6 +48,14 @@ public:
    */
   ns3::Time
   getTimeFromLastUpdate () const;
+
+  /**
+   * @brief Obtain a read-only copy of the digest
+   *
+   * If m_digest is 0, then it is automatically created.  On every update and removal, m_digest is reset to 0
+   */
+  DigestConstPtr
+  getDigest ();
   
   // from State
   virtual void
@@ -58,6 +66,7 @@ public:
   
 private:
   ns3::Time m_lastUpdated; ///< @brief Time when state was updated last time
+  DigestPtr m_digest;
 };
 
 

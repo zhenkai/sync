@@ -27,6 +27,10 @@
 #include <boost/make_shared.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
+#include <boost/foreach.hpp>
+#include <boost/assert.hpp>
+
+#include "sync-full-leaf.h"
 
 using namespace boost;
 namespace ll = boost::lambda;
@@ -48,12 +52,30 @@ FullState::getTimeFromLastUpdate () const
 {
   return ns3::Simulator::Now () - m_lastUpdated;
 }
-  
+
+DigestConstPtr
+FullState::getDigest ()
+{
+  if (m_digest == 0)
+    {
+      m_digest = make_shared<Digest> ();
+      BOOST_FOREACH (LeafConstPtr leaf, m_leaves)
+        {
+          FullLeafConstPtr fullLeaf = dynamic_pointer_cast<const FullLeaf> (leaf);
+          BOOST_ASSERT (fullLeaf != 0);
+          *m_digest << fullLeaf->getDigest ();
+        }
+    }
+
+  return m_digest;
+}
+
 // from State
 void
 FullState::update (NameInfoConstPtr info, const SeqNo &seq)
 {
   m_lastUpdated = ns3::Simulator::Now ();
+  m_digest.reset ();
 
   LeafContainer::iterator item = m_leaves.find (*info);
   if (item == m_leaves.end ())
@@ -70,6 +92,7 @@ void
 FullState::remove (NameInfoConstPtr info)
 {
   m_lastUpdated = ns3::Simulator::Now ();
+  m_digest.reset ();
 
   m_leaves.erase (*info);
 }

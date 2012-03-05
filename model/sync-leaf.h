@@ -70,6 +70,7 @@ private:
 };
 
 typedef boost::shared_ptr<Leaf> LeafPtr;
+typedef boost::shared_ptr<const Leaf> LeafConstPtr;
 
 } // Sync
 

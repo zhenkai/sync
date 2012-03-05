@@ -23,7 +23,7 @@
 #include "sync-digest.h"
 #include <string.h>
 
-#include "ns3/assert.h"
+#include <boost/assert.hpp>
 #include <boost/exception/errinfo_at_line.hpp>
 
 using namespace boost;
@@ -81,7 +81,7 @@ Digest::getHash ()
   if (m_buffer == 0)
     finalize ();
 
-  NS_ASSERT (sizeof (std::size_t) <= m_hashLength);
+  BOOST_ASSERT (sizeof (std::size_t) <= m_hashLength);
   
   // just getting first sizeof(std::size_t) bytes
   // not ideal, but should work pretty well
@@ -97,7 +97,7 @@ Digest::operator == (Digest &digest)
   if (digest.m_buffer == 0)
     digest.finalize ();
   
-  NS_ASSERT (m_hashLength == digest.m_hashLength);
+  BOOST_ASSERT (m_hashLength == digest.m_hashLength);
 
   return memcmp (m_buffer, digest.m_buffer, m_hashLength) == 0;
 }
