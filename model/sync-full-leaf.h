@@ -20,8 +20,8 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#ifndef SYNC_DIFF_LEAF_H
-#define SYNC_DIFF_LEAF_H
+#ifndef SYNC_FULL_LEAF_H
+#define SYNC_FULL_LEAF_H
 
 #include "sync-leaf.h"
 
@@ -29,19 +29,9 @@ namespace Sync {
 
 /**
  * @ingroup sync
- * @brief Annotation for SYNC leaf
+ * @brief SYNC leaf for the full state (with support of Digest calculation) 
  */
-enum Operation
-  {
-    UPDATE, ///< @brief Leaf was added or updated
-    REMOVE  ///< @brief Leaf was removed
-  };
-
-/**
- * @ingroup sync
- * @brief Annotated SYNC leaf 
- */
-class DiffLeaf : public Leaf
+class FullLeaf : public Leaf
 {
 public:
   /**
@@ -49,31 +39,32 @@ public:
    * @param info Smart pointer to leaf's name
    * @param seq  Initial sequence number of the pointer
    */
-  DiffLeaf (NameInfoConstPtr info, const SeqNo &seq);
+  FullLeaf (NameInfoConstPtr info, const SeqNo &seq);
+  virtual ~FullLeaf () { }
 
   /**
-   * @brief Constructor to create an REMOVE diff leaf
-   * @param info Smart pointer to leaf's name
+   * @brief Get hash digest of the leaf
    *
-   * This constructor creates a leaf with phony sequence number
-   * with 0 session ID and 0 sequence number
+   * The underlying Digest object is recalculated on every update or removal
+   * (including updates of child classes)
    */
-  DiffLeaf (NameInfoConstPtr info);
+  const Digest &
+  getDigest () const { return m_digest; }  
 
-  virtual ~DiffLeaf () { }
-
-  /**
-   * @brief Get diff leaf type
-   */
-  Operation
-  getOperation () const { return m_op; }
+  // from Leaf
+  virtual void
+  setSeq (const SeqNo &seq);
+  
+private:
+  void
+  updateDigest ();
 
 private:
-  Operation m_op;
+  Digest m_digest;
 };
 
-typedef boost::shared_ptr<DiffLeaf> DiffLeafPtr;
+typedef boost::shared_ptr<FullLeaf> FullLeafPtr;
 
 } // Sync
 
-#endif // SYNC_DIFF_LEAF_H
+#endif // SYNC_FULL_LEAF_H

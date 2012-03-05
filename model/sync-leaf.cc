@@ -19,3 +19,21 @@
  *         卞超轶 Chaoyi Bian <bcy@pku.edu.cn>
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
+
+#include "sync-leaf.h"
+
+namespace Sync {
+
+Leaf::Leaf (NameInfoConstPtr info, const SeqNo &seq)
+  : m_info (info)
+  , m_seq (seq)
+{
+}
+
+void
+Leaf::setSeq (const SeqNo &seq)
+{
+  m_seq = std::max (m_seq, seq);
+}
+
+} // Sync

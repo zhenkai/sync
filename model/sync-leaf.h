@@ -40,32 +40,20 @@ public:
    * @param info Smart pointer to leaf's name
    * @param seq  Initial sequence number of the pointer
    */
-  Leaf (boost::shared_ptr<const NameInfo> info, const SeqNo &seq)
-    : m_info (info)
-    , m_seq (seq)
-  { }
-
-  virtual ~Leaf ()
-  {
-  }
+  Leaf (NameInfoConstPtr info, const SeqNo &seq);
+  virtual ~Leaf () { }
   
   /**
    * @brief Get name of the leaf
    */
   const NameInfo &
-  getInfo () const
-  {
-    return *m_info;
-  }
+  getInfo () const { return *m_info; }
 
   /**
    * @brief Get sequence number of the leaf
    */
   const SeqNo&
-  getSeq () const
-  {
-    return m_seq;
-  }
+  getSeq () const { return m_seq; }
 
   /**
    * @brief Update sequence number of the leaf
@@ -73,11 +61,8 @@ public:
    *
    * Sequence number is updated to the largest value among this->m_seq and seq
    */
-  void
-  setSeq (const SeqNo &seq)
-  {
-    m_seq = std::max (m_seq, seq);
-  }
+  virtual void
+  setSeq (const SeqNo &seq);
   
 private:
   NameInfoConstPtr m_info;

@@ -23,6 +23,7 @@
 #include "sync-ns3-name-info.h"
 #include "ns3/ccnx-name-components.h"
 
+#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <utility>
 
@@ -30,6 +31,7 @@ using namespace std;
 using namespace boost;
 
 namespace Sync {
+
 
 NameInfoConstPtr
 Ns3NameInfo::FindOrCreate (ns3::Ptr<const ns3::CcnxNameComponents> name)
@@ -47,7 +49,8 @@ Ns3NameInfo::Ns3NameInfo (ns3::Ptr<const ns3::CcnxNameComponents> name)
   : m_name (name)
 {
   m_id = m_ids ++; // set ID for a newly inserted element
-  // m_digest << *name;
+  m_digest << *name;
+  m_digest.getHash (); // finalize digest
 }
 
 string
@@ -67,6 +70,21 @@ Ns3NameInfo::operator == (const NameInfo &info) const
     {
       return false;
     }
+}
+
+Digest &
+operator << (Digest &digest, const ns3::CcnxNameComponents &name)
+{
+  BOOST_FOREACH (const std::string &component, name.GetComponents ())
+    {
+      Digest subhash;
+      subhash << component;
+      subhash.getHash (); // finalize hash
+
+      digest << subhash;
+    }
+
+  return digest;
 }
 
 

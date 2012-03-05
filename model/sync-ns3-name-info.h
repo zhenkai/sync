@@ -64,6 +64,9 @@ private:
   ns3::Ptr<const ns3::CcnxNameComponents> m_name;
 };
 
+Digest &
+operator << (Digest &, const ns3::CcnxNameComponents &name);
+
 } // Sync
 
 #endif // SYNC_CCNX_NAME_INFO_H

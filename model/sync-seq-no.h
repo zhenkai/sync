@@ -24,6 +24,7 @@
 #define SYNC_SEQ_NO_H
 
 #include <boost/cstdint.hpp>
+#include "sync-digest.h"
 
 namespace Sync {
 
@@ -32,7 +33,7 @@ namespace Sync {
  *
  * 
  */
-struct SeqNo
+class SeqNo
 {
 public:
   /**
@@ -53,23 +54,9 @@ public:
     : m_session (session)
     , m_seq (seq)
   { }
-  
-  /**
-   * @brief Session ID (e.g., after crash, application will choose new session ID.
-   *
-   * Note that session IDs for the same name should always increase. So, the good choice
-   * for the session ID is client's timestamp
-   */
-  uint32_t m_session;
 
-  /**
-   * @brief Sequence number
-   *
-   * Sequence number for a session always starts with 0 and goes to max value.
-   *
-   * For now, wrapping sequence number after max to zero is not supported
-   */
-  uint32_t m_seq;
+  inline Digest
+  getDigest () const;
 
   /**
    * @brief Compare if one sequence number is lower
@@ -94,7 +81,56 @@ public:
   {
     return m_session == seq.m_session && m_seq == seq.m_seq;
   }
+
+  SeqNo &
+  operator = (const SeqNo &seq)
+  {
+    m_session = seq.m_session;
+    m_seq = seq.m_seq;
+
+    return *this;
+  }
+  
+private:
+  inline void
+  updateDigest ();
+  
+private:
+  /**
+   * @brief Session ID (e.g., after crash, application will choose new session ID.
+   *
+   * Note that session IDs for the same name should always increase. So, the good choice
+   * for the session ID is client's timestamp
+   */
+  uint32_t m_session;
+
+  /**
+   * @brief Sequence number
+   *
+   * Sequence number for a session always starts with 0 and goes to max value.
+   *
+   * For now, wrapping sequence number after max to zero is not supported
+   */
+  uint32_t m_seq;
+
+  Digest m_digest;
 };
+
+
+void
+SeqNo::updateDigest ()
+{
+  m_digest.reset ();
+  m_digest << m_session << m_seq;
+}
+  
+Digest
+SeqNo::getDigest () const
+{
+  Digest digest;
+  return digest;
+}
+
 
 } // Sync
 

@@ -36,9 +36,7 @@ Digest::Digest ()
 {
   m_context = EVP_MD_CTX_create ();
 
-  int ok = EVP_DigestInit_ex (m_context, EVP_sha1 (), 0);
-  if (!ok)
-    throw DigestCalculationError () << errinfo_at_line (__LINE__);
+  reset ();
 }
 
 Digest::~Digest ()
@@ -50,7 +48,22 @@ Digest::~Digest ()
 }
 
 void
-Digest::Finalize ()
+Digest::reset ()
+{
+  if (m_buffer != 0)
+    {
+      delete [] m_buffer;
+      m_buffer = 0;
+    }
+
+  int ok = EVP_DigestInit_ex (m_context, EVP_sha1 (), 0);
+  if (!ok)
+    throw DigestCalculationError () << errinfo_at_line (__LINE__);
+}
+
+
+void
+Digest::finalize ()
 {
   if (m_buffer != 0) return;
 
@@ -66,7 +79,7 @@ std::size_t
 Digest::getHash ()
 {
   if (m_buffer == 0)
-    Finalize ();
+    finalize ();
 
   NS_ASSERT (sizeof (std::size_t) <= m_hashLength);
   
@@ -79,10 +92,10 @@ bool
 Digest::operator == (Digest &digest)
 {
   if (m_buffer == 0)
-    Finalize ();
+    finalize ();
 
   if (digest.m_buffer == 0)
-    digest.Finalize ();
+    digest.finalize ();
   
   NS_ASSERT (m_hashLength == digest.m_hashLength);
 
@@ -90,16 +103,27 @@ Digest::operator == (Digest &digest)
 }
 
 
+void
+Digest::update (const uint8_t *buffer, size_t size)
+{
+  // cannot update Digest when it has been finalized
+  if (m_buffer != 0)
+    throw DigestCalculationError () << errinfo_at_line (__LINE__);
+
+  bool ok = EVP_DigestUpdate (m_context, buffer, size);
+  if (!ok)
+    throw DigestCalculationError () << errinfo_at_line (__LINE__);
+}
+
+
 Digest &
 Digest::operator << (const Digest &src)
 {
-  if (src.m_buffer == 0)
+  if (src.m_buffer == 0) 
     throw DigestCalculationError () << errinfo_at_line (__LINE__);
 
-  bool ok = EVP_DigestUpdate (m_context, src.m_buffer, src.m_hashLength);
-  if (!ok)
-    throw DigestCalculationError () << errinfo_at_line (__LINE__);
-  
+  update (src.m_buffer, src.m_hashLength);
+
   return *this;
 }
 

@@ -20,20 +20,32 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#include "sync-diff-leaf.h"
+#include "sync-full-leaf.h"
+#include <boost/ref.hpp>
+
+using namespace boost;
 
 namespace Sync {
 
-DiffLeaf::DiffLeaf (NameInfoConstPtr info, const SeqNo &seq)
+FullLeaf::FullLeaf (NameInfoConstPtr info, const SeqNo &seq)
   : Leaf (info, seq)
-  , m_op (UPDATE)
 {
+  updateDigest ();
 }
 
-DiffLeaf::DiffLeaf (NameInfoConstPtr info)
-  : Leaf (info, SeqNo (0,0))
-  , m_op (REMOVE)
+void
+FullLeaf::updateDigest ()
 {
+  m_digest.reset ();
+  m_digest << getInfo ().getDigest () << getSeq ().getDigest ();
 }
 
+// from Leaf
+void
+FullLeaf::setSeq (const SeqNo &seq)
+{
+  Leaf::setSeq (seq);
+  updateDigest ();
 }
+
+} // Sync

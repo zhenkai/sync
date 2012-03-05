@@ -44,6 +44,12 @@ public:
   Digest ();
 
   /**
+   * @brief Reset digest to the initial state
+   */
+  void
+  reset ();
+
+  /**
    * @brief Destructor
    */
   ~Digest ();
@@ -65,7 +71,7 @@ public:
   operator == (Digest &digest);
 
   /**
-   * @brief Combine digests
+   * @brief Add existing digest to digest calculation
    * @param src digest to combine with
    *
    * The result of this combination is  hash (hash (...))
@@ -73,14 +79,42 @@ public:
   Digest &
   operator << (const Digest &src);
 
+  /**
+   * @brief Add string to digest calculation
+   * @param str string to put into digest
+   */
+  inline Digest &
+  operator << (const std::string &str);
 
-  
+  inline Digest &
+  operator << (uint32_t value);
+
+  // /**
+  //  * @brief Add integer to digest calculation
+  //  * @param value the value to add to the digest
+  //  */
+  // template<class INT>
+  // inline Digest &
+  // operator << (INT value);
   
 private:
   /**
+   * @brief Disabled copy operator 
+   */
+  Digest &
+  operator = (Digest &digest) { return *this; }
+  
+  /**
    * @brief Finalize digest. All subsequent calls to "operator <<" will fire an exception
    */
-  void Finalize ();
+  void
+  finalize ();
+
+  /**
+   * @brief Add size bytes of buffer to the hash
+   */
+  void
+  update (const uint8_t *buffer, size_t size);
   
 private:
   EVP_MD_CTX *m_context;
@@ -89,6 +123,30 @@ private:
 };
 
 struct DigestCalculationError : virtual boost::exception { };
+
+
+Digest &
+Digest::operator << (const std::string &str)
+{
+  update (reinterpret_cast<const uint8_t*> (str.c_str ()), str.size ());
+  return *this;
+}
+
+inline Digest &
+Digest::operator << (uint32_t value)
+{
+  update (reinterpret_cast<const uint8_t*> (&value), sizeof (uint32_t));
+  return *this;
+}
+
+// template<class INT>
+// Digest &
+// Digest::operator << (INT value)
+// {
+//   update (&value, sizeof (INT));
+//   return *this;
+// }
+
 
 } // Sync
 
