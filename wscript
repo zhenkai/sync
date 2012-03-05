@@ -17,10 +17,15 @@ def configure(conf):
         conf.check_boost(lib='signals filesystem iostreams regex', libpath="/usr/lib64")
 
 def build (bld):
-    module = bld.new_task_gen(target="sync", features=['cxx', 'cxxshlib'])
-    module.source = bld.path.ant_glob(['model/*.cc',
-                                       'helper/*.cc'])
-    module.uselib = 'BOOST BOOST_IOSTREAMS SSL'
+    synclib = bld.new_task_gen (target="sync", features=['cxx', 'cxxshlib'])
+    synclib.source = bld.path.ant_glob(['model/sync-*.cc',
+                                        'helper/sync-*.cc'])
+    synclib.uselib = 'BOOST BOOST_IOSTREAMS SSL'
+
+    testapp = bld.new_task_gen (target="testapp", features=['cxx', 'cxxprogram'])
+    testapp.source = "test/testapp.cc"
+    # testapp.uselib = 'BOOST BOOST_IOSTREAMS SSL'
+    testapp.uselib_local = 'sync'
 
 # def build_ns3 (bld):
 #     deps = ['core', 'network', 'NDNabstraction']
