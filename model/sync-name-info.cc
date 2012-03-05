@@ -21,7 +21,6 @@
  */
 
 #include "sync-name-info.h"
-#include "ns3/ccnx-name-components.h"
 
 #include <boost/lexical_cast.hpp>
 

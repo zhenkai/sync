@@ -20,6 +20,8 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
+#ifndef STANDALONE
+
 #include "sync-ns3-name-info.h"
 #include "ns3/ccnx-name-components.h"
 
@@ -89,3 +91,6 @@ operator << (Digest &digest, const ns3::CcnxNameComponents &name)
 
 
 } // Sync
+
+#endif
+

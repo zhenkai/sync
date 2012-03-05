@@ -22,7 +22,9 @@
 
 #include "sync-full-state.h"
 
+#ifndef STANDALONE
 #include "ns3/simulator.h"
+#endif // STANDALONE
 
 #include <boost/make_shared.hpp>
 #include <boost/lambda/lambda.hpp>
@@ -39,7 +41,7 @@ namespace Sync {
 
 
 FullState::FullState ()
-  : m_lastUpdated (0)
+// m_lastUpdated is initialized to "not_a_date_time" in STANDALONE mode and to "0" time in NS-3 mode
 {
 }
 
@@ -47,10 +49,14 @@ FullState::~FullState ()
 {
 }
 
-ns3::Time
+TimeDurationType
 FullState::getTimeFromLastUpdate () const
 {
+#ifndef STANDALONE
   return ns3::Simulator::Now () - m_lastUpdated;
+#else
+  return boost::posix_time::second_clock::universal_time () - m_lastUpdated;
+#endif // STANDALONE
 }
 
 DigestConstPtr
@@ -74,7 +80,12 @@ FullState::getDigest ()
 void
 FullState::update (NameInfoConstPtr info, const SeqNo &seq)
 {
+#ifndef STANDALONE  
   m_lastUpdated = ns3::Simulator::Now ();
+#else
+  m_lastUpdated = boost::posix_time::second_clock::universal_time ();
+#endif // STANDALONE  
+
   m_digest.reset ();
 
   LeafContainer::iterator item = m_leaves.find (*info);
@@ -91,7 +102,12 @@ FullState::update (NameInfoConstPtr info, const SeqNo &seq)
 void
 FullState::remove (NameInfoConstPtr info)
 {
+#ifndef STANDALONE  
   m_lastUpdated = ns3::Simulator::Now ();
+#else
+  m_lastUpdated = boost::posix_time::second_clock::universal_time ();
+#endif // STANDALONE  
+
   m_digest.reset ();
 
   m_leaves.erase (*info);

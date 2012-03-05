@@ -20,6 +20,8 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
+#ifndef STANDALONE
+
 #ifndef SYNC_CCNX_NAME_INFO_H
 #define SYNC_CCNX_NAME_INFO_H
 
@@ -70,3 +72,5 @@ operator << (Digest &, const ns3::CcnxNameComponents &name);
 } // Sync
 
 #endif // SYNC_CCNX_NAME_INFO_H
+
+#endif // STANDALONE
