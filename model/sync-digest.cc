@@ -26,7 +26,16 @@
 #include <boost/assert.hpp>
 #include <boost/exception/errinfo_at_line.hpp>
 
+// for printing, may be disabled in optimized build
+#include <boost/archive/iterators/base64_from_binary.hpp>
+#include <boost/archive/iterators/base64_from_binary.hpp>
+#include <boost/archive/iterators/transform_width.hpp>
+
 using namespace boost;
+using namespace std;
+
+using namespace boost::archive::iterators;
+typedef base64_from_binary<transform_width<string::const_iterator, 6, 8> > base64_t;
 
 namespace Sync {
 
@@ -125,6 +134,28 @@ Digest::operator << (const Digest &src)
   update (src.m_buffer, src.m_hashLength);
 
   return *this;
+}
+
+
+std::ostream&
+Digest::print (std::ostream &os) const
+{
+  BOOST_ASSERT (m_hashLength != 0);
+  
+  ostreambuf_iterator<char> out_it (os); // ostream iterator
+  // need to encode to base64
+  copy (base64_t (reinterpret_cast<const char*> (m_buffer)),
+        base64_t (reinterpret_cast<const char*> (m_buffer+m_hashLength)),
+        out_it);
+
+  return os;
+}
+
+std::ostream &
+operator << (std::ostream &os, const Digest &digest)
+{
+  digest.print (os);
+  return os;
 }
 
 

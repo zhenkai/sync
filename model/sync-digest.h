@@ -96,6 +96,9 @@ public:
   // template<class INT>
   // inline Digest &
   // operator << (INT value);
+
+  std::ostream&
+  print (std::ostream &os) const;
   
 private:
   /**
@@ -140,6 +143,9 @@ Digest::operator << (uint32_t value)
   update (reinterpret_cast<const uint8_t*> (&value), sizeof (uint32_t));
   return *this;
 }
+
+std::ostream &
+operator << (std::ostream &os, const Digest &digest);
 
 // template<class INT>
 // Digest &
