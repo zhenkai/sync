@@ -20,6 +20,11 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
+#define BOOST_TEST_MODULE Digest
+#include <boost/test/unit_test.hpp>
+#include <boost/test/output_test_stream.hpp> 
+using boost::test_tools::output_test_stream;
+
 #include "../model/sync-digest.h"
 #include <boost/lexical_cast.hpp>
 #include <iostream>
@@ -29,71 +34,78 @@ using namespace Sync;
 using namespace std;
 using namespace boost;
 
-int
-main (int argc, char **argv)
+BOOST_AUTO_TEST_SUITE(DigestTestSuite)
+
+BOOST_AUTO_TEST_CASE (BasicTest)
 {
-  Digest test;
-  test << "1\n";
-
-  // try
-  //   {
-  //     cout << "Trying to print without explicit getHash() call: ";
-  //     cout << test;
-  //     cout << "Failed (should be asserted)\n";
-  //   }
-  // catch (...)
-  //   {
-  //     cout << "OK (exception)\n";
-  //   }
-  
-  // without explicit finalizing, Digest will not be complete and printing out will cause assert
-  test.getHash ();
-
-  try
-    {
-      cout << "Hash for '1' is " << test << std::endl;
-    }
-  catch (...)
-    {
-      cout << "Hash calculation failed\n";
-    }
-
-  try
-    {
-      cout << "Trying to add data to hash after finalizing: ";
-      test << "2"; // should cause an assert
-      cout << "Failed (should be asserted)\n";
-    }
-  catch (...)
-    {
-      cout << "OK (exception)\n";
-    }
-
-  Digest test2;
-// #ifdef DIGEST_BASE64
-//   string testString = "sCYyTGkEsqnLS4jW1hyB0Q==";
-// #else
-  string testString = lexical_cast<string> (test); //"b026324c6904b2a9cb4b88d6d61c81d1";
-// #endif
-  cout << "Hash from string: " << testString << "\n";
-  istringstream is (testString);
-  is >> test2;
-
-  cout << "Result from hash: " << test2 << "\n";
-
-  cout << "Compare two hashes: " << (test == test2) << "\n";
-
-  Digest test3;
-  if (testString[0] != '1')
-    testString[0] = '1';
-  else
-    testString[0] = '2';
-  
-  istringstream is2(testString);
-  is2 >> test3;
-
-  cout << "Hash from string: " << test3 << "\n";
-  cout << "Compare two hashes: " << (test == test3) << "\n";
-  
-  return 0; 
+  Digest d0;
+  BOOST_REQUIRE (d0.empty ());
 }
+
+BOOST_AUTO_TEST_CASE (DigestGenerationTest)
+{
+  Digest d1;
+  BOOST_CHECK_NO_THROW (d1 << "1\n");
+
+  // without explicit finalizing, Digest will not be complete and printing out will cause assert
+  BOOST_CHECK (d1.empty ());
+
+  // fix hash
+  BOOST_CHECK_NO_THROW (d1.getHash ());
+  BOOST_CHECK (!d1.empty ());
+  BOOST_CHECK (d1 == d1);
+
+  BOOST_CHECK_THROW (d1 << "2", DigestCalculationError);
+  
+  output_test_stream output;
+  BOOST_CHECK_NO_THROW (output << d1);
+  BOOST_CHECK (output.check_length (40,false) );
+  BOOST_CHECK (output.is_equal ("e5fa44f2b31c1fb553b6021e7360d07d5d91ff5e", true));
+}
+
+BOOST_AUTO_TEST_CASE (DigestComparison)
+{
+  Digest d1;
+  BOOST_CHECK_NO_THROW (d1 << "1\n");
+  BOOST_CHECK_THROW (d1 == d1, DigestCalculationError);
+  BOOST_CHECK_NO_THROW (d1.getHash ());
+  BOOST_CHECK (d1 == d1);
+  
+  Digest d2;
+  BOOST_CHECK_NO_THROW (d2 << "2\n");
+  BOOST_CHECK_NO_THROW (d2.getHash ());
+  BOOST_CHECK (d1 != d2);
+  
+  Digest d3;
+  istringstream is (string ("e5fa44f2b31c1fb553b6021e7360d07d5d91ff5e")); //real sha-1 for "1\n"
+  BOOST_CHECK_NO_THROW (is >> d3);
+  BOOST_CHECK (!d3.empty ());
+  BOOST_CHECK (d3 == d1);
+  BOOST_CHECK (d3 != d2);
+
+  istringstream is2 (string ("25fa44f2b31c1fb553b6021e7360d07d5d91ff5e")); // some fake hash
+  BOOST_CHECK_THROW (is2 >> d3, DigestCalculationError); // >> can be used only once
+
+  Digest d4;
+  BOOST_CHECK_THROW (is2 >> d4, DigestCalculationError); // is2 is now empty. empty >> is not allowed
+
+  istringstream is3 (string ("25fa44f2b31c1fb553b6021e7360d07d5d91ff5e")); // some fake hash
+  BOOST_CHECK_NO_THROW (is3 >> d4);
+  
+  BOOST_CHECK (d4 != d1);
+  BOOST_CHECK (d4 != d2);
+  BOOST_CHECK (d4 != d3);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+BOOST_AUTO_TEST_SUITE(LeafTestSuite)
+
+BOOST_AUTO_TEST_CASE (LeafBase)
+{
+  Leaf test;
+}
+
+BOOST_AUTO_TEST_SUITE_END()

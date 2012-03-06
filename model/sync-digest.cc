@@ -120,6 +120,12 @@ Digest::~Digest ()
   EVP_MD_CTX_destroy (m_context);
 }
 
+bool
+Digest::empty () const
+{
+  return m_buffer == 0;
+}
+
 void
 Digest::reset ()
 {
@@ -154,7 +160,8 @@ Digest::getHash ()
   if (m_buffer == 0)
     finalize ();
 
-  BOOST_ASSERT (sizeof (std::size_t) <= m_hashLength);
+  if (sizeof (std::size_t) > m_hashLength)
+    throw DigestCalculationError () << errinfo_at_line (__LINE__);
   
   // just getting first sizeof(std::size_t) bytes
   // not ideal, but should work pretty well
@@ -162,13 +169,10 @@ Digest::getHash ()
 }
 
 bool
-Digest::operator == (Digest &digest)
+Digest::operator == (const Digest &digest) const
 {
-  if (m_buffer == 0)
-    finalize ();
-
-  if (digest.m_buffer == 0)
-    digest.finalize ();
+  if (m_buffer == 0 || digest.m_buffer == 0)
+    throw DigestCalculationError () << errinfo_at_line (__LINE__);
   
   BOOST_ASSERT (m_hashLength == digest.m_hashLength);
 
@@ -221,6 +225,10 @@ operator >> (std::istream &is, Digest &digest)
 {
   string str;
   is >> str; // read string first
+
+  if (str.size () == 0)
+    throw DigestCalculationError () << errinfo_at_line (__LINE__);
+  
   // uint8_t padding = (3 - str.size () % 3) % 3;
   // for (uint8_t i = 0; i < padding; i++) str.push_back ('=');
 

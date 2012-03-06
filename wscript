@@ -17,7 +17,7 @@ def configure(conf):
     # conf.define ('DIGEST_BASE64', 1) # base64 is not working and probably will not work at all
 
     conf.load('boost')
-    conf.check_boost(lib='system iostreams')
+    conf.check_boost(lib='system iostreams test')
     
     conf.load('doxygen')
 
@@ -32,7 +32,7 @@ def build (bld):
     bld.program (target="testapp",
                  source = "test/testapp.cc",
                  features=['cxx', 'cxxprogram'],
-                 use = 'sync')
+                 use = 'BOOST_TEST sync')
 
 from waflib.Build import BuildContext
 class doxy (BuildContext):

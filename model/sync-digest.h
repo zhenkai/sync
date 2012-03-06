@@ -42,6 +42,12 @@ public:
   Digest ();
 
   /**
+   * @brief Check if digest is empty
+   */
+  bool
+  empty () const;
+  
+  /**
    * @brief Reset digest to the initial state
    */
   void
@@ -66,7 +72,12 @@ public:
    * Side effect: Finalize will be called on `this' and `digest'
    */
   bool
-  operator == (Digest &digest);
+  operator == (const Digest &digest) const;
+
+  bool
+  operator != (const Digest &digest) const
+  { return ! (*this == digest); }
+  
 
   /**
    * @brief Add existing digest to digest calculation

@@ -55,7 +55,7 @@ public:
     , m_seq (seq)
   { }
 
-  inline Digest
+  inline const Digest&
   getDigest () const;
 
   /**
@@ -124,11 +124,10 @@ SeqNo::updateDigest ()
   m_digest << m_session << m_seq;
 }
   
-Digest
+const Digest&
 SeqNo::getDigest () const
 {
-  Digest digest;
-  return digest;
+  return m_digest;
 }
 
 
