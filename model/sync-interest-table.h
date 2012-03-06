@@ -23,7 +23,7 @@
 #ifndef SYNC_STATE_H
 #define SYNC_STATE_H
 #include <string>
-#include <boost/unordered_map.hpp>
+#include <boost/unordered_set.hpp>
 
 /**
  * \defgroup sync SYNC protocol
@@ -39,10 +39,17 @@ namespace Sync {
 class SyncInterestTable
 {
 private:
-	boost::unordered_map<std::string, std::string> m_table;
+	boost::unordered_set<std::string> m_table;
 public:
+	/**
+	 * @brief Insert an interest
+	 */
 	bool insert(std::string interest);
-	boost::unordered_map<std::string, std::string> fetchAll();
+
+	/**
+	 * @brief fetch all Interests and clear the table
+	 */
+	boost::unordered_set<std::string> fetchAll();
 
 };
 

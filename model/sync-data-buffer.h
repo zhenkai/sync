@@ -95,17 +95,33 @@ public:
 	virtual void setBufferAndLength(const unsigned char *buffer, size_t len)
 	{m_dataBuffer->setBufferAndLength(buffer, len); }
 
+	/**
+	 * @brief convert from FullState to SyncDataBuffer
+	 */
 	SyncDataBuffer &operator<<(FullState &fs);
+
+	/**
+	 * @brief convert from DiffState to SyncDataBuffer
+	 */
 	SyncDataBuffer &operator<<(DiffState &ds);
 
+	/**
+	 * @brief convert from SyncDataBuffer to FullState, throws
+	 * SyncDataBufferConvertException if convert fails
+	 */
 	SyncDataBuffer &operator>>(FullState &fs);
+
+	/**
+	 * @brief convert from SyncDataBuffer to DiffState, throws
+	 * SyncDataBufferConvertException if convert fails
+	 */
 	SyncDataBuffer &operator>>(DiffState &ds);
 
 private:
 	boost::shared_ptr<DataBuffer> m_dataBuffer;
 };
 
-struct SyncDataBufferConvertError : virtual boost::exception {};
+struct SyncDataBufferConvertException : virtual boost::exception {};
 
 } // Sync
 
