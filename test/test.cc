@@ -20,24 +20,6 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#include "sync-leaf.h"
+#define BOOST_TEST_MODULE Digest
+#include <boost/test/unit_test.hpp>
 
-namespace Sync {
-
-Leaf::Leaf (NameInfoConstPtr info, const SeqNo &seq)
-  : m_info (info)
-  , m_seq (seq)
-{
-}
-
-Leaf::~Leaf ()
-{
-}
-
-void
-Leaf::setSeq (const SeqNo &seq)
-{
-  m_seq = std::max (m_seq, seq);
-}
-
-} // Sync

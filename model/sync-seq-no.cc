@@ -20,58 +20,20 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#ifndef SYNC_LEAF_H
-#define SYNC_LEAF_H
-
 #include "sync-seq-no.h"
-#include "sync-name-info.h"
+#include <boost/make_shared.hpp>
+
+using namespace boost;
 
 namespace Sync {
 
-/**
- * \ingroup sync
- * @brief Sync tree leaf
- */
-class Leaf
+DigestConstPtr
+SeqNo::getDigest () const
 {
-public:
-  /**
-   * @brief Constructor
-   * @param info Smart pointer to leaf's name
-   * @param seq  Initial sequence number of the pointer
-   */
-  Leaf (NameInfoConstPtr info, const SeqNo &seq);
-  virtual ~Leaf ();
-  
-  /**
-   * @brief Get name of the leaf
-   */
-  const NameInfo &
-  getInfo () const { return *m_info; }
-
-  /**
-   * @brief Get sequence number of the leaf
-   */
-  const SeqNo&
-  getSeq () const { return m_seq; }
-
-  /**
-   * @brief Update sequence number of the leaf
-   * @param seq Sequence number
-   *
-   * Sequence number is updated to the largest value among this->m_seq and seq
-   */
-  virtual void
-  setSeq (const SeqNo &seq);
-  
-private:
-  NameInfoConstPtr m_info;
-  SeqNo m_seq;
-};
-
-typedef boost::shared_ptr<Leaf> LeafPtr;
-typedef boost::shared_ptr<const Leaf> LeafConstPtr;
+  DigestPtr digest = make_shared<Digest> ();
+  *digest << m_session << m_seq;
+  digest->finalize ();
+  return digest;
+}
 
 } // Sync
-
-#endif // SYNC_LEAF_H

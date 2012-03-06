@@ -91,7 +91,7 @@ FullState::update (NameInfoConstPtr info, const SeqNo &seq)
   LeafContainer::iterator item = m_leaves.find (*info);
   if (item == m_leaves.end ())
     {
-      m_leaves.insert (make_shared<Leaf> (info, cref (seq)));
+      m_leaves.insert (make_shared<FullLeaf> (info, cref (seq)));
     }
   else
     {

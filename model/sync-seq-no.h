@@ -29,13 +29,34 @@
 namespace Sync {
 
 /**
+ * @ingroup sync
  * @brief Sequence number abstraction
- *
- * 
  */
 class SeqNo
 {
 public:
+  /**
+   * @brief Copy constructor
+   * @param seq sequence number object to copy from
+   */
+  SeqNo (const SeqNo &seq)
+  {
+    *this = seq;
+  }
+
+  /**
+   * @brief Assignment operator
+   * @param seq sequence number object to copy from
+   */
+  SeqNo &
+  operator = (const SeqNo &seq)
+  {
+    m_session = seq.m_session;
+    m_seq = seq.m_seq;
+
+    return *this;
+  }
+
   /**
    * @brief Constructor with just sequence number. Session assumed to be zero
    * @param seq Sequence number
@@ -55,7 +76,12 @@ public:
     , m_seq (seq)
   { }
 
-  inline Digest
+  /**
+   * @brief Get sequence number digest
+   *
+   * Digest will be calculated every time it is requested
+   */
+  DigestConstPtr
   getDigest () const;
 
   /**
@@ -82,18 +108,17 @@ public:
     return m_session == seq.m_session && m_seq == seq.m_seq;
   }
 
-  SeqNo &
-  operator = (const SeqNo &seq)
-  {
-    m_session = seq.m_session;
-    m_seq = seq.m_seq;
+  /**
+   * @brief Get session id
+   */
+  uint32_t getSession () const
+  { return m_session; }
 
-    return *this;
-  }
-  
-private:
-  inline void
-  updateDigest ();
+  /**
+   * @brief Get sequence number
+   */
+  uint32_t getSeq () const
+  { return m_seq; }
   
 private:
   /**
@@ -112,25 +137,7 @@ private:
    * For now, wrapping sequence number after max to zero is not supported
    */
   uint32_t m_seq;
-
-  Digest m_digest;
 };
-
-
-void
-SeqNo::updateDigest ()
-{
-  m_digest.reset ();
-  m_digest << m_session << m_seq;
-}
-  
-Digest
-SeqNo::getDigest () const
-{
-  Digest digest;
-  return digest;
-}
-
 
 } // Sync
 

@@ -13,11 +13,12 @@ def configure(conf):
     conf.load("compiler_cxx")
     conf.check_cfg(atleast_pkgconfig_version='0.20')
     conf.check_cfg(package='openssl', args=['--cflags', '--libs'], uselib_store='SSL')
+    conf.check_cfg(package='libxml-2.0', args=['--cflags', '--libs'], uselib_store='XML')
     conf.define ('STANDALONE', 1)
     # conf.define ('DIGEST_BASE64', 1) # base64 is not working and probably will not work at all
 
     conf.load('boost')
-    conf.check_boost(lib='system iostreams')
+    conf.check_boost(lib='system iostreams test')
     
     conf.load('doxygen')
 
@@ -26,14 +27,17 @@ def build (bld):
                features=['cxx', 'cxxshlib'],
                source = bld.path.ant_glob(['model/sync-*.cc',
                                            'helper/sync-*.cc']),
-               uselib = 'BOOST BOOST_IOSTREAMS SSL'
+               uselib = 'BOOST BOOST_IOSTREAMS SSL XML'
                )
 
-    bld.program (target="testapp",
-                 source = "test/testapp.cc",
+    # Unit tests
+    bld.program (target="unit-tests",
+                 source = bld.path.ant_glob(['test/**/*.cc']),
                  features=['cxx', 'cxxprogram'],
-                 use = 'sync')
+                 use = 'BOOST_TEST sync')
 
+
+# doxygen docs
 from waflib.Build import BuildContext
 class doxy (BuildContext):
     cmd = "doxygen"

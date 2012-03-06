@@ -42,6 +42,12 @@ public:
   Digest ();
 
   /**
+   * @brief Check if digest is empty
+   */
+  bool
+  empty () const;
+  
+  /**
    * @brief Reset digest to the initial state
    */
   void
@@ -55,10 +61,16 @@ public:
   /**
    * @brief Obtain a short version of the hash (just first sizeof(size_t) bytes
    *
-   * Side effect: Finalize will be called on `this'
+   * Side effect: finalize() will be called on `this'
    */
   std::size_t
   getHash ();
+
+  /**
+   * @brief Finalize digest. All subsequent calls to "operator <<" will fire an exception
+   */
+  void
+  finalize ();
 
   /**
    * @brief Compare two full digests
@@ -66,7 +78,12 @@ public:
    * Side effect: Finalize will be called on `this' and `digest'
    */
   bool
-  operator == (Digest &digest);
+  operator == (const Digest &digest) const;
+
+  bool
+  operator != (const Digest &digest) const
+  { return ! (*this == digest); }
+  
 
   /**
    * @brief Add existing digest to digest calculation
@@ -84,30 +101,17 @@ public:
   inline Digest &
   operator << (const std::string &str);
 
+  /**
+   * @brief Add uint32_t value to digest calculation
+   * @param value uint32_t value to put into digest
+   */
   inline Digest &
   operator << (uint32_t value);
 
-  // /**
-  //  * @brief Add integer to digest calculation
-  //  * @param value the value to add to the digest
-  //  */
-  // template<class INT>
-  // inline Digest &
-  // operator << (INT value);
-
 private:
-  /**
-   * @brief Disabled copy operator 
-   */
   Digest &
   operator = (Digest &digest) { return *this; }
   
-  /**
-   * @brief Finalize digest. All subsequent calls to "operator <<" will fire an exception
-   */
-  void
-  finalize ();
-
   /**
    * @brief Add size bytes of buffer to the hash
    */
