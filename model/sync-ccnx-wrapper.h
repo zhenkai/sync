@@ -33,6 +33,7 @@ extern "C" {
 
 #include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
+#include <string>
 /**
  * \defgroup sync SYNC protocol
  *
@@ -88,10 +89,10 @@ public:
    * @param strInterest the Interest name
    * @param callback the callback function to deal with the returned data
    */
-   int sendInterest(string strInterest, boost::function<void (DataBuffer &)> processData);
-   int sendInterestFilter(string prefix, boost::function<void (string)>
+   int sendInterest(std::string strInterest, boost::function<void (DataBuffer &)> processData);
+   int sendInterestFilter(std::string prefix, boost::function<void (std::string)>
    processInterest);
-   int publishData(string name, DataBuffer &dataBuffer);
+   int publishData(std::string name, DataBuffer &dataBuffer);
 
 };
 
