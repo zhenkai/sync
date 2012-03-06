@@ -25,7 +25,7 @@
 
 namespace Sync {
 
-#include "diff-state.h"
+#include "sync-diff-state.h"
 
 #include <boost/multi_index_container.hpp>
 // #include <boost/multi_index/tag.hpp>

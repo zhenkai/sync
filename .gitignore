@@ -1,4 +1,6 @@
 .lock-waf_darwin_build
-.waf-1.6.11-30618c54883417962c38f5d395f83584/
+.waf*
 build/
 *.pyc
+doc/html
+.DS_Store

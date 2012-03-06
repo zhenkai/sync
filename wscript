@@ -1,9 +1,13 @@
 # -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
 
+VERSION='0.0.1'
+APPNAME='sync'
+
 def options(opt):
     opt.load('compiler_c')
     opt.load('compiler_cxx')
-    opt.tool_options('boost', tooldir=["waf-tools"])
+    opt.load('boost')
+    opt.load('doxygen')
 
 def configure(conf):
     conf.load("compiler_cxx")
@@ -12,50 +16,30 @@ def configure(conf):
     conf.define ('STANDALONE', 1)
     # conf.define ('DIGEST_BASE64', 1) # base64 is not working and probably will not work at all
 
-    conf.check_tool('boost')
-    conf.check_boost(lib='signals filesystem iostreams regex')
-    if not conf.env.LIB_BOOST:
-        conf.check_boost(lib='signals filesystem iostreams regex', libpath="/usr/lib64")
+    conf.load('boost')
+    conf.check_boost(lib='system iostreams')
+    
+    conf.load('doxygen')
 
 def build (bld):
-    synclib = bld.new_task_gen (target="sync", features=['cxx', 'cxxshlib'])
-    synclib.source = bld.path.ant_glob(['model/sync-*.cc',
-                                        'helper/sync-*.cc'])
-    synclib.uselib = 'BOOST BOOST_IOSTREAMS SSL'
+    bld.shlib (target=APPNAME, 
+               features=['cxx', 'cxxshlib'],
+               source = bld.path.ant_glob(['model/sync-*.cc',
+                                           'helper/sync-*.cc']),
+               uselib = 'BOOST BOOST_IOSTREAMS SSL'
+               )
 
-    testapp = bld.new_task_gen (target="testapp", features=['cxx', 'cxxprogram'])
-    testapp.source = "test/testapp.cc"
-    # testapp.uselib = 'BOOST BOOST_IOSTREAMS SSL'
-    testapp.uselib_local = 'sync'
+    bld.program (target="testapp",
+                 source = "test/testapp.cc",
+                 features=['cxx', 'cxxprogram'],
+                 use = 'sync')
 
-# def build_ns3 (bld):
-#     deps = ['core', 'network', 'NDNabstraction']
-#     if bld.env['ENABLE_PYTHON_BINDINGS']:
-#         deps.append ('visualizer')
+from waflib.Build import BuildContext
+class doxy (BuildContext):
+    cmd = "doxygen"
+    fun = "doxygen"
 
-#     module = bld.create_ns3_module ('sync', deps)
-#     module.uselib = 'BOOST BOOST_IOSTREAMS SSL'
-
-#     # tests = bld.create_ns3_module_test_library('sync')
-#     # tests.source = [
-#     #     'test/sync-test-suite.cc',
-#     #     ]
-
-#     headers = bld.new_task_gen(features=['ns3header'])
-#     headers.module = 'sync'
-#     headers.source = [
-#         'model/sync-app.h',
-#         ]
-
-#     # if not bld.env['ENABLE_NDN_ABSTRACT']:
-#     #     bld.env['MODULES_NOT_BUILT'].append('NDNabstraction')
-#     #     return
-   
-#     module.source = bld.path.ant_glob(['model/*.cc',
-#                                        'helper/*.cc'])
-
-#     # if bld.env.ENABLE_EXAMPLES:
-#     #     bld.add_subdirs('examples')
-
-#     # bld.ns3_python_bindings()
-
+def doxygen (bld):
+    bld (features="doxygen",
+         doxyfile='doc/doxygen.conf',
+         output_dir = 'doc')
