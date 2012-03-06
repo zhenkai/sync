@@ -20,35 +20,47 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#ifndef SYNC_STATE_H
-#define SYNC_STATE_H
+#ifndef SYNC_LEAF_H
+#define SYNC_LEAF_H
 #include <boost/shared_ptr.hpp>
+#include <boost/function.hpp>
 #include "sync-ccnx-wrapper.h"
+#include "sync-interest-table.h"
+#include "sync-data-buffer.h"
+#include "sync-diff-state.h"
+#include "sync-full-state.h"
 
-/**
- * \defgroup sync SYNC protocol
- *
- * Implementation of SYNC protocol
- */
 namespace Sync {
 
 /**
  * \ingroup sync
- * @brief publishes application data and keeps track of most recently published
- * data
+ * @brief 
  */
-class AppDataPublish
+class SyncAppWrapper
 {
 public:
-	std::pair<std::string, boost::shared_ptr<const DataBuffer> > getRecentData();
-	bool publishData(std::string name, boost::shared_ptr<DataBufer> dataBuffer,
-	int freshness);
-  
+	SyncAppWrapper(std::string syncPrefix, boost::function<void (string, long,
+	long)> fetch);
+	~SyncAppWrapper();
+	/**
+	 * a wrapper for the same func in SyncApp
+	 */
+	void addLocalNames(std::string prefix, long seq);
+	void respondSyncInterest(std::string interest);	
+	void processSyncData(boost::shared_ptr<DataBuffer> databuffer);
+
 private:
-	boost::shared_ptr<CcnxWrapper> ccnxHandle;
-	std::pair<std::string, boost::shared_ptr<DataBuffer> > recentData;
+	sendSyncInterest();
+
+private:
+	boost::shared_ptr<CcnxWrapper> m_ccnxHandle;
+	boost::shared_ptr<SyncApp> m_syncApp;
+	boost::function<void (string, long, long)> m_fetch;
+	SyncInterestTable m_syncInterestTable;	
+	std::string m_syncPrefix;
 };
+
 
 } // Sync
 
-#endif // SYNC_STATE_H
+#endif // SYNC_LEAF_H

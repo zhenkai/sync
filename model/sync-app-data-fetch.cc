@@ -19,36 +19,3 @@
  *         卞超轶 Chaoyi Bian <bcy@pku.edu.cn>
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
-
-#ifndef SYNC_STATE_H
-#define SYNC_STATE_H
-#include <boost/shared_ptr.hpp>
-#include "sync-ccnx-wrapper.h"
-
-/**
- * \defgroup sync SYNC protocol
- *
- * Implementation of SYNC protocol
- */
-namespace Sync {
-
-/**
- * \ingroup sync
- * @brief publishes application data and keeps track of most recently published
- * data
- */
-class AppDataPublish
-{
-public:
-	std::pair<std::string, boost::shared_ptr<const DataBuffer> > getRecentData();
-	bool publishData(std::string name, boost::shared_ptr<DataBufer> dataBuffer,
-	int freshness);
-  
-private:
-	boost::shared_ptr<CcnxWrapper> ccnxHandle;
-	std::pair<std::string, boost::shared_ptr<DataBuffer> > recentData;
-};
-
-} // Sync
-
-#endif // SYNC_STATE_H

@@ -20,35 +20,35 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#ifndef SYNC_STATE_H
-#define SYNC_STATE_H
-#include <boost/shared_ptr.hpp>
+#ifndef SYNC_LEAF_H
+#define SYNC_LEAF_H
 #include "sync-ccnx-wrapper.h"
+#include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
 
-/**
- * \defgroup sync SYNC protocol
- *
- * Implementation of SYNC protocol
- */
 namespace Sync {
 
 /**
  * \ingroup sync
- * @brief publishes application data and keeps track of most recently published
- * data
+ * @brief fetch application data, by default it will try to fetch every piece
+ * of data
  */
-class AppDataPublish
+class AppDataFetch
 {
 public:
-	std::pair<std::string, boost::shared_ptr<const DataBuffer> > getRecentData();
-	bool publishData(std::string name, boost::shared_ptr<DataBufer> dataBuffer,
-	int freshness);
-  
+	AppDataFetch(boost::function<void (boost::shared_ptr<DataBuffer>)>
+	dataCallback);
+	void setDataCallback(boost::function<void (boost::shared_ptr<DataBuffer>)>
+	dataCallback) {m_dataCallback = dataCallback;}
+	void fetch(string prefix, long startSeq, long endSeq);
+
 private:
 	boost::shared_ptr<CcnxWrapper> ccnxHandle;
-	std::pair<std::string, boost::shared_ptr<DataBuffer> > recentData;
+	boost::shared_ptr<boost::function<void (boost::shared_ptr<DataBuffer>)>
+	m_dataCallback;
 };
+
 
 } // Sync
 
-#endif // SYNC_STATE_H
+#endif // SYNC_LEAF_H

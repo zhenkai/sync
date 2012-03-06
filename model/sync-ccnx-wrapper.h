@@ -78,7 +78,8 @@ public:
    (boost::shared_ptr<DataBuffer>)> processData);
    int sendInterestFilter(std::string prefix, boost::function<void (std::string)>
    processInterest);
-   int publishData(std::string name, boost::shared_ptr<DataBuffer> dataBuffer);
+   int publishData(std::string name, boost::shared_ptr<DataBuffer> dataBuffer,
+   int freshness);
 
 };
 
