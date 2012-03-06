@@ -20,13 +20,11 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#define BOOST_TEST_MODULE Digest
 #include <boost/test/unit_test.hpp>
 #include <boost/test/output_test_stream.hpp> 
 using boost::test_tools::output_test_stream;
 
 #include "../model/sync-digest.h"
-#include <boost/lexical_cast.hpp>
 #include <iostream>
 #include <sstream>
 
@@ -99,13 +97,3 @@ BOOST_AUTO_TEST_CASE (DigestComparison)
 
 BOOST_AUTO_TEST_SUITE_END()
 
-//////////////////////////////////////////////////////////////////////////////////////////
-
-BOOST_AUTO_TEST_SUITE(LeafTestSuite)
-
-BOOST_AUTO_TEST_CASE (LeafBase)
-{
-  Leaf test;
-}
-
-BOOST_AUTO_TEST_SUITE_END()

@@ -29,11 +29,14 @@ def build (bld):
                uselib = 'BOOST BOOST_IOSTREAMS SSL'
                )
 
-    bld.program (target="testapp",
-                 source = "test/testapp.cc",
+    # Unit tests
+    bld.program (target="utit-tests",
+                 source = bld.path.ant_glob(['test/**/*.cc']),
                  features=['cxx', 'cxxprogram'],
                  use = 'BOOST_TEST sync')
 
+
+# doxygen docs
 from waflib.Build import BuildContext
 class doxy (BuildContext):
     cmd = "doxygen"
