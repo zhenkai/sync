@@ -34,7 +34,7 @@ using namespace Sync;
 using namespace std;
 using namespace boost;
 
-BOOST_AUTO_TEST_SUITE(LeafTestSuite)
+BOOST_AUTO_TEST_SUITE(LeafTests)
 
 BOOST_AUTO_TEST_CASE (LeafBase)
 {
@@ -43,19 +43,19 @@ BOOST_AUTO_TEST_CASE (LeafBase)
 
   // find the same name
   BOOST_CHECK (name.get () == StdNameInfo::FindOrCreate ("/test/name").get ());
-  BOOST_CHECK_EQUAL (name.use_count (), 2);
+  BOOST_CHECK_EQUAL (name.use_count (), 1);
 
   BOOST_CHECK_NO_THROW (DiffLeaf x (name, SeqNo (12)));
-  BOOST_CHECK_EQUAL (name.use_count (), 2);
+  BOOST_CHECK_EQUAL (name.use_count (), 1);
   
   BOOST_CHECK_NO_THROW (DiffLeaf x (name));
-  BOOST_CHECK_EQUAL (name.use_count (), 2);
+  BOOST_CHECK_EQUAL (name.use_count (), 1);
 
   DiffLeaf updateLeaf (name, SeqNo (12));
-  BOOST_CHECK_EQUAL (name.use_count (), 3);
+  BOOST_CHECK_EQUAL (name.use_count (), 2);
 
   DiffLeaf removeLeaf (name);
-  BOOST_CHECK_EQUAL (name.use_count (), 4);
+  BOOST_CHECK_EQUAL (name.use_count (), 3);
 
   BOOST_CHECK_EQUAL (updateLeaf.getOperation (), UPDATE);
   BOOST_CHECK_EQUAL (updateLeaf.getSeq ().getSession (), 0);
@@ -67,12 +67,12 @@ BOOST_AUTO_TEST_CASE (LeafBase)
   
   BOOST_REQUIRE_NO_THROW (FullLeaf x (name, SeqNo (12)));
   FullLeaf fullLeaf (name, SeqNo (12));
-  BOOST_CHECK_EQUAL (name.use_count (), 5);
+  BOOST_CHECK_EQUAL (name.use_count (), 4);
 }
 
 BOOST_AUTO_TEST_CASE (LeafDigest)
 {
-  BOOST_CHECK_EQUAL (StdNameInfo::FindOrCreate ("/test/name").use_count (), 2);
+  BOOST_CHECK_EQUAL (StdNameInfo::FindOrCreate ("/test/name").use_count (), 1);
   NameInfoConstPtr name = StdNameInfo::FindOrCreate ("/test/name");
   FullLeaf fullLeaf (name, SeqNo (12));
 

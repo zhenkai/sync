@@ -24,6 +24,8 @@
 #define SYNC_NAME_INFO_H
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
+#include <boost/thread/mutex.hpp>
 #include <map>
 #include <string>
 #include "sync-digest.h"
@@ -37,7 +39,7 @@ namespace Sync {
 class NameInfo
 {
 private:
-  typedef boost::shared_ptr<const NameInfo> const_ptr;
+  typedef boost::weak_ptr<const NameInfo> const_weak_ptr;
   
 public:
   virtual ~NameInfo () { };
@@ -74,21 +76,28 @@ public:
    */
   virtual std::string
   toString () const = 0;
-
+  
 protected:
   // actual stuff
   size_t m_id; ///< @brief Identifies NameInfo throughout the library (for hash container, doesn't need to be strictly unique)
   Digest m_digest;
 
   // static stuff
-  typedef std::map<std::string, const_ptr> NameMap;
+  typedef std::map<std::string, const_weak_ptr> NameMap;
   static size_t  m_ids;
   static NameMap m_names;
+  static boost::mutex m_namesMutex;
 };
 
 typedef boost::shared_ptr<NameInfo> NameInfoPtr;
 typedef boost::shared_ptr<const NameInfo> NameInfoConstPtr;
 
+inline std::ostream &
+operator << (std::ostream &os, const NameInfo &info)
+{
+  os << info.toString ();
+  return os;
+}
 
 } // Sync
 

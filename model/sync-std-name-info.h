@@ -38,7 +38,10 @@ public:
   static NameInfoConstPtr
   FindOrCreate (const std::string &name);
 
-  virtual ~StdNameInfo () { };
+  /**
+   * @brief Destructor which will clean up m_names structure
+   */
+  virtual ~StdNameInfo ();
   
   // from NameInfo
   virtual bool

@@ -20,6 +20,7 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
+#define BOOST_TEST_MAIN 1
 #include <boost/test/unit_test.hpp>
 #include <boost/test/output_test_stream.hpp> 
 using boost::test_tools::output_test_stream;
@@ -32,7 +33,7 @@ using namespace Sync;
 using namespace std;
 using namespace boost;
 
-BOOST_AUTO_TEST_SUITE(DigestTestSuite)
+BOOST_AUTO_TEST_SUITE(DigestTests)
 
 BOOST_AUTO_TEST_CASE (BasicTest)
 {
@@ -96,4 +97,3 @@ BOOST_AUTO_TEST_CASE (DigestComparison)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-

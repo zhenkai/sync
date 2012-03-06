@@ -21,8 +21,10 @@
  */
 
 #include "sync-std-name-info.h"
+#include "boost/thread/locks.hpp"
 
 using namespace std;
+using namespace boost;
 
 namespace Sync {
 
@@ -30,11 +32,30 @@ namespace Sync {
 NameInfoConstPtr
 StdNameInfo::FindOrCreate (const std::string &key)
 {
-  NameInfoPtr value = NameInfoPtr (new StdNameInfo (key));
-  pair<NameMap::iterator,bool> item =
-    m_names.insert (make_pair (key, value));
+  mutex::scoped_lock namesLock (m_namesMutex);
+  
+  // std::cout << "FindOrCreate: " << m_names.size () << "\n";
+  
+  NameInfoConstPtr ret;
+  
+  NameMap::iterator item = m_names.find (key);
+  if (item != m_names.end ())
+    {
+      ret = item->second.lock ();
+      BOOST_ASSERT (ret != 0);
+    }
+  else
+    {
+      ret = NameInfoPtr (new StdNameInfo (key));
+      weak_ptr<const NameInfo> value (ret);
+      pair<NameMap::iterator,bool> inserted =
+        m_names.insert (make_pair (key, value));
+      
+      BOOST_ASSERT (inserted.second); // previous call has to insert value
+      item = inserted.first;
+    }
 
-  return item.first->second;
+  return ret;
 }
 
 StdNameInfo::StdNameInfo (const std::string &name)
@@ -43,6 +64,16 @@ StdNameInfo::StdNameInfo (const std::string &name)
   m_id = m_ids ++; // set ID for a newly inserted element
   m_digest << name;
   m_digest.getHash (); // finalize digest
+
+  // std::cout << "StdNameInfo: " << name << " = " << m_id << "\n";
+}
+
+StdNameInfo::~StdNameInfo ()
+{
+  mutex::scoped_lock namesLock (m_namesMutex);
+
+  // cout << "Destructor for " << m_name << "\n";
+  m_names.erase (toString ());
 }
 
 string

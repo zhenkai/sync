@@ -27,6 +27,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/make_shared.hpp>
 #include <utility>
 
 using namespace std;
@@ -40,11 +41,17 @@ Ns3NameInfo::FindOrCreate (ns3::Ptr<const ns3::CcnxNameComponents> name)
 {
   string key = lexical_cast<string> (*name);
 
-  NameInfoPtr value = NameInfoPtr (new Ns3NameInfo (name));
-  pair<NameMap::iterator,bool> item =
-    m_names.insert (make_pair (key, value));
+  NameMap::iterator item = m_names.find (key);
+  if (item == m_names.end ())
+    {
+      NameInfoPtr value = NameInfoPtr (new Ns3NameInfo (name));
+      pair<NameMap::iterator,bool> inserted =
+        m_names.insert (make_pair (key, value));
+      BOOST_ASSERT (inserted.second); // previous call has to insert value
+      item = inserted.first;
+    }
 
-  return item.first->second;
+  return item->second;
 }
 
 Ns3NameInfo::Ns3NameInfo (ns3::Ptr<const ns3::CcnxNameComponents> name)

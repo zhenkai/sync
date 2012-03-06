@@ -22,18 +22,12 @@
 
 #include "sync-name-info.h"
 
-#include <boost/lexical_cast.hpp>
+// #include <boost/lexical_cast.hpp>
 
 namespace Sync {
 
 NameInfo::NameMap NameInfo::m_names;
 size_t  NameInfo::m_ids = 0;
-
-/**
- * @brief Calculates digest of the name
- */
-// tempalte<>
-// Digest
-// NameInfo::getDigest<PrefixInfo> () const;
+boost::mutex NameInfo::m_namesMutex;
 
 } // Sync

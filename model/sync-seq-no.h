@@ -139,6 +139,13 @@ private:
   uint32_t m_seq;
 };
 
+inline std::ostream &
+operator << (std::ostream &os, const SeqNo &seqno)
+{
+  os << seqno.getSession () << ":" << seqno.getSeq ();
+  return os;
+}
+
 } // Sync
 
 #endif // SYNC_SEQ_NO_H

@@ -19,3 +19,10 @@
  *         卞超轶 Chaoyi Bian <bcy@pku.edu.cn>
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
+
+#include "sync-state.h"
+#include <boost/assert.hpp>
+
+namespace Sync {
+
+}

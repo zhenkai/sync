@@ -52,7 +52,6 @@ public:
 
   /**
    * @brief Remove leaf from the state tree
-   *
    * @param info name of the leaf
    */
   virtual void

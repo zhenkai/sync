@@ -20,6 +20,9 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
+#define BOOST_TEST_DYN_LINK 1
+#define BOOST_TEST_NO_MAIN 1
+// #define BOOST_TEST_MODULE StateTests
 #include <boost/test/unit_test.hpp>
 #include <boost/test/output_test_stream.hpp> 
 using boost::test_tools::output_test_stream;
@@ -35,7 +38,7 @@ using namespace Sync;
 using namespace std;
 using namespace boost;
 
-BOOST_AUTO_TEST_SUITE(StateTestSuite)
+BOOST_AUTO_TEST_SUITE(StateTests)
 
 BOOST_AUTO_TEST_CASE (FullStateTest)
 {
@@ -82,6 +85,54 @@ BOOST_AUTO_TEST_CASE (DiffStateTest)
   BOOST_CHECK_NO_THROW (state.remove (name));
   BOOST_CHECK_EQUAL (state.getLeaves ().size (), 1);
   BOOST_CHECK_EQUAL ((*state.getLeaves ().begin ())->getSeq ().getSeq (), 0);
+}
+
+BOOST_AUTO_TEST_CASE (FullStateDigestTest)
+{
+  FullState state;
+  BOOST_CHECK_EQUAL (state.getLeaves ().size (), 0);
+
+  NameInfoConstPtr name3 = StdNameInfo::FindOrCreate ("3");
+  NameInfoConstPtr name2 = StdNameInfo::FindOrCreate ("2");
+  NameInfoConstPtr name1 = StdNameInfo::FindOrCreate ("1");
+
+  state.update (name1, SeqNo (10));
+  DigestConstPtr digest1 = state.getDigest ();
+
+  state.update (name2, SeqNo (12));
+  DigestConstPtr digest2 = state.getDigest ();
+
+  BOOST_CHECK (digest1.get () != digest2.get ());
+  BOOST_CHECK (!digest1->empty ());
+  BOOST_CHECK (!digest2->empty ());
+
+  state.update (name3, SeqNo (8));
+  DigestConstPtr digest3 = state.getDigest ();
+
+  BOOST_CHECK (digest1.get () != digest2.get ());
+  BOOST_CHECK (digest2.get () != digest3.get ());
+  BOOST_CHECK (digest1.get () != digest3.get ());
+
+  BOOST_CHECK (*digest1 != *digest2);
+  BOOST_CHECK (*digest2 != *digest3);
+  BOOST_CHECK (*digest1 != *digest3);
+
+  // removing elements. Digest should get reverted to digest1
+  state.remove (name2);
+  state.remove (name3);
+  DigestConstPtr digest4 = state.getDigest ();
+  BOOST_CHECK (*digest1 == *digest4);
+
+  name2.reset (); // force destructor
+  name3.reset (); // force destructor
+  name3 = StdNameInfo::FindOrCreate ("3"); // this will enforce different (larger) hashing ID of name
+  name2 = StdNameInfo::FindOrCreate ("2"); // this will enforce different (larger) hashing ID of name
+  
+  // adding in different order
+  state.update (name3, SeqNo (8));
+  state.update (name2, SeqNo (12));
+  DigestConstPtr digest5 = state.getDigest ();
+  BOOST_CHECK (*digest5 == *digest3);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
