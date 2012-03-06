@@ -46,8 +46,8 @@ namespace Sync {
  */
  class DataBuffer {
 private:
-	unsigned char *buffer;
-	size_t len;
+	unsigned char *m_buffer;
+	size_t m_len;
 public:
 	DataBuffer(const unsigned char *buffer, size_t len);
 	DataBuffer(const DataBuffer &dataBuffer);
@@ -64,11 +64,11 @@ public:
  */
 class CcnxWrapper { 
 private:
-	ccn* handle;
-	ccn_keystore *keyStore;
-	ccn_charbuf *keyLoactor;
-	boost::mutex mutex;
-	boost::shared_ptr<boos::thread> thread;
+	ccn* m_handle;
+	ccn_keystore *m_keyStore;
+	ccn_charbuf *m_keyLoactor;
+	boost::mutex m_mutex;
+	boost::shared_ptr<boos::thread> m_thread;
 
 private:
 	void createKeyLocator();
