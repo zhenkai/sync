@@ -74,10 +74,11 @@ public:
    * @param strInterest the Interest name
    * @param callback the callback function to deal with the returned data
    */
-   int sendInterest(std::string strInterest, boost::function<void (DataBuffer &)> processData);
+   int sendInterest(std::string strInterest, boost::function<void
+   (boost::shared_ptr<DataBuffer>)> processData);
    int sendInterestFilter(std::string prefix, boost::function<void (std::string)>
    processInterest);
-   int publishData(std::string name, DataBuffer &dataBuffer);
+   int publishData(std::string name, boost::shared_ptr<DataBuffer> dataBuffer);
 
 };
 
