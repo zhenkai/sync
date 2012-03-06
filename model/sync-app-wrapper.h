@@ -34,7 +34,8 @@ namespace Sync {
 
 /**
  * \ingroup sync
- * @brief 
+ * @brief A wrapper for SyncApp, which handles ccnx related things (process
+ * interests and data)
  */
 class SyncAppWrapper
 {
