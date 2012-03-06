@@ -40,15 +40,32 @@ namespace Sync {
 class SyncAppWrapper
 {
 public:
+	/**
+	 * @brief constructor for this class; 
+	 * @param syncPrefix the name prefix to use for the Sync Interest
+	 * @param fetch the fetch function, which will be called to actually fetch
+	 * the app data when new remote names are learned
+	 */
 	SyncAppWrapper(std::string syncPrefix, boost::function<void (string, long,
 	long)> fetch);
+
 	~SyncAppWrapper();
 	/**
 	 * a wrapper for the same func in SyncApp
 	 */
 	void addLocalNames(std::string prefix, long seq);
+
+	/**
+	 * @brief respond to the Sync Interest; a lot of logic needs to go in here
+	 * @param interest the Sync Interest in string format
+	 */
 	void respondSyncInterest(std::string interest);	
-	void processSyncData(boost::shared_ptr<DataBuffer> databuffer);
+
+	/**
+	 * @brief process the fetched sync data
+	 * @param dataBuffer the sync data
+	 */
+	void processSyncData(boost::shared_ptr<DataBuffer> dataBuffer);
 
 private:
 	sendSyncInterest();

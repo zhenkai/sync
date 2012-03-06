@@ -34,19 +34,47 @@ namespace Sync {
 
 /**
  * \ingroup sync
- * @brief publishes application data and keeps track of most recently published
- * data
+ * @brief publishes application data using incrementing sequence number (for
+ * each sequence namber and keeps track of most recently published data for 
+ * each name prefix
  */
 class AppDataPublish
 {
 public:
-	std::pair<std::string, boost::shared_ptr<const DataBuffer> > getRecentData();
+	AppDataPublish();
+	~AppDataPublish() {};
+
+	/**
+	 * @brief get the name (including sequence number) and the content
+	 * (unencoded, just XML stanza) of the most recent published data
+	 *
+	 * @param prefix the name prefix to look for 
+	 * @return the pair of name and content
+	 */
+	std::pair<std::string, boost::shared_ptr<const DataBuffer> >
+	getRecentData(std::string prefix);
+
+	/**
+	 * brief get the most recent sequence number for a name prefix
+	 */
+	 long getHighestSeq(std:string prefix);
+
+	/**
+	 * @brief publish data for a name prefix, updates the corresponding
+	 * sequence number and recent data
+	 *
+	 * @param name data prefix
+	 * @param dataBuffer the data itself
+	 * @param freshness the freshness for the data object
+	 * @return whether the publish succeeded
+	 */
 	bool publishData(std::string name, boost::shared_ptr<DataBufer> dataBuffer,
 	int freshness);
   
 private:
-	boost::shared_ptr<CcnxWrapper> ccnxHandle;
-	std::pair<std::string, boost::shared_ptr<DataBuffer> > recentData;
+	boost::unordered_map<string, long> m_sequenceLog;
+	boost::shared_ptr<CcnxWrapper> m_ccnxHandle;
+	std::pair<std::string, boost::shared_ptr<DataBuffer> > m_recentData;
 };
 
 } // Sync

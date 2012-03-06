@@ -38,7 +38,8 @@ namespace Sync {
 
 /**
  * \ingroup sync
- * @brief DataBuffer Interface
+ * @brief DataBuffer Interface to be used by CcnxWrapper and all other data
+ * publish/request/processing related functions
  */
 class DataBuffer {
 public:
@@ -59,10 +60,15 @@ public:
 	AppDataBuffer(const unsigned char *buffer, size_t len);
 	AppDataBuffer(const DataBuffer *DataBuffer);
 	AppDataBuffer &operator=(const DataBuffer *DataBuffer);
+
+	/**
+	 * @brief reset the buffer and len
+	 */
 	virtual void setBufferAndLength(const unsigned char *buffer, size_t len);
-	virtual ~DataBuffer();
-	virtual size_t length() {return len;}
-	virtual const unsigned char *buffer() { return const_cast<const unsigned char *> (buffer); }
+	virtual ~AppDataBuffer();
+	virtual size_t length() {return m_len;}
+	virtual const unsigned char *buffer() { return const_cast<const unsigned
+	char *> (m_buffer); }
 
 private:
 	unsigned char *m_buffer;
@@ -77,6 +83,10 @@ private:
  */
 class SyncDataBuffer : DataBuffer{
 public:
+	/**
+	 * @brief decorates some object that implements DataBuffer interface
+	 * primary usage here is to decorate AppDataBuffer
+	 */
 	SyncDataBuffer(DataBuffer *dataBuffer) { m_dataBuffer = dataBuffer;}
 	virtual ~SyncDataBuffer(){};	
 	virtual size_t length() {m_dataBuffer->length();}

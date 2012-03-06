@@ -36,10 +36,22 @@ namespace Sync {
 class AppDataFetch
 {
 public:
+	/**
+	 * @param dataCallback the callback function to process data
+	 */
 	AppDataFetch(boost::function<void (boost::shared_ptr<DataBuffer>)>
 	dataCallback);
+
 	void setDataCallback(boost::function<void (boost::shared_ptr<DataBuffer>)>
 	dataCallback) {m_dataCallback = dataCallback;}
+
+	/**
+	 * @breif fetch data for a certain name prefix
+	 *
+	 * @param prefix the prefix for the data
+	 * @param startSeq the start of sequence number range (inclusive)
+	 * @param endSeq the end of sequence number range (inclusive)
+	 */
 	void fetch(string prefix, long startSeq, long endSeq);
 
 private:

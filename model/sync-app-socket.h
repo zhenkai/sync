@@ -33,11 +33,32 @@ namespace Sync {
 class SyncAppSocket
 {
 public:
+	/**
+	 * @brief the constructor for SyncAppSocket; the parameter syncPrefix
+	 * should be passed to the constructor of m_syncAppWrapper; the other
+	 * parameter should be passed to the constructor of m_fetcher; furthermore,
+	 * the fetch function of m_fetcher should be a second paramter passed to
+	 * the constructor of m_syncAppWrapper, so that m_syncAppWrapper can tell
+	 * m_fetcher to fetch the actual app data after it learns the names
+	 *
+	 * @param syncPrefix the name prefix for Sync Interest
+	 * @param dataCallback the callback to process data
+	 */
 	SyncAppSocket(std::string syncPrefix, boost::function<void
-	(boost::shared_ptr<DataBuffer>)>);
+	(boost::shared_ptr<DataBuffer>)> dataCallback);
+
 	~SyncAppSocket();
-	bool publishData(std::string prefix, boost::shared_ptr<DataBuffer>
-	dataBuffer);
+
+	/**
+	 * @brief publish data from local client and tell SyncAppWrapper to update
+	 * the sync tree by adding the local names
+	 * 
+	 * @param prefix the name prefix for the data
+	 * @param dataBuffer the data itself
+	 * @param freshness the freshness time for the data (in seconds)
+	 */
+	bool publish(std::string prefix, boost::shared_ptr<DataBuffer>
+	dataBuffer, int freshness);
 private:
 	boost::shared_ptr<AppDataFetch> m_fetcher;
 	boost::shared_ptr<AppDataPublish> m_publisher;
