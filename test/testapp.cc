@@ -21,27 +21,30 @@
  */
 
 #include "../model/sync-digest.h"
+#include <boost/lexical_cast.hpp>
 #include <iostream>
+#include <sstream>
 
 using namespace Sync;
 using namespace std;
+using namespace boost;
 
 int
 main (int argc, char **argv)
 {
   Digest test;
-  test << "1";
+  test << "1\n";
 
-  try
-    {
-      cout << "Trying to print without explicit getHash() call: ";
-      cout << test;
-      cout << "Failed (should be asserted)\n";
-    }
-  catch (...)
-    {
-      cout << "OK (exception)\n";
-    }
+  // try
+  //   {
+  //     cout << "Trying to print without explicit getHash() call: ";
+  //     cout << test;
+  //     cout << "Failed (should be asserted)\n";
+  //   }
+  // catch (...)
+  //   {
+  //     cout << "OK (exception)\n";
+  //   }
   
   // without explicit finalizing, Digest will not be complete and printing out will cause assert
   test.getHash ();
@@ -65,5 +68,32 @@ main (int argc, char **argv)
     {
       cout << "OK (exception)\n";
     }
+
+  Digest test2;
+// #ifdef DIGEST_BASE64
+//   string testString = "sCYyTGkEsqnLS4jW1hyB0Q==";
+// #else
+  string testString = lexical_cast<string> (test); //"b026324c6904b2a9cb4b88d6d61c81d1";
+// #endif
+  cout << "Hash from string: " << testString << "\n";
+  istringstream is (testString);
+  is >> test2;
+
+  cout << "Result from hash: " << test2 << "\n";
+
+  cout << "Compare two hashes: " << (test == test2) << "\n";
+
+  Digest test3;
+  if (testString[0] != '1')
+    testString[0] = '1';
+  else
+    testString[0] = '2';
+  
+  istringstream is2(testString);
+  is2 >> test3;
+
+  cout << "Hash from string: " << test3 << "\n";
+  cout << "Compare two hashes: " << (test == test3) << "\n";
+  
   return 0; 
 }

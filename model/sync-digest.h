@@ -29,8 +29,6 @@
 
 namespace Sync {
 
-const std::size_t HASH_SIZE = 160;
-
 /**
  * @ingroup sync
  * @brief A simple wrapper for libcrypto hash functions
@@ -97,9 +95,6 @@ public:
   // inline Digest &
   // operator << (INT value);
 
-  std::ostream&
-  print (std::ostream &os) const;
-  
 private:
   /**
    * @brief Disabled copy operator 
@@ -118,6 +113,12 @@ private:
    */
   void
   update (const uint8_t *buffer, size_t size);
+
+  friend std::ostream &
+  operator << (std::ostream &os, const Digest &digest);
+
+  friend std::istream &
+  operator >> (std::istream &is, Digest &digest);
   
 private:
   EVP_MD_CTX *m_context;
@@ -146,6 +147,9 @@ Digest::operator << (uint32_t value)
 
 std::ostream &
 operator << (std::ostream &os, const Digest &digest);
+
+std::istream &
+operator >> (std::istream &is, Digest &digest);
 
 // template<class INT>
 // Digest &

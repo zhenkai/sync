@@ -10,6 +10,7 @@ def configure(conf):
     conf.check_cfg(atleast_pkgconfig_version='0.20')
     conf.check_cfg(package='openssl', args=['--cflags', '--libs'], uselib_store='SSL')
     conf.define ('STANDALONE', 1)
+    # conf.define ('DIGEST_BASE64', 1) # base64 is not working and probably will not work at all
 
     conf.check_tool('boost')
     conf.check_boost(lib='signals filesystem iostreams regex')

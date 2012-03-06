@@ -27,15 +27,79 @@
 #include <boost/exception/errinfo_at_line.hpp>
 
 // for printing, may be disabled in optimized build
-#include <boost/archive/iterators/base64_from_binary.hpp>
-#include <boost/archive/iterators/base64_from_binary.hpp>
+
+// #ifdef DIGEST_BASE64
+// #include <boost/archive/iterators/base64_from_binary.hpp>
+// #include <boost/archive/iterators/binary_from_base64.hpp>
+// #endif
+
 #include <boost/archive/iterators/transform_width.hpp>
+#include <boost/iterator/transform_iterator.hpp>
+#include <boost/archive/iterators/dataflow_exception.hpp>
 
 using namespace boost;
+using namespace boost::archive::iterators;
 using namespace std;
 
-using namespace boost::archive::iterators;
-typedef base64_from_binary<transform_width<string::const_iterator, 6, 8> > base64_t;
+// Other options: VP_md2, EVP_md5, EVP_sha, EVP_sha1, EVP_sha256, EVP_dss, EVP_dss1, EVP_mdc2, EVP_ripemd160
+#define HASH_FUNCTION EVP_sha1
+
+
+// #ifndef DIGEST_BASE64
+
+template<class CharType>
+struct hex_from_4_bit
+{
+  typedef CharType result_type;
+  CharType operator () (CharType ch) const
+  {
+    const char *lookup_table = "0123456789abcdef";
+    // cout << "New character: " << (int) ch << " (" << (char) ch << ")" << "\n";
+    BOOST_ASSERT (ch < 16);
+    return lookup_table[static_cast<size_t>(ch)];
+  }
+};
+
+typedef transform_iterator<hex_from_4_bit<string::const_iterator::value_type>,
+                           transform_width<string::const_iterator, 4, 8, string::const_iterator::value_type> > string_from_binary;
+
+
+template<class CharType>
+struct hex_to_4_bit
+{
+  typedef CharType result_type;
+  CharType operator () (CharType ch) const
+  {
+    const signed char lookup_table [] = {
+      -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+      -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+      -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1,
+      -1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+      -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+      -1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+      -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+    };
+
+    // cout << "New character: " << hex << (int) ch << " (" << (char) ch << ")" << "\n";
+    signed char value = -1;
+    if ((unsigned)ch < 128)
+      value = lookup_table [(unsigned)ch];
+    if (value == -1)
+      throw Sync::DigestCalculationError () << errinfo_at_line (__LINE__);
+    
+    return value;
+  }
+};
+
+typedef transform_width<transform_iterator<hex_to_4_bit<string::const_iterator::value_type>, string::const_iterator>, 8, 4> string_to_binary;
+
+// #else
+
+// typedef base64_from_binary<transform_width<string::const_iterator, 6, 8> > string_from_binary;
+// typedef binary_from_base64<transform_width<string::const_iterator, 8, 6> > string_to_binary;
+
+// #endif
 
 namespace Sync {
 
@@ -65,7 +129,7 @@ Digest::reset ()
       m_buffer = 0;
     }
 
-  int ok = EVP_DigestInit_ex (m_context, EVP_sha1 (), 0);
+  int ok = EVP_DigestInit_ex (m_context, HASH_FUNCTION (), 0);
   if (!ok)
     throw DigestCalculationError () << errinfo_at_line (__LINE__);
 }
@@ -76,7 +140,7 @@ Digest::finalize ()
 {
   if (m_buffer != 0) return;
 
-  m_buffer = new uint8_t [HASH_SIZE];
+  m_buffer = new uint8_t [EVP_MAX_MD_SIZE];
 
   int ok = EVP_DigestFinal_ex (m_context,
 			       m_buffer, &m_hashLength);
@@ -115,6 +179,8 @@ Digest::operator == (Digest &digest)
 void
 Digest::update (const uint8_t *buffer, size_t size)
 {
+  // cout << "Update: " << (void*)buffer << " / size: " << size << "\n";
+  
   // cannot update Digest when it has been finalized
   if (m_buffer != 0)
     throw DigestCalculationError () << errinfo_at_line (__LINE__);
@@ -136,26 +202,40 @@ Digest::operator << (const Digest &src)
   return *this;
 }
 
-
-std::ostream&
-Digest::print (std::ostream &os) const
+std::ostream &
+operator << (std::ostream &os, const Digest &digest)
 {
-  BOOST_ASSERT (m_hashLength != 0);
+  BOOST_ASSERT (digest.m_hashLength != 0);
   
   ostreambuf_iterator<char> out_it (os); // ostream iterator
   // need to encode to base64
-  copy (base64_t (reinterpret_cast<const char*> (m_buffer)),
-        base64_t (reinterpret_cast<const char*> (m_buffer+m_hashLength)),
+  copy (string_from_binary (reinterpret_cast<const char*> (digest.m_buffer)),
+        string_from_binary (reinterpret_cast<const char*> (digest.m_buffer+digest.m_hashLength)),
         out_it);
 
   return os;
 }
 
-std::ostream &
-operator << (std::ostream &os, const Digest &digest)
+std::istream &
+operator >> (std::istream &is, Digest &digest)
 {
-  digest.print (os);
-  return os;
+  string str;
+  is >> str; // read string first
+  // uint8_t padding = (3 - str.size () % 3) % 3;
+  // for (uint8_t i = 0; i < padding; i++) str.push_back ('=');
+
+  // only empty digest object can be used for reading
+  if (digest.m_buffer != 0)
+    throw DigestCalculationError () << errinfo_at_line (__LINE__);
+
+  digest.m_buffer = new uint8_t [EVP_MAX_MD_SIZE];
+  uint8_t *end = copy (string_to_binary (str.begin ()),
+                       string_to_binary (str.end ()),
+                       digest.m_buffer);
+
+  digest.m_hashLength = end - digest.m_buffer;
+
+  return is;
 }
 
 
