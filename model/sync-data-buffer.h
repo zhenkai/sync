@@ -25,6 +25,7 @@
 
 #include <tinyxml.h>
 #include <boost/shared_ptr.hpp>
+#include <boost/exception/all.hpp>
 #include "sync-diff-state.h"
 #include "sync-full-state.h"
 
@@ -97,12 +98,14 @@ public:
 	SyncDataBuffer &operator<<(FullState &fs);
 	SyncDataBuffer &operator<<(DiffState &ds);
 
-	FullState &operator>>(FullState &fs);
-	DiffState &operator>>(DiffState &ds);
+	SyncDataBuffer &operator>>(FullState &fs);
+	SyncDataBuffer &operator>>(DiffState &ds);
 
 private:
 	boost::shared_ptr<DataBuffer> m_dataBuffer;
 };
+
+struct SyncDataBufferConvertError : virtual boost::exception {};
 
 } // Sync
 
