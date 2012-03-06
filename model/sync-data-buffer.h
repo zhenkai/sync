@@ -38,35 +38,61 @@ namespace Sync {
 
 /**
  * \ingroup sync
- * @brief handles conversion from xml encoded data ("wire_format") to states
- * data (FullState or DiffState)
- */
-/**
- * \ingroup sync
- * @brief Data wrapper with size; convert from/to FullState and DiffState
+ * @brief DataBuffer Interface
  */
 class DataBuffer {
+public:
+	virtual ~DataBuffer() = 0;
+	virtual size_t length() = 0; 
+	virtual const unsigned char *buffer() = 0;
+	virtual void setBufferAndLength(const unsigned char *buffer, size_t len) =
+	0;
+};
+
+/**
+ * \ingroup sync
+ * @brief general Data Buffer class, mainly works for app data
+ */
+class AppDataBuffer:DataBuffer {
+public:
+	AppDataBuffer() {m_buffer = NULL; m_len = 0;}
+	AppDataBuffer(const unsigned char *buffer, size_t len);
+	AppDataBuffer(const DataBuffer *DataBuffer);
+	AppDataBuffer &operator=(const DataBuffer *DataBuffer);
+	virtual void setBufferAndLength(const unsigned char *buffer, size_t len);
+	virtual ~DataBuffer();
+	virtual size_t length() {return len;}
+	virtual const unsigned char *buffer() { return const_cast<const unsigned char *> (buffer); }
+
 private:
 	unsigned char *m_buffer;
 	size_t m_len;
-public:
-	DataBuffer() {m_buffer = NULL; m_len = 0;}
-	DataBuffer(const unsigned char *buffer, size_t len);
-	DataBuffer(const DataBuffer &dataBuffer);
-	DataBuffer &operator=(const DataBuffer &dataBuffer);
-	~DataBuffer();	
-	size_t length() {return len;}
-	const unsigned char *buffer() { return const_cast<const unsigned char *> (buffer); }
-
-	DataBuffer &operator<<(FullState &fs);
-	DataBuffer &operator<<(DiffState &ds);
-
-	FullState &operator>>(FullState &fs);
-	DiffState &operator>>(DiffState &ds);
 };
 
 
 
+/**
+ * \ingroup sync
+ * @brief decorator class, wrapper for sync data; converts to and from states
+ */
+class SyncDataBuffer : DataBuffer{
+public:
+	SyncDataBuffer(DataBuffer *dataBuffer) { m_dataBuffer = dataBuffer;}
+	virtual ~SyncDataBuffer(){};	
+	virtual size_t length() {m_dataBuffer->length();}
+	virtual const unsigned char *buffer() {m_dataBuffer->buffer();}
+	virtual void setBufferAndLength(const unsigned char *buffer, size_t len)
+	{m_dataBuffer->setBufferAndLength(buffer, len); }
+
+	SyncDataBuffer &operator<<(FullState &fs);
+	SyncDataBuffer &operator<<(DiffState &ds);
+
+	FullState &operator>>(FullState &fs);
+	DiffState &operator>>(DiffState &ds);
+
+private:
+	boost::shared_ptr<DataBuffer> m_dataBuffer;
+};
 
 } // Sync
 
