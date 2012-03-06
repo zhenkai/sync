@@ -44,6 +44,9 @@ public:
   virtual bool
   operator == (const NameInfo &info) const;
 
+  virtual bool
+  operator < (const NameInfo &info) const;
+
   virtual std::string
   toString () const;
 

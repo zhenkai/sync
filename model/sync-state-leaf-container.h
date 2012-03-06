@@ -24,10 +24,11 @@
 #define SYNC_STATE_LEAF_CONTAINER
 
 #include "sync-leaf.h"
+#include "sync-name-info.h"
 
 #include <boost/multi_index_container.hpp>
 // #include <boost/multi_index/tag.hpp>
-// #include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/ordered_index.hpp>
 // #include <boost/multi_index/composite_key.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 // #include <boost/multi_index/random_access_index.hpp>
@@ -48,6 +49,7 @@ struct NameInfoHash : public std::unary_function<NameInfo, std::size_t>
 };
 
 struct hashed { };
+struct ordered { };
 
 /**
  * \ingroup sync
@@ -61,7 +63,11 @@ struct LeafContainer : public mi::multi_index_container<
         mi::tag<hashed>,
         mi::const_mem_fun<Leaf, const NameInfo&, &Leaf::getInfo>,
         NameInfoHash
-      >
+        >,
+      mi::ordered_unique<
+        mi::tag<ordered>,
+        mi::const_mem_fun<Leaf, const NameInfo&, &Leaf::getInfo>
+        >
     >
    >
 {

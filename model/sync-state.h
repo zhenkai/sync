@@ -58,6 +58,13 @@ public:
   virtual void
   remove (NameInfoConstPtr info) = 0;
 
+  /**
+   * @brief Get state leaves
+   */
+  const LeafContainer &
+  getLeaves () const 
+  { return m_leaves; }
+  
 protected:
   LeafContainer m_leaves;
 };

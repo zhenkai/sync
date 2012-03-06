@@ -65,7 +65,7 @@ FullState::getDigest ()
   if (m_digest == 0)
     {
       m_digest = make_shared<Digest> ();
-      BOOST_FOREACH (LeafConstPtr leaf, m_leaves)
+      BOOST_FOREACH (LeafConstPtr leaf, m_leaves.get<ordered> ())
         {
           FullLeafConstPtr fullLeaf = dynamic_pointer_cast<const FullLeaf> (leaf);
           BOOST_ASSERT (fullLeaf != 0);

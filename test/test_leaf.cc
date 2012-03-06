@@ -85,15 +85,22 @@ BOOST_AUTO_TEST_CASE (LeafDigest)
   // manualNameDigest.finalize ();
 
   // Digest manualSeqNoDigest;
-  // manualSeqNoDigest << 0 << 12;
+  // manualSeqNoDigest << 0 << 13;
   // manualSeqNoDigest.finalize ();
 
   // manualDigest << manualNameDigest << manualSeqNoDigest;
   // manualDigest.finalize ();
 
+  // cout << manualDigest << "\n\n";
+
   output_test_stream output;
   output << fullLeaf.getDigest ();
   BOOST_CHECK (output.is_equal ("991f8cf6262dfe0f519c63f6e9b92fe69e741a9b", true));
+
+  fullLeaf.setSeq (SeqNo (13));
+  output << fullLeaf.getDigest ();
+  BOOST_CHECK (!output.is_equal ("991f8cf6262dfe0f519c63f6e9b92fe69e741a9b", false));
+  BOOST_CHECK (output.is_equal ("585a8687ab41d5c29f86e5906c8f188ddca816b3", true));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

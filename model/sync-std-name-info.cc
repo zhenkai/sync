@@ -54,15 +54,13 @@ StdNameInfo::toString () const
 bool
 StdNameInfo::operator == (const NameInfo &info) const
 {
-  try
-    {
-      return m_name == dynamic_cast<const StdNameInfo&> (info).m_name;
-    }
-  catch (...)
-    {
-      return false;
-    }
+  return m_name == dynamic_cast<const StdNameInfo&> (info).m_name;
+}
+
+bool
+StdNameInfo::operator < (const NameInfo &info) const
+{
+  return m_name < dynamic_cast<const StdNameInfo&> (info).m_name;
 }
 
 } // Sync
-

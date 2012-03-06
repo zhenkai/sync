@@ -47,9 +47,20 @@ public:
    */
   size_t
   getHashId () const { return m_id; }
-  
+
+  /**
+   * @brief Check if two names are equal
+   * @param info name to check with
+   */
   virtual bool
   operator == (const NameInfo &info) const = 0;
+
+  /**
+   * @brief Check if two names are in order
+   * @param info name to check with
+   */
+  virtual bool
+  operator < (const NameInfo &info) const = 0;
 
   /**
    * @brief Calculates digest of the name
