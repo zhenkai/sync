@@ -31,7 +31,7 @@ def build (bld):
                )
 
     # Unit tests
-    bld.program (target="utit-tests",
+    bld.program (target="unit-tests",
                  source = bld.path.ant_glob(['test/**/*.cc']),
                  features=['cxx', 'cxxprogram'],
                  use = 'BOOST_TEST sync')

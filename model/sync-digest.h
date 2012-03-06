@@ -61,10 +61,16 @@ public:
   /**
    * @brief Obtain a short version of the hash (just first sizeof(size_t) bytes
    *
-   * Side effect: Finalize will be called on `this'
+   * Side effect: finalize() will be called on `this'
    */
   std::size_t
   getHash ();
+
+  /**
+   * @brief Finalize digest. All subsequent calls to "operator <<" will fire an exception
+   */
+  void
+  finalize ();
 
   /**
    * @brief Compare two full digests
@@ -106,12 +112,6 @@ private:
   Digest &
   operator = (Digest &digest) { return *this; }
   
-  /**
-   * @brief Finalize digest. All subsequent calls to "operator <<" will fire an exception
-   */
-  void
-  finalize ();
-
   /**
    * @brief Add size bytes of buffer to the hash
    */
