@@ -30,6 +30,10 @@ Leaf::Leaf (NameInfoConstPtr info, const SeqNo &seq)
 {
 }
 
+Leaf::~Leaf ()
+{
+}
+
 void
 Leaf::setSeq (const SeqNo &seq)
 {

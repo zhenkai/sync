@@ -41,7 +41,7 @@ public:
    * @param seq  Initial sequence number of the pointer
    */
   Leaf (NameInfoConstPtr info, const SeqNo &seq);
-  virtual ~Leaf () { }
+  virtual ~Leaf () = 0;
   
   /**
    * @brief Get name of the leaf

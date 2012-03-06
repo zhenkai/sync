@@ -13,6 +13,7 @@ def configure(conf):
     conf.load("compiler_cxx")
     conf.check_cfg(atleast_pkgconfig_version='0.20')
     conf.check_cfg(package='openssl', args=['--cflags', '--libs'], uselib_store='SSL')
+    conf.check_cfg(package='libxml-2.0', args=['--cflags', '--libs'], uselib_store='XML')
     conf.define ('STANDALONE', 1)
     # conf.define ('DIGEST_BASE64', 1) # base64 is not working and probably will not work at all
 
@@ -26,7 +27,7 @@ def build (bld):
                features=['cxx', 'cxxshlib'],
                source = bld.path.ant_glob(['model/sync-*.cc',
                                            'helper/sync-*.cc']),
-               uselib = 'BOOST BOOST_IOSTREAMS SSL'
+               uselib = 'BOOST BOOST_IOSTREAMS SSL XML'
                )
 
     # Unit tests

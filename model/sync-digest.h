@@ -95,21 +95,14 @@ public:
   inline Digest &
   operator << (const std::string &str);
 
+  /**
+   * @brief Add uint32_t value to digest calculation
+   * @param value uint32_t value to put into digest
+   */
   inline Digest &
   operator << (uint32_t value);
 
-  // /**
-  //  * @brief Add integer to digest calculation
-  //  * @param value the value to add to the digest
-  //  */
-  // template<class INT>
-  // inline Digest &
-  // operator << (INT value);
-
 private:
-  /**
-   * @brief Disabled copy operator 
-   */
   Digest &
   operator = (Digest &digest) { return *this; }
   
