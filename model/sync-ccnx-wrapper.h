@@ -92,7 +92,7 @@ public:
    * @param interestCallback the callback function to deal with the returned data
    * @return the return code of ccn_set_interest_filter
    */
-   int sendInterestFilter(std::string prefix, boost::function<void (std::string)>
+   int setInterestFilter(std::string prefix, boost::function<void (std::string)>
    interestCallback);
 
   /**

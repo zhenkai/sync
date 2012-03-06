@@ -46,7 +46,7 @@ public:
 	dataCallback) {m_dataCallback = dataCallback;}
 
 	/**
-	 * @breif fetch data for a certain name prefix
+	 * @brief fetch data for a certain name prefix
 	 *
 	 * @param prefix the prefix for the data
 	 * @param startSeq the start of sequence number range (inclusive)
