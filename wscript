@@ -8,26 +8,31 @@ def options(opt):
     opt.load('compiler_cxx')
     opt.load('boost')
     opt.load('doxygen')
+    opt.load('ccnx tinyxml', tooldir=["waf-tools"])
 
 def configure(conf):
     conf.load("compiler_cxx")
     conf.check_cfg(atleast_pkgconfig_version='0.20')
     conf.check_cfg(package='openssl', args=['--cflags', '--libs'], uselib_store='SSL')
-    conf.check_cfg(package='libxml-2.0', args=['--cflags', '--libs'], uselib_store='XML')
-    conf.define ('STANDALONE', 1)
-    # conf.define ('DIGEST_BASE64', 1) # base64 is not working and probably will not work at all
+    # conf.check_cfg(package='libxml-2.0', args=['--cflags', '--libs'], uselib_store='XML')
 
     conf.load('boost')
     conf.check_boost(lib='system iostreams test')
     
     conf.load('doxygen')
+    conf.load('ccnx tinyxml')
+    conf.check_ccnx (path=conf.options.ccnx_dir)
+    conf.check_tinyxml (path=conf.options.ccnx_dir)
 
+    conf.define ('STANDALONE', 1)
+    # conf.define ('DIGEST_BASE64', 1) # base64 is not working and probably will not work at all
+	
 def build (bld):
     bld.shlib (target=APPNAME, 
                features=['cxx', 'cxxshlib'],
                source = bld.path.ant_glob(['model/sync-*.cc',
                                            'helper/sync-*.cc']),
-               uselib = 'BOOST BOOST_IOSTREAMS SSL XML'
+               uselib = 'BOOST BOOST_IOSTREAMS SSL TINYXML CCNX'
                )
 
     # Unit tests
