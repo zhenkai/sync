@@ -17,7 +17,7 @@ def configure(conf):
     # conf.check_cfg(package='libxml-2.0', args=['--cflags', '--libs'], uselib_store='XML')
 
     conf.load('boost')
-    conf.check_boost(lib='system iostreams test')
+    conf.check_boost(lib='system iostreams test thread')
     
     conf.load('doxygen')
     conf.load('ccnx tinyxml')
@@ -32,7 +32,7 @@ def build (bld):
                features=['cxx', 'cxxshlib'],
                source = bld.path.ant_glob(['model/sync-*.cc',
                                            'helper/sync-*.cc']),
-               uselib = 'BOOST BOOST_IOSTREAMS SSL TINYXML CCNX'
+               uselib = 'BOOST BOOST_IOSTREAMS BOOST_THREAD SSL TINYXML CCNX'
                )
 
     # Unit tests
