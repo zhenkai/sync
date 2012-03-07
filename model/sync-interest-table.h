@@ -20,8 +20,8 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#ifndef SYNC_STATE_H
-#define SYNC_STATE_H
+#ifndef SYNC_INTEREST_TABLE_H
+#define SYNC_INTEREST_TABLE_H
 #include <string>
 #include <boost/unordered_set.hpp>
 
@@ -55,4 +55,4 @@ public:
 
 } // Sync
 
-#endif // SYNC_STATE_H
+#endif // SYNC_INTEREST_TABLE_H

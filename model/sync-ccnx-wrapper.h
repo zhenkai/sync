@@ -20,8 +20,8 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#ifndef SYNC_STATE_H
-#define SYNC_STATE_H
+#ifndef SYNC_CCNX_WRAPPER_H
+#define SYNC_CCNX_WRAPPER_H
 
 extern "C" {
 #include <ccn/ccn.h>
@@ -111,4 +111,4 @@ public:
 
 } // Sync
 
-#endif // SYNC_STATE_H
+#endif // SYNC_CCNX_WRAPPER_H

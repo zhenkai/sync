@@ -20,8 +20,8 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#ifndef SYNC_STATE_H
-#define SYNC_STATE_H
+#ifndef SYNC_APP_DATA_PUBLISH_H
+#define SYNC_APP_DATA_PUBLISH_H
 #include <boost/shared_ptr.hpp>
 #include "sync-ccnx-wrapper.h"
 
@@ -79,4 +79,4 @@ private:
 
 } // Sync
 
-#endif // SYNC_STATE_H
+#endif // SYNC_APP_DATA_PUBLISH_H

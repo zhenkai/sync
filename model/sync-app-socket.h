@@ -20,8 +20,8 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#ifndef SYNC_LEAF_H
-#define SYNC_LEAF_H
+#ifndef SYNC_APP_SOCKET_H
+#define SYNC_APP_SOCKET_H
 #include <boost/function.hpp>
 
 namespace Sync {
@@ -67,4 +67,4 @@ private:
 
 } // Sync
 
-#endif // SYNC_LEAF_H
+#endif // SYNC_APP_SOCKET_H

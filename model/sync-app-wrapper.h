@@ -20,8 +20,8 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#ifndef SYNC_LEAF_H
-#define SYNC_LEAF_H
+#ifndef SYNC_APP_WRAPPER_H
+#define SYNC_APP_WRAPPER_H
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 #include "sync-ccnx-wrapper.h"
@@ -81,4 +81,4 @@ private:
 
 } // Sync
 
-#endif // SYNC_LEAF_H
+#endif // SYNC_APP_WRAPPER_H

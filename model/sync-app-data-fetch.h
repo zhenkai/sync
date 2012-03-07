@@ -20,8 +20,8 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#ifndef SYNC_LEAF_H
-#define SYNC_LEAF_H
+#ifndef SYNC_APP_DATA_FETCH_H
+#define SYNC_APP_DATA_FETCH_H
 #include "sync-ccnx-wrapper.h"
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
@@ -63,4 +63,4 @@ private:
 
 } // Sync
 
-#endif // SYNC_LEAF_H
+#endif // SYNC_APP_DATA_FETCH_H

@@ -20,8 +20,8 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#ifndef SYNC_STATE_H
-#define SYNC_STATE_H
+#ifndef SYNC_DATA_BUFFER_H
+#define SYNC_DATA_BUFFER_H
 
 #include <tinyxml.h>
 #include <boost/shared_ptr.hpp>
@@ -125,4 +125,4 @@ struct SyncDataBufferConvertException : virtual boost::exception {};
 
 } // Sync
 
-#endif // SYNC_STATE_H
+#endif // SYNC_DATA_BUFFER_H
