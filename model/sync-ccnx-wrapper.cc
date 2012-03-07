@@ -108,7 +108,7 @@ void CcnxWrapper::ccnLoop()
   }
 }
 
-int CcnxWrapper::publishData(string name, shared_ptr< DataBuffer > dataBuffer, int freshness)
+int CcnxWrapper::publishData(string name, string dataBuffer, int freshness)
 {
   ccn_charbuf *pname = ccn_charbuf_create();
   ccn_charbuf *signed_info = ccn_charbuf_create();
@@ -124,7 +124,7 @@ int CcnxWrapper::publishData(string name, shared_ptr< DataBuffer > dataBuffer, i
 			 NULL,
 			 m_keyLoactor);
   ccn_encode_ContentObject(content, pname, signed_info,
-			   dataBuffer->buffer(), dataBuffer->length(),
+			   dataBuffer.c_str(), dataBuffer.length(),
 			   NULL, getPrivateKey());
   ccn_put(m_handle, content->buf, content->length);
 
@@ -154,10 +154,16 @@ static ccn_upcall_res incomingInterest(
       return CCN_UPCALL_RESULT_OK;
   }
 
-  char *comp;
-  size_t size;
-  ccn_name_comp_get(info->content_ccnb, info->content_comps, info->content_comps->n - 3, (const unsigned char **)&comp, &size);
-  f((string)comp);
+  string interest;
+  for (int i = 0; i < info->content_comps->n - 1; i++)
+  {
+    char *comp;
+    size_t size;
+    ccn_name_comp_get(info->content_ccnb, info->content_comps, i, (const unsigned char **)&comp, &size);
+    interest += comp;
+  }
+  f(interest);
+  return CCN_UPCALL_RESULT_OK;
 }
 
 static ccn_upcall_res incomingData(
@@ -165,7 +171,7 @@ static ccn_upcall_res incomingData(
   ccn_upcall_kind kind,
   ccn_upcall_info *info)
 {
-  function<void (shared_ptr<DataBuffer>)> f = *(function<void (shared_ptr<DataBuffer>)> *)selfp->data;
+  function<void (string)> f = *(function<void (string)> *)selfp->data;
 
   switch (kind)
   {
@@ -183,15 +189,14 @@ static ccn_upcall_res incomingData(
   char *pcontent;
   size_t len;
   ccn_content_get_value(info->content_ccnb, info->pco->offset[CCN_PCO_E], info->pco, (const unsigned char **)&pcontent, &len);
-  shared_ptr<DataBuffer> data(new DataBufferImpl((const unsigned char*)pcontent, len));
-  f(data);
+  f((string)pcontent);
 }
 
-int CcnxWrapper::sendInterest(string strInterest, function< void (shared_ptr< DataBuffer >) > dataCallback)
+int CcnxWrapper::sendInterest(string strInterest, function<void (string)> dataCallback)
 {
   ccn_charbuf *pname = ccn_charbuf_create();
   ccn_closure *dataClosure = new ccn_closure;
-  function<void (shared_ptr< DataBuffer >)> *f = new function<void (shared_ptr< DataBuffer >)>(dataCallback);
+  function<void (string)> *f = new function<void (string)>(dataCallback);
 
   ccn_name_from_uri(pname, strInterest.c_str());
   ccn_express_interest(m_handle, pname, dataClosure, NULL);
@@ -201,7 +206,7 @@ int CcnxWrapper::sendInterest(string strInterest, function< void (shared_ptr< Da
   ccn_charbuf_destroy(&pname);
 }
 
-int CcnxWrapper::setInterestFilter(string prefix, function< void (string) > interestCallback)
+int CcnxWrapper::setInterestFilter(string prefix, function<void (string)> interestCallback)
 {
   ccn_charbuf *pname = ccn_charbuf_create();
   ccn_closure *interestClosure = new ccn_closure;
