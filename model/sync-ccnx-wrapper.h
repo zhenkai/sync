@@ -33,7 +33,7 @@ extern "C" {
 
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/thread.hpp>
-#include <boost/shared_ptr.hpp>
+#include <boost/function.hpp>
 #include <string>
 #include "sync-data-buffer.h"
 /**
@@ -48,14 +48,14 @@ namespace Sync {
  * @brief A wrapper for ccnx library; clients of this code do not need to deal
  * with ccnx library
  */
-class CcnxWrapper { 
+class CcnxWrapper {
 private:
 	ccn* m_handle;
 	ccn_keystore *m_keyStore;
 	ccn_charbuf *m_keyLoactor;
 	// to lock, use "boost::recursive_mutex::scoped_lock scoped_lock(mutex);
 	boost::recursive_mutex m_mutex;
-	boost::shared_ptr<boos::thread> m_thread;
+	boost::thread m_thread;
 
 private:
 	void createKeyLocator();
@@ -64,12 +64,13 @@ private:
 	const unsigned char *getPublicKeyDigest();
 	ssize_t getPublicKeyDigestLength();
 	void ccnLoop();
+	bool running;
 
 public:
-  
+
   /**
    * @brief initialize the wrapper; a lot of things needs to be done. 1) init
-   * keystore 2) init keylocator 3) start a thread to hold a loop of ccn_run 
+   * keystore 2) init keylocator 3) start a thread to hold a loop of ccn_run
    *
    */
    CcnxWrapper();
@@ -80,13 +81,13 @@ public:
    *
    * @param strInterest the Interest name
    * @param dataCallback the callback function to deal with the returned data
-   * @return the return code of ccn_express_interest 
+   * @return the return code of ccn_express_interest
    */
    int sendInterest(std::string strInterest, boost::function<void
    (boost::shared_ptr<DataBuffer>)> dataCallback);
 
   /**
-   * @brief set Interest filter (specify what interest you want to receive 
+   * @brief set Interest filter (specify what interest you want to receive
    *
    * @param prefix the prefix of Interest
    * @param interestCallback the callback function to deal with the returned data

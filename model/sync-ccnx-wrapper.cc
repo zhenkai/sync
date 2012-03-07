@@ -19,3 +19,198 @@
  *         卞超轶 Chaoyi Bian <bcy@pku.edu.cn>
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
+
+#include "sync-ccnx-wrapper.h"
+#include <poll.h>
+#include <ccn/signing.h>
+
+using namespace std;
+using namespace boost;
+
+namespace Sync {
+
+CcnxWrapper::CcnxWrapper()
+{
+  m_handle = ccn_create();
+  ccn_connect(m_handle, NULL);
+  initKeyStore();
+  createKeyLocator();
+  m_thread = thread(&CcnxWrapper::ccnLoop);
+}
+
+CcnxWrapper::~CcnxWrapper()
+{
+  running = false;
+  m_thread.join();
+  ccn_disconnect(m_handle);
+  ccn_destroy(&m_handle);
+  ccn_charbuf_destroy(&m_keyLoactor);
+  ccn_keystore_destroy(&m_keyStore);
+}
+
+void CcnxWrapper::createKeyLocator()
+{
+  int res;
+
+  m_keyLoactor = ccn_charbuf_create();
+  ccn_charbuf_append_tt(m_keyLoactor, CCN_DTAG_KeyLocator, CCN_DTAG);
+  ccn_charbuf_append_tt(m_keyLoactor, CCN_DTAG_Key, CCN_DTAG);
+  res = ccn_append_pubkey_blob(m_keyLoactor, ccn_keystore_public_key(m_keyStore));
+  if (res >= 0)
+  {
+    ccn_charbuf_append_closer(m_keyLoactor); /* </Key> */
+    ccn_charbuf_append_closer(m_keyLoactor); /* </KeyLocator> */
+  }
+}
+
+const ccn_pkey* CcnxWrapper::getPrivateKey()
+{
+  return ccn_keystore_private_key(m_keyStore);
+}
+
+const unsigned char* CcnxWrapper::getPublicKeyDigest()
+{
+  return ccn_keystore_public_key_digest(m_keyStore);
+}
+
+ssize_t CcnxWrapper::getPublicKeyDigestLength()
+{
+  return ccn_keystore_public_key_digest_length(m_keyStore);
+}
+
+void CcnxWrapper::initKeyStore()
+{
+  ccn_charbuf *temp = ccn_charbuf_create();
+  m_keyStore = ccn_keystore_create();
+  ccn_charbuf_putf(temp, "%s/.ccnx/.ccnx_keystore", getenv("HOME"));
+  ccn_keystore_init(m_keyStore, ccn_charbuf_as_string(temp), (char*)"Th1s1sn0t8g00dp8ssw0rd.");
+  ccn_charbuf_destroy(&temp);
+}
+
+void CcnxWrapper::ccnLoop()
+{
+  pollfd pfds[1];
+  int res = ccn_run(m_handle, 0);
+
+  pfds[0].fd = ccn_get_connection_fd(m_handle);
+  pfds[0].events = POLLIN;
+
+  while (running)
+  {
+    if (res >= 0)
+    {
+      int ret = poll(pfds, 1, 100);
+      if (ret >= 0)
+      {
+	boost::recursive_mutex::scoped_lock lock(m_mutex);
+	res = ccn_run(m_handle, 0);
+      }
+    }
+  }
+}
+
+int CcnxWrapper::publishData(string name, shared_ptr< DataBuffer > dataBuffer, int freshness)
+{
+  ccn_charbuf *pname = ccn_charbuf_create();
+  ccn_charbuf *signed_info = ccn_charbuf_create();
+  ccn_charbuf *content = ccn_charbuf_create();
+
+  ccn_name_from_uri(pname, name.c_str());
+  ccn_signed_info_create(signed_info,
+			 getPublicKeyDigest(),
+			 getPublicKeyDigestLength(),
+			 NULL,
+			 CCN_CONTENT_DATA,
+			 freshness,
+			 NULL,
+			 m_keyLoactor);
+  ccn_encode_ContentObject(content, pname, signed_info,
+			   dataBuffer->buffer(), dataBuffer->length(),
+			   NULL, getPrivateKey());
+  ccn_put(m_handle, content->buf, content->length);
+
+  ccn_charbuf_destroy(&pname);
+  ccn_charbuf_destroy(&signed_info);
+  ccn_charbuf_destroy(&content);
+}
+
+
+static ccn_upcall_res incomingInterest(
+  ccn_closure *selfp,
+  ccn_upcall_kind kind,
+  ccn_upcall_info *info)
+{
+  function< void (string) > callback = selfp->data;
+
+  switch (kind)
+  {
+    case CCN_UPCALL_FINAL:
+      free(selfp);
+      return CCN_UPCALL_RESULT_OK;
+
+    case CCN_UPCALL_INTEREST:
+      break;
+
+    default:
+      return CCN_UPCALL_RESULT_OK;
+  }
+
+  char *comp;
+  size_t size;
+  ccn_name_comp_get(info->content_ccnb, info->content_comps, info->content_comps->n - 3, (const unsigned char **)&comp, &size);
+  callback(string(comp));
+}
+
+static ccn_upcall_res incomingData(
+  ccn_closure *selfp,
+  ccn_upcall_kind kind,
+  ccn_upcall_info *info)
+{
+  function< void (string) > callback = selfp->data;
+
+  switch (kind)
+  {
+    case CCN_UPCALL_FINAL:
+      free(selfp);
+      return CCN_UPCALL_RESULT_OK;
+
+    case CCN_UPCALL_CONTENT:
+      break;
+
+    default:
+      return CCN_UPCALL_RESULT_OK;
+  }
+
+  char *pcontent;
+  size_t len;
+  ccn_content_get_value(info->content_ccnb, info->pco->offset[CCN_PCO_E], info->pco, (const unsigned char **)&pcontent, &len);
+  callback(string(pcontent));
+}
+
+int CcnxWrapper::sendInterest(string strInterest, boost::function< void (shared_ptr< DataBuffer >) > dataCallback)
+{
+  ccn_charbuf *pname = ccn_charbuf_create();
+  ccn_closure *dataClosure = new ccn_closure;
+
+  ccn_name_from_uri(pname, strInterest.c_str());
+  ccn_express_interest(m_handle, pname, dataClosure, NULL);
+  dataClosure->data = dataCallback.target<void (shared_ptr< DataBuffer >)>();
+  dataClosure->p = &incomingData;
+
+  ccn_charbuf_destroy(&pname);
+}
+
+int CcnxWrapper::setInterestFilter(string prefix, boost::function< void (string) > interestCallback)
+{
+  ccn_charbuf *pname = ccn_charbuf_create();
+  ccn_closure *interestClosure = new ccn_closure;
+
+  ccn_name_from_uri(pname, prefix.c_str());
+  interestClosure->data = interestCallback.target<void (string)>();
+  interestClosure->p = &incomingInterest;
+  ccn_set_interest_filter(m_handle, pname, interestClosure);
+
+  ccn_charbuf_destroy(&pname);
+}
+
+}

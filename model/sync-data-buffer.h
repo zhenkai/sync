@@ -45,7 +45,7 @@ namespace Sync {
 class DataBuffer {
 public:
 	virtual ~DataBuffer() = 0;
-	virtual size_t length() = 0; 
+	virtual size_t length() = 0;
 	virtual const unsigned char *buffer() = 0;
 	virtual void setBufferAndLength(const unsigned char *buffer, size_t len) =
 	0;
@@ -88,8 +88,8 @@ public:
 	 * @brief decorates some object that implements DataBuffer interface
 	 * primary usage here is to decorate AppDataBuffer
 	 */
-	SyncDataBuffer(DataBuffer *dataBuffer) { m_dataBuffer = dataBuffer;}
-	virtual ~SyncDataBuffer(){};	
+	SyncDataBuffer(DataBuffer *dataBuffer) { m_dataBuffer = boost::shared_ptr<DataBuffer>(dataBuffer);}
+	virtual ~SyncDataBuffer(){};
 	virtual size_t length() {m_dataBuffer->length();}
 	virtual const unsigned char *buffer() {m_dataBuffer->buffer();}
 	virtual void setBufferAndLength(const unsigned char *buffer, size_t len)
