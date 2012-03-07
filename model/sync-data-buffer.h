@@ -55,7 +55,7 @@ public:
  * \ingroup sync
  * @brief general Data Buffer class, implments DataBuffer interface mainly works for app data
  */
-class DataBufferImpl:DataBuffer {
+class DataBufferImpl : public DataBuffer {
 public:
 	DataBufferImpl() {m_buffer = NULL; m_len = 0;}
 	DataBufferImpl(const unsigned char *buffer, size_t len);
@@ -88,7 +88,7 @@ public:
 	 * @brief decorates some object that implements DataBuffer interface
 	 * primary usage here is to decorate AppDataBuffer
 	 */
-	SyncDataBuffer(boost::share_ptr<DataBuffer> dataBuffer) { m_dataBuffer = dataBuffer;}
+	SyncDataBuffer(boost::shared_ptr<DataBuffer> dataBuffer) { m_dataBuffer = dataBuffer;}
 	virtual ~SyncDataBuffer(){};
 	virtual size_t length() {m_dataBuffer->length();}
 	virtual const unsigned char *buffer() {m_dataBuffer->buffer();}

@@ -29,6 +29,7 @@ extern "C" {
 #include <ccn/keystore.h>
 #include <ccn/uri.h>
 #include <ccn/bloom.h>
+#include <ccn/signing.h>
 }
 
 #include <boost/thread/recursive_mutex.hpp>

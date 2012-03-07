@@ -22,7 +22,6 @@
 
 #include "sync-ccnx-wrapper.h"
 #include <poll.h>
-#include <ccn/signing.h>
 
 using namespace std;
 using namespace boost;
@@ -35,7 +34,7 @@ CcnxWrapper::CcnxWrapper()
   ccn_connect(m_handle, NULL);
   initKeyStore();
   createKeyLocator();
-  m_thread = thread(&CcnxWrapper::ccnLoop);
+  m_thread = thread(&CcnxWrapper::ccnLoop, this);
 }
 
 CcnxWrapper::~CcnxWrapper()
@@ -140,7 +139,7 @@ static ccn_upcall_res incomingInterest(
   ccn_upcall_kind kind,
   ccn_upcall_info *info)
 {
-  function< void (string) > callback = selfp->data;
+  function<void (string)> f = *(function<void (string)> *)selfp->data;
 
   switch (kind)
   {
@@ -158,7 +157,7 @@ static ccn_upcall_res incomingInterest(
   char *comp;
   size_t size;
   ccn_name_comp_get(info->content_ccnb, info->content_comps, info->content_comps->n - 3, (const unsigned char **)&comp, &size);
-  callback(string(comp));
+  f((string)comp);
 }
 
 static ccn_upcall_res incomingData(
@@ -166,7 +165,7 @@ static ccn_upcall_res incomingData(
   ccn_upcall_kind kind,
   ccn_upcall_info *info)
 {
-  function< void (string) > callback = selfp->data;
+  function<void (shared_ptr<DataBuffer>)> f = *(function<void (shared_ptr<DataBuffer>)> *)selfp->data;
 
   switch (kind)
   {
@@ -184,29 +183,32 @@ static ccn_upcall_res incomingData(
   char *pcontent;
   size_t len;
   ccn_content_get_value(info->content_ccnb, info->pco->offset[CCN_PCO_E], info->pco, (const unsigned char **)&pcontent, &len);
-  callback(string(pcontent));
+  shared_ptr<DataBuffer> data(new DataBufferImpl((const unsigned char*)pcontent, len));
+  f(data);
 }
 
-int CcnxWrapper::sendInterest(string strInterest, boost::function< void (shared_ptr< DataBuffer >) > dataCallback)
+int CcnxWrapper::sendInterest(string strInterest, function< void (shared_ptr< DataBuffer >) > dataCallback)
 {
   ccn_charbuf *pname = ccn_charbuf_create();
   ccn_closure *dataClosure = new ccn_closure;
+  function<void (shared_ptr< DataBuffer >)> *f = new function<void (shared_ptr< DataBuffer >)>(dataCallback);
 
   ccn_name_from_uri(pname, strInterest.c_str());
   ccn_express_interest(m_handle, pname, dataClosure, NULL);
-  dataClosure->data = dataCallback.target<void (shared_ptr< DataBuffer >)>();
+  dataClosure->data = f;
   dataClosure->p = &incomingData;
 
   ccn_charbuf_destroy(&pname);
 }
 
-int CcnxWrapper::setInterestFilter(string prefix, boost::function< void (string) > interestCallback)
+int CcnxWrapper::setInterestFilter(string prefix, function< void (string) > interestCallback)
 {
   ccn_charbuf *pname = ccn_charbuf_create();
   ccn_closure *interestClosure = new ccn_closure;
+  function<void (string)> *f = new function<void (string)>(interestCallback);
 
   ccn_name_from_uri(pname, prefix.c_str());
-  interestClosure->data = interestCallback.target<void (string)>();
+  interestClosure->data = f;
   interestClosure->p = &incomingInterest;
   ccn_set_interest_filter(m_handle, pname, interestClosure);
 
