@@ -159,6 +159,7 @@ static ccn_upcall_res incomingInterest(
   {
     char *comp;
     size_t size;
+    interest += "/";
     ccn_name_comp_get(info->interest_ccnb, info->interest_comps, i, (const unsigned char **)&comp, &size);
     interest += comp;
   }
