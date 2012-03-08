@@ -135,4 +135,64 @@ BOOST_AUTO_TEST_CASE (FullStateDigestTest)
   BOOST_CHECK (*digest5 == *digest3);
 }
 
+BOOST_AUTO_TEST_CASE (FullStateXml)
+{
+  FullState state;
+
+  NameInfoConstPtr name3 = StdNameInfo::FindOrCreate ("3");
+  NameInfoConstPtr name2 = StdNameInfo::FindOrCreate ("2");
+  NameInfoConstPtr name1 = StdNameInfo::FindOrCreate ("1");
+
+  state.update (name1, SeqNo (10));
+  state.update (name2, SeqNo (12));
+  state.update (name3, SeqNo (8));  
+
+  {
+  ostringstream os;
+  os << state;
+  string s = os.str ();
+  erase_all (s, "\n");
+  BOOST_CHECK_EQUAL (s, "<state type=\"full\"><item><name>3</name><seq><session>0</session><seqno>8</seqno></seq></item><item><name>2</name><seq><session>0</session><seqno>12</seqno></seq></item><item><name>1</name><seq><session>0</session><seqno>10</seqno></seq></item></state>");
+  }
+  
+  state.remove (name2);
+  {
+  ostringstream os;
+  os << state;
+  string s = os.str ();
+  erase_all (s, "\n");
+  BOOST_CHECK_EQUAL (s, "<state type=\"full\"><item><name>3</name><seq><session>0</session><seqno>8</seqno></seq></item><item><name>1</name><seq><session>0</session><seqno>10</seqno></seq></item></state>");
+  }
+}
+
+BOOST_AUTO_TEST_CASE (DiffStateXml)
+{
+  DiffState state;
+
+  NameInfoConstPtr name3 = StdNameInfo::FindOrCreate ("3");
+  NameInfoConstPtr name2 = StdNameInfo::FindOrCreate ("2");
+  NameInfoConstPtr name1 = StdNameInfo::FindOrCreate ("1");
+
+  state.update (name1, SeqNo (10));
+  state.update (name2, SeqNo (12));
+  state.update (name3, SeqNo (8));  
+
+  {
+  ostringstream os;
+  os << state;
+  string s = os.str ();
+  erase_all (s, "\n");
+  BOOST_CHECK_EQUAL (s, "<state type=\"diff\"><item action=\"update\"><name>3</name><seq><session>0</session><seqno>8</seqno></seq></item><item action=\"update\"><name>2</name><seq><session>0</session><seqno>12</seqno></seq></item><item action=\"update\"><name>1</name><seq><session>0</session><seqno>10</seqno></seq></item></state>");
+  }
+  
+  state.remove (name2);
+  {
+  ostringstream os;
+  os << state;
+  string s = os.str ();
+  erase_all (s, "\n");
+  BOOST_CHECK_EQUAL (s, "<state type=\"diff\"><item action=\"update\"><name>3</name><seq><session>0</session><seqno>8</seqno></seq></item><item action=\"remove\"><name>2</name></item><item action=\"update\"><name>1</name><seq><session>0</session><seqno>10</seqno></seq></item></state>");
+  }
+}
+
 BOOST_AUTO_TEST_SUITE_END()

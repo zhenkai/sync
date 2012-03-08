@@ -78,6 +78,15 @@ private:
   DigestPtr m_digest;
 };
 
+/**
+ * @brief Formats an XML representation of the full state
+ * @param os output stream
+ * @param state state
+ * @returns output stream
+ */
+std::ostream &
+operator << (std::ostream &os, const FullState &state);
+
 
 } // Sync
 

@@ -142,7 +142,7 @@ private:
 inline std::ostream &
 operator << (std::ostream &os, const SeqNo &seqno)
 {
-  os << seqno.getSession () << ":" << seqno.getSeq ();
+  os << "<session>" << seqno.getSession () << "</session><seqno>" << seqno.getSeq () << "</seqno>";
   return os;
 }
 

@@ -68,6 +68,8 @@ protected:
   LeafContainer m_leaves;
 };
 
+std::string & operator >> (std::string &DataBuffer, State &state);
+
 } // Sync
 
 #endif // SYNC_STATE_H

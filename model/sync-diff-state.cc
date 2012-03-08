@@ -24,6 +24,8 @@
 #include "sync-diff-leaf.h"
 
 #include <boost/make_shared.hpp>
+#include <boost/foreach.hpp>
+#include <boost/assert.hpp>
 
 using namespace boost;
 
@@ -75,6 +77,33 @@ DiffState::remove (NameInfoConstPtr info)
 
   DiffLeafPtr leaf = make_shared<DiffLeaf> (info);
   m_leaves.insert (leaf);
+}
+
+#ifdef _DEBUG
+#define DEBUG_ENDL os << "\n";
+#else
+#define DEBUG_ENDL
+#endif
+
+std::ostream &
+operator << (std::ostream &os, const DiffState &state)
+{
+  os << "<state type=\"diff\">"; DEBUG_ENDL;
+  
+  BOOST_FOREACH (shared_ptr<const Leaf> _leaf, state.getLeaves ())
+    {
+      shared_ptr<const DiffLeaf> leaf = dynamic_pointer_cast<const DiffLeaf> (_leaf);
+      BOOST_ASSERT (leaf != 0);
+
+      os << "<item action=\"" << leaf->getOperation () << "\">"; DEBUG_ENDL;
+      os << "<name>" << leaf->getInfo () << "</name>"; DEBUG_ENDL;
+      if (leaf->getOperation () == UPDATE)
+        {
+          os << "<seq>" << leaf->getSeq () << "</seq>"; DEBUG_ENDL;
+        }
+      os << "</item>"; DEBUG_ENDL;
+    }
+  os << "</state>";
 }
 
 

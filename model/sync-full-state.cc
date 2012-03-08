@@ -117,5 +117,25 @@ FullState::remove (NameInfoConstPtr info)
   m_leaves.erase (*info);
 }
 
+#ifdef _DEBUG
+#define DEBUG_ENDL os << "\n";
+#else
+#define DEBUG_ENDL
+#endif
+
+std::ostream &
+operator << (std::ostream &os, const FullState &state)
+{
+  os << "<state type=\"full\">"; DEBUG_ENDL;
+  
+  BOOST_FOREACH (shared_ptr<const Leaf> leaf, state.getLeaves ())
+    {
+      os << "<item>"; DEBUG_ENDL;
+      os << "<name>" << leaf->getInfo () << "</name>"; DEBUG_ENDL;
+      os << "<seq>" << leaf->getSeq () << "</seq>"; DEBUG_ENDL;
+      os << "</item>"; DEBUG_ENDL;
+    }
+  os << "</state>";
+}
 
 } // Sync

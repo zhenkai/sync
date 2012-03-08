@@ -38,7 +38,7 @@ namespace Sync
     doc.Parse(DataBuffer.c_str());
     for (TiXmlElement *iterator = doc.RootElement(); iterator != NULL; iterator = iterator->NextSiblingElement())
     {
-      if (strcmp(iterator->Attribute("action"), "UPDATE") == 0)
+      if (strcmp(iterator->Attribute("action"), "update") == 0)
       {
 	TiXmlElement *name = iterator->FirstChildElement();
 	TiXmlElement *session = name->NextSiblingElement();

@@ -24,6 +24,7 @@
 #define SYNC_DIFF_STATE_H
 
 #include "sync-state.h"
+#include <iostream>
 
 namespace Sync {
 
@@ -95,6 +96,15 @@ private:
   DiffStatePtr m_next;
   DigestConstPtr m_digest;
 };
+
+/**
+ * @brief Formats an XML representation of the diff state
+ * @param os output stream
+ * @param state state
+ * @returns output stream
+ */
+std::ostream &
+operator << (std::ostream &os, const DiffState &state);
 
 } // Sync
 
