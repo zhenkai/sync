@@ -64,19 +64,19 @@ BOOST_AUTO_TEST_CASE (CcnxWrapperTest)
 	hb.sendInterest(interest, memberFunc);
 
 	// give time for ccnd to react
-	sleep(5);
+	sleep(1);
 
 	BOOST_CHECK_EQUAL(echoStr, interest);
 
 
 	string name = "/ucla.edu/0";
 	string data = "random bits: !#$!@#$!";
-	ha.publishData(name, data, 15);
+	ha.publishData(name, data, 5);
 
 	hb.sendInterest(interest, memberFunc);
 
 	// give time for ccnd to react
-	sleep(5);
+	sleep(1);
 	BOOST_CHECK_EQUAL(foo.s_str, data);
 
 }
