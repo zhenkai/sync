@@ -20,8 +20,8 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#ifndef SYNC_APP_WRAPPER_H
-#define SYNC_APP_WRAPPER_H
+#ifndef SYNC_LOGIC_H
+#define SYNC_LOGIC_H
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 #include "sync-ccnx-wrapper.h"
@@ -37,7 +37,7 @@ namespace Sync {
  * @brief A wrapper for SyncApp, which handles ccnx related things (process
  * interests and data)
  */
-class SyncAppWrapper
+class SyncLogic
 {
 public:
 	/**
@@ -46,10 +46,10 @@ public:
 	 * @param fetch the fetch function, which will be called to actually fetch
 	 * the app data when new remote names are learned
 	 */
-	SyncAppWrapper(std::string syncPrefix, boost::function<void (std::string,
+	SyncLogic(std::string syncPrefix, boost::function<void (std::string,
 	uint32_t, uint32_t)> fetch, boost::shared_ptr<CcnxWrapper> ccnxHandle);
 
-	~SyncAppWrapper();
+	~SyncLogic();
 	/**
 	 * a wrapper for the same func in SyncApp
 	 */

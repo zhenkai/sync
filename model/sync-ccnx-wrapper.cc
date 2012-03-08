@@ -101,7 +101,7 @@ void CcnxWrapper::ccnLoop()
       int ret = poll(pfds, 1, 100);
       if (ret >= 0)
       {
-	boost::recursive_mutex::scoped_lock lock(m_mutex);
+	recursive_mutex::scoped_lock lock(m_mutex);
 	res = ccn_run(m_handle, 0);
       }
     }
@@ -126,6 +126,7 @@ int CcnxWrapper::publishData(string name, string dataBuffer, int freshness)
   ccn_encode_ContentObject(content, pname, signed_info,
 			   dataBuffer.c_str(), dataBuffer.length(),
 			   NULL, getPrivateKey());
+  recursive_mutex::scoped_lock lock(m_mutex);
   ccn_put(m_handle, content->buf, content->length);
 
   ccn_charbuf_destroy(&pname);
@@ -144,7 +145,7 @@ static ccn_upcall_res incomingInterest(
   switch (kind)
   {
     case CCN_UPCALL_FINAL:
-      free(selfp);
+      delete selfp;
       return CCN_UPCALL_RESULT_OK;
 
     case CCN_UPCALL_INTEREST:
@@ -177,7 +178,7 @@ static ccn_upcall_res incomingData(
   switch (kind)
   {
     case CCN_UPCALL_FINAL:
-      free(selfp);
+      delete selfp;
       return CCN_UPCALL_RESULT_OK;
 
     case CCN_UPCALL_CONTENT:
@@ -191,6 +192,7 @@ static ccn_upcall_res incomingData(
   size_t len;
   ccn_content_get_value(info->content_ccnb, info->pco->offset[CCN_PCO_E], info->pco, (const unsigned char **)&pcontent, &len);
   f((string)pcontent);
+  return CCN_UPCALL_RESULT_OK;
 }
 
 int CcnxWrapper::sendInterest(string strInterest, function<void (string)> dataCallback)
@@ -200,9 +202,10 @@ int CcnxWrapper::sendInterest(string strInterest, function<void (string)> dataCa
   function<void (string)> *f = new function<void (string)>(dataCallback);
 
   ccn_name_from_uri(pname, strInterest.c_str());
-  ccn_express_interest(m_handle, pname, dataClosure, NULL);
   dataClosure->data = f;
   dataClosure->p = &incomingData;
+  recursive_mutex::scoped_lock lock(m_mutex);
+  ccn_express_interest(m_handle, pname, dataClosure, NULL);
 
   ccn_charbuf_destroy(&pname);
 }

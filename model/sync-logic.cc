@@ -20,7 +20,7 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#include "sync-app-wrapper.h"
+#include "sync-logic.h"
 
 using namespace std;
 using namespace boost;
@@ -28,7 +28,7 @@ using namespace boost;
 namespace Sync
 {
 
-SyncAppWrapper::SyncAppWrapper(string syncPrefix,
+SyncLogic::SyncLogic(string syncPrefix,
 			       function<void (string, uint32_t, uint32_t)> fetch,
 			       shared_ptr<CcnxWrapper> ccnxHandle)
 {
@@ -37,27 +37,27 @@ SyncAppWrapper::SyncAppWrapper(string syncPrefix,
   m_ccnxHandle = ccnxHandle;
 }
 
-SyncAppWrapper::~SyncAppWrapper()
+SyncLogic::~SyncLogic()
 {
 
 }
 
-void SyncAppWrapper::processSyncData(string dataBuffer)
+void SyncLogic::processSyncData(string dataBuffer)
 {
 
 }
 
-void SyncAppWrapper::addLocalNames(string prefix, uint32_t seq)
+void SyncLogic::addLocalNames(string prefix, uint32_t seq)
 {
 
 }
 
-void SyncAppWrapper::respondSyncInterest(string interest)
+void SyncLogic::respondSyncInterest(string interest)
 {
 
 }
 
-void SyncAppWrapper::sendSyncInterest()
+void SyncLogic::sendSyncInterest()
 {
 
 }

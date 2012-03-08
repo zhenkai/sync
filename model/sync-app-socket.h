@@ -22,6 +22,10 @@
 
 #ifndef SYNC_APP_SOCKET_H
 #define SYNC_APP_SOCKET_H
+
+#include "sync-logic.h"
+#include "sync-app-data-fetch.h"
+#include "sync-app-data-publish.h"
 #include <boost/function.hpp>
 
 namespace Sync {
@@ -44,25 +48,26 @@ public:
 	 * @param syncPrefix the name prefix for Sync Interest
 	 * @param dataCallback the callback to process data
 	 */
-	SyncAppSocket(std::string syncPrefix, boost::function<void
-	(boost::shared_ptr<DataBuffer>)> dataCallback);
+	SyncAppSocket(std::string syncPrefix, boost::function<void (std::string)>
+	dataCallback);
 
 	~SyncAppSocket();
 
 	/**
-	 * @brief publish data from local client and tell SyncAppWrapper to update
+	 * @brief publish data from local client and tell SyncLogic to update
 	 * the sync tree by adding the local names
-	 * 
+	 *
 	 * @param prefix the name prefix for the data
 	 * @param dataBuffer the data itself
 	 * @param freshness the freshness time for the data (in seconds)
 	 */
-	bool publish(std::string prefix, boost::shared_ptr<DataBuffer>
-	dataBuffer, int freshness);
+	bool publish(std::string prefix, std::string dataBuffer, int freshness);
+
 private:
-	boost::shared_ptr<AppDataFetch> m_fetcher;
-	boost::shared_ptr<AppDataPublish> m_publisher;
-	boost::shared_ptr<SyncAppWrapper> m_syncAppWrapper;
+	AppDataFetch *m_fetcher;
+	AppDataPublish *m_publisher;
+	SyncLogic *m_syncLogic;
+	boost::shared_ptr<CcnxWrapper> m_ccnxHandle;
 };
 
 } // Sync

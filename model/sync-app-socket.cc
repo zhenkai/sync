@@ -19,3 +19,36 @@
  *         卞超轶 Chaoyi Bian <bcy@pku.edu.cn>
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
+
+#include "sync-app-socket.h"
+
+using namespace std;
+using namespace boost;
+
+namespace Sync
+{
+
+SyncAppSocket::SyncAppSocket(string syncPrefix, function<void (string)> dataCallback)
+{
+  m_ccnxHandle.reset(new CcnxWrapper());
+  m_fetcher = new AppDataFetch(m_ccnxHandle, dataCallback);
+  m_publisher = new AppDataPublish(m_ccnxHandle);
+
+  function<void (string, uint32_t, uint32_t)> f(bind(&AppDataFetch::fetch, m_fetcher, _1, _2, _3));
+  m_syncLogic = new SyncLogic(syncPrefix, f, m_ccnxHandle);
+}
+
+SyncAppSocket::~SyncAppSocket()
+{
+  delete m_syncLogic;
+  delete m_fetcher;
+  delete m_publisher;
+}
+
+bool SyncAppSocket::publish(string prefix, string dataBuffer, int freshness)
+{
+  m_publisher->publishData(prefix, dataBuffer, freshness);
+  m_syncLogic->addLocalNames(prefix, m_publisher->getHighestSeq(prefix));
+}
+
+}
