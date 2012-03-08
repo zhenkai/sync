@@ -26,9 +26,9 @@
 #include <boost/function.hpp>
 #include "sync-ccnx-wrapper.h"
 #include "sync-interest-table.h"
-#include "sync-data-buffer.h"
 #include "sync-diff-state.h"
 #include "sync-full-state.h"
+#include "sync-app.h"
 
 namespace Sync {
 
@@ -41,40 +41,40 @@ class SyncAppWrapper
 {
 public:
 	/**
-	 * @brief constructor for this class; 
+	 * @brief constructor for this class;
 	 * @param syncPrefix the name prefix to use for the Sync Interest
 	 * @param fetch the fetch function, which will be called to actually fetch
 	 * the app data when new remote names are learned
 	 */
-	SyncAppWrapper(std::string syncPrefix, boost::function<void (string, long,
-	long)> fetch);
+	SyncAppWrapper(std::string syncPrefix, boost::function<void (std::string,
+	uint32_t, uint32_t)> fetch, boost::shared_ptr<CcnxWrapper> ccnxHandle);
 
 	~SyncAppWrapper();
 	/**
 	 * a wrapper for the same func in SyncApp
 	 */
-	void addLocalNames(std::string prefix, long seq);
+	void addLocalNames(std::string prefix, uint32_t seq);
 
 	/**
 	 * @brief respond to the Sync Interest; a lot of logic needs to go in here
 	 * @param interest the Sync Interest in string format
 	 */
-	void respondSyncInterest(std::string interest);	
+	void respondSyncInterest(std::string interest);
 
 	/**
 	 * @brief process the fetched sync data
 	 * @param dataBuffer the sync data
 	 */
-	void processSyncData(boost::shared_ptr<DataBuffer> dataBuffer);
+	void processSyncData(std::string dataBuffer);
 
 private:
-	sendSyncInterest();
+	void sendSyncInterest();
 
 private:
 	boost::shared_ptr<CcnxWrapper> m_ccnxHandle;
-	boost::shared_ptr<SyncApp> m_syncApp;
-	boost::function<void (string, long, long)> m_fetch;
-	SyncInterestTable m_syncInterestTable;	
+	//boost::shared_ptr<SyncApp> m_syncApp;
+	boost::function<void (std::string, uint32_t, uint32_t)> m_fetch;
+	SyncInterestTable m_syncInterestTable;
 	std::string m_syncPrefix;
 };
 

@@ -19,3 +19,23 @@
  *         卞超轶 Chaoyi Bian <bcy@pku.edu.cn>
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
+
+#include "sync-interest-table.h"
+
+using namespace std;
+using namespace boost;
+
+namespace Sync
+{
+
+unordered_set<string> SyncInterestTable::fetchAll()
+{
+  return m_table;
+}
+
+bool SyncInterestTable::insert(string interest)
+{
+  m_table.insert(interest);
+}
+
+}

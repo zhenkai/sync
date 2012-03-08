@@ -19,3 +19,47 @@
  *         卞超轶 Chaoyi Bian <bcy@pku.edu.cn>
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
+
+#include "sync-app-wrapper.h"
+
+using namespace std;
+using namespace boost;
+
+namespace Sync
+{
+
+SyncAppWrapper::SyncAppWrapper(string syncPrefix,
+			       function<void (string, uint32_t, uint32_t)> fetch,
+			       shared_ptr<CcnxWrapper> ccnxHandle)
+{
+  m_syncPrefix = syncPrefix;
+  m_fetch = fetch;
+  m_ccnxHandle = ccnxHandle;
+}
+
+SyncAppWrapper::~SyncAppWrapper()
+{
+
+}
+
+void SyncAppWrapper::processSyncData(string dataBuffer)
+{
+
+}
+
+void SyncAppWrapper::addLocalNames(string prefix, uint32_t seq)
+{
+
+}
+
+void SyncAppWrapper::respondSyncInterest(string interest)
+{
+
+}
+
+void SyncAppWrapper::sendSyncInterest()
+{
+
+}
+
+}
