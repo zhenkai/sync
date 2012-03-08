@@ -39,11 +39,12 @@ public:
 	/**
 	 * @param dataCallback the callback function to process data
 	 */
-	AppDataFetch(boost::function<void (boost::shared_ptr<DataBuffer>)>
-	dataCallback);
+	AppDataFetch(boost::shared_ptr<CcnxWrapper> ccnxHandle,
+		     boost::function<void (std::string)> dataCallback)
+	{ m_ccnxHandle = ccnxHandle; m_dataCallback = dataCallback; }
 
-	void setDataCallback(boost::function<void (boost::shared_ptr<DataBuffer>)>
-	dataCallback) {m_dataCallback = dataCallback;}
+	void setDataCallback(boost::function<void (std::string)> dataCallback)
+	{ m_dataCallback = dataCallback; }
 
 	/**
 	 * @brief fetch data for a certain name prefix
@@ -52,12 +53,11 @@ public:
 	 * @param startSeq the start of sequence number range (inclusive)
 	 * @param endSeq the end of sequence number range (inclusive)
 	 */
-	void fetch(string prefix, long startSeq, long endSeq);
+	void fetch(std::string prefix, uint32_t startSeq, uint32_t endSeq);
 
 private:
-	boost::shared_ptr<CcnxWrapper> ccnxHandle;
-	boost::shared_ptr<boost::function<void (boost::shared_ptr<DataBuffer>)>
-	m_dataCallback;
+	boost::shared_ptr<CcnxWrapper> m_ccnxHandle;
+	boost::function<void (std::string)> m_dataCallback;
 };
 
 

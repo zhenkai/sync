@@ -19,3 +19,49 @@
  *         卞超轶 Chaoyi Bian <bcy@pku.edu.cn>
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
+
+#include "sync-app-data-publish.h"
+
+using namespace std;
+using namespace boost;
+
+namespace Sync
+{
+
+pair<string, string> AppDataPublish::getRecentData(string prefix)
+{
+
+}
+
+uint32_t AppDataPublish::getHighestSeq(string prefix)
+{
+  unordered_map<string, uint32_t>::iterator i = m_sequenceLog.find(prefix);
+
+  if (i != m_sequenceLog.end())
+  {
+    return i->second;
+  }
+  else
+  {
+    m_sequenceLog[prefix] = 0;
+    return 0;
+  }
+
+}
+
+bool AppDataPublish::publishData(string name, string dataBuffer, int freshness)
+{
+  uint32_t seq = getHighestSeq(name) + 1;
+  string contentName = name;
+
+  contentName += seq;
+
+  m_sequenceLog[contentName] = seq;
+  m_recentData[contentName] = dataBuffer;
+
+  m_ccnxHandle->publishData(contentName, dataBuffer, freshness);
+
+  return true;
+}
+
+}

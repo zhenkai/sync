@@ -19,3 +19,23 @@
  *         卞超轶 Chaoyi Bian <bcy@pku.edu.cn>
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
+
+#include "sync-app-data-fetch.h"
+
+using namespace std;
+using namespace boost;
+
+namespace Sync
+{
+
+void AppDataFetch::fetch(string prefix, uint32_t startSeq, uint32_t endSeq)
+{
+  for (uint32_t i = startSeq; i <= endSeq; i++)
+  {
+    string interestName = prefix;
+    interestName += i;
+    m_ccnxHandle->sendInterest(interestName, m_dataCallback);
+  }
+}
+
+}
