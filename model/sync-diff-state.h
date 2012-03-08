@@ -97,15 +97,6 @@ private:
   DigestConstPtr m_digest;
 };
 
-/**
- * @brief Formats an XML representation of the diff state
- * @param os output stream
- * @param state state
- * @returns output stream
- */
-std::ostream &
-operator << (std::ostream &os, const DiffState &state);
-
 } // Sync
 
 #endif // SYNC_DIFF_STATE_H

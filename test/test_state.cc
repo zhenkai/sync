@@ -147,21 +147,52 @@ BOOST_AUTO_TEST_CASE (FullStateXml)
   state.update (name2, SeqNo (12));
   state.update (name3, SeqNo (8));  
 
+  string xml1 = "<state>"
+    "<item><name>1</name><seq><session>0</session><seqno>10</seqno></seq></item>"
+    "<item><name>2</name><seq><session>0</session><seqno>12</seqno></seq></item>"
+    "<item><name>3</name><seq><session>0</session><seqno>8</seqno></seq></item>"
+    "</state>";
   {
   ostringstream os;
   os << state;
   string s = os.str ();
   erase_all (s, "\n");
-  BOOST_CHECK_EQUAL (s, "<state type=\"full\"><item><name>3</name><seq><session>0</session><seqno>8</seqno></seq></item><item><name>2</name><seq><session>0</session><seqno>12</seqno></seq></item><item><name>1</name><seq><session>0</session><seqno>10</seqno></seq></item></state>");
+  BOOST_CHECK_EQUAL (s, xml1);
   }
   
   state.remove (name2);
+  string xml2 = "<state>"
+    "<item><name>1</name><seq><session>0</session><seqno>10</seqno></seq></item>"
+    "<item><name>3</name><seq><session>0</session><seqno>8</seqno></seq></item>"
+    "</state>";
   {
   ostringstream os;
   os << state;
   string s = os.str ();
   erase_all (s, "\n");
-  BOOST_CHECK_EQUAL (s, "<state type=\"full\"><item><name>3</name><seq><session>0</session><seqno>8</seqno></seq></item><item><name>1</name><seq><session>0</session><seqno>10</seqno></seq></item></state>");
+  BOOST_CHECK_EQUAL (s, xml2);
+  }
+
+  FullState state2;
+  istringstream xml1_is (xml1);
+  BOOST_CHECK_NO_THROW (xml1_is >> state2);
+  {
+  ostringstream os;
+  os << state2;
+  string xml1_test = os.str ();
+  erase_all (xml1_test, "\n");
+  BOOST_CHECK_EQUAL (xml1_test, xml1);
+  }
+  
+  istringstream xml2_is ("<state><item action=\"remove\"><name>2</name></item></state>");
+  BOOST_CHECK_NO_THROW (xml2_is >> state2);
+  
+  {
+  ostringstream os;
+  os << state2;
+  string xml2_test = os.str ();
+  erase_all (xml2_test, "\n");
+  BOOST_CHECK_EQUAL (xml2_test, xml2);
   }
 }
 
@@ -177,22 +208,58 @@ BOOST_AUTO_TEST_CASE (DiffStateXml)
   state.update (name2, SeqNo (12));
   state.update (name3, SeqNo (8));  
 
+  string xml1 = "<state>"
+    "<item action=\"update\"><name>1</name><seq><session>0</session><seqno>10</seqno></seq></item>"
+    "<item action=\"update\"><name>2</name><seq><session>0</session><seqno>12</seqno></seq></item>"
+    "<item action=\"update\"><name>3</name><seq><session>0</session><seqno>8</seqno></seq></item>"
+    "</state>";
   {
   ostringstream os;
   os << state;
-  string s = os.str ();
-  erase_all (s, "\n");
-  BOOST_CHECK_EQUAL (s, "<state type=\"diff\"><item action=\"update\"><name>3</name><seq><session>0</session><seqno>8</seqno></seq></item><item action=\"update\"><name>2</name><seq><session>0</session><seqno>12</seqno></seq></item><item action=\"update\"><name>1</name><seq><session>0</session><seqno>10</seqno></seq></item></state>");
+  string xml1_test = os.str ();
+  erase_all (xml1_test, "\n");
+  BOOST_CHECK_EQUAL (xml1_test, xml1);
   }
   
   state.remove (name2);
+  string xml2 = "<state>"
+    "<item action=\"update\"><name>1</name><seq><session>0</session><seqno>10</seqno></seq></item>"
+    "<item action=\"remove\"><name>2</name></item>"
+    "<item action=\"update\"><name>3</name><seq><session>0</session><seqno>8</seqno></seq></item>"
+    "</state>";
   {
   ostringstream os;
   os << state;
-  string s = os.str ();
-  erase_all (s, "\n");
-  BOOST_CHECK_EQUAL (s, "<state type=\"diff\"><item action=\"update\"><name>3</name><seq><session>0</session><seqno>8</seqno></seq></item><item action=\"remove\"><name>2</name></item><item action=\"update\"><name>1</name><seq><session>0</session><seqno>10</seqno></seq></item></state>");
+  string xml2_test = os.str ();
+  erase_all (xml2_test, "\n");
+  BOOST_CHECK_EQUAL (xml2_test, xml2);
   }
+
+  ////////////  ////////////  ////////////  ////////////  ////////////  ////////////
+  
+  DiffState state2;
+  istringstream xml1_is (xml1);
+  BOOST_CHECK_NO_THROW (xml1_is >> state2);
+  
+  {
+  ostringstream os;
+  os << state2;
+  string xml1_test = os.str ();
+  erase_all (xml1_test, "\n");
+  BOOST_CHECK_EQUAL (xml1_test, xml1);
+  }
+
+  istringstream xml2_is ("<state><item action=\"remove\"><name>2</name></item></state>");
+  BOOST_CHECK_NO_THROW (xml2_is >> state2);
+  
+  {
+  ostringstream os;
+  os << state2;
+  string xml2_test = os.str ();
+  erase_all (xml2_test, "\n");
+  BOOST_CHECK_EQUAL (xml2_test, xml2);
+  }
+
 }
 
 BOOST_AUTO_TEST_SUITE_END()

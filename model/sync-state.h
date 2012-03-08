@@ -24,6 +24,7 @@
 #define SYNC_STATE_H
 
 #include "sync-state-leaf-container.h"
+#include <boost/exception/all.hpp>
 
 /**
  * \defgroup sync SYNC protocol
@@ -68,7 +69,29 @@ protected:
   LeafContainer m_leaves;
 };
 
-std::string & operator >> (std::string &DataBuffer, State &state);
+/**
+ * @brief Formats an XML representation of the state
+ * @param os output stream
+ * @param state state
+ * @returns output stream
+ */
+std::ostream &
+operator << (std::ostream &os, const State &state);
+
+/**
+ * @brief Parses an XML representation to the state
+ * @param DataBuffer input data
+ * @param state state
+ */
+// void
+// operator >> (const std::string &DataBuffer, State &state);
+std::istream &
+operator >> (std::istream &in, State &state);
+
+/**
+ * @brief Will be thrown when XML cannot be properly decoded to State
+ */
+struct SyncXmlDecodingFailure : virtual boost::exception, virtual std::exception { };
 
 } // Sync
 
