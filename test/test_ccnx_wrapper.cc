@@ -63,9 +63,11 @@ BOOST_AUTO_TEST_CASE (CcnxWrapperTest)
 	string interest = "/ucla.edu/0";
 	hb.sendInterest(interest, memberFunc);
 
+	// give time for ccnd to react
+	sleep(5);
+
 	BOOST_CHECK_EQUAL(echoStr, interest);
 
-	sleep(5);
 
 	string name = "/ucla.edu/0";
 	string data = "random bits: !#$!@#$!";
@@ -73,6 +75,8 @@ BOOST_AUTO_TEST_CASE (CcnxWrapperTest)
 
 	hb.sendInterest(interest, memberFunc);
 
+	// give time for ccnd to react
+	sleep(5);
 	BOOST_CHECK_EQUAL(foo.s_str, data);
 
 }
