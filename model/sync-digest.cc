@@ -24,7 +24,9 @@
 #include <string.h>
 
 #include <boost/assert.hpp>
-#include <boost/exception/errinfo_at_line.hpp>
+#include <boost/throw_exception.hpp>
+typedef boost::error_info<struct tag_errmsg, std::string> errmsg_info_str; 
+typedef boost::error_info<struct tag_errmsg, int> errmsg_info_int; 
 
 // for printing, may be disabled in optimized build
 
@@ -86,7 +88,7 @@ struct hex_to_4_bit
     if ((unsigned)ch < 128)
       value = lookup_table [(unsigned)ch];
     if (value == -1)
-      throw Sync::DigestCalculationError () << errinfo_at_line (__LINE__);
+      BOOST_THROW_EXCEPTION (Sync::DigestCalculationError () << errmsg_info_int ((int)ch));
     
     return value;
   }
@@ -137,7 +139,9 @@ Digest::reset ()
 
   int ok = EVP_DigestInit_ex (m_context, HASH_FUNCTION (), 0);
   if (!ok)
-    throw DigestCalculationError () << errinfo_at_line (__LINE__);
+    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+                           << errmsg_info_str ("EVP_DigestInit_ex returned error")
+                           << errmsg_info_int (ok));
 }
 
 
@@ -151,7 +155,9 @@ Digest::finalize ()
   int ok = EVP_DigestFinal_ex (m_context,
 			       m_buffer, &m_hashLength);
   if (!ok)
-    throw DigestCalculationError () << errinfo_at_line (__LINE__);
+    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+                           << errmsg_info_str ("EVP_DigestFinal_ex returned error")
+                           << errmsg_info_int (ok));
 }
   
 std::size_t
@@ -161,7 +167,9 @@ Digest::getHash ()
     finalize ();
 
   if (sizeof (std::size_t) > m_hashLength)
-    throw DigestCalculationError () << errinfo_at_line (__LINE__);
+    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+                           << errmsg_info_str ("Hash length is less than size_t")
+                           << errmsg_info_int (m_hashLength));
   
   // just getting first sizeof(std::size_t) bytes
   // not ideal, but should work pretty well
@@ -171,10 +179,19 @@ Digest::getHash ()
 bool
 Digest::operator == (const Digest &digest) const
 {
-  if (m_buffer == 0 || digest.m_buffer == 0)
-    throw DigestCalculationError () << errinfo_at_line (__LINE__);
-  
-  BOOST_ASSERT (m_hashLength == digest.m_hashLength);
+  if (m_buffer == 0)
+    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+                           << errmsg_info_str ("Digest1 is empty"));
+
+  if (digest.m_buffer == 0)
+    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+                           << errmsg_info_str ("Digest2 is empty"));
+
+  if (m_hashLength != digest.m_hashLength)
+    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+                           << errmsg_info_str ("Digest lengths are not the same")
+                           << errmsg_info_int (m_hashLength)
+                           << errmsg_info_int (digest.m_hashLength));
 
   return memcmp (m_buffer, digest.m_buffer, m_hashLength) == 0;
 }
@@ -187,11 +204,14 @@ Digest::update (const uint8_t *buffer, size_t size)
   
   // cannot update Digest when it has been finalized
   if (m_buffer != 0)
-    throw DigestCalculationError () << errinfo_at_line (__LINE__);
+    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+                           << errmsg_info_str ("Digest has been already finalized"));
 
   bool ok = EVP_DigestUpdate (m_context, buffer, size);
   if (!ok)
-    throw DigestCalculationError () << errinfo_at_line (__LINE__);
+    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+                           << errmsg_info_str ("EVP_DigestUpdate returned error")
+                           << errmsg_info_int (ok));
 }
 
 
@@ -199,7 +219,8 @@ Digest &
 Digest::operator << (const Digest &src)
 {
   if (src.m_buffer == 0) 
-    throw DigestCalculationError () << errinfo_at_line (__LINE__);
+    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+                           << errmsg_info_str ("Digest has not been yet finalized"));
 
   update (src.m_buffer, src.m_hashLength);
 
@@ -227,14 +248,16 @@ operator >> (std::istream &is, Digest &digest)
   is >> str; // read string first
 
   if (str.size () == 0)
-    throw DigestCalculationError () << errinfo_at_line (__LINE__);
+    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+                           << errmsg_info_str ("Input is empty"));
   
   // uint8_t padding = (3 - str.size () % 3) % 3;
   // for (uint8_t i = 0; i < padding; i++) str.push_back ('=');
 
   // only empty digest object can be used for reading
   if (digest.m_buffer != 0)
-    throw DigestCalculationError () << errinfo_at_line (__LINE__);
+    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+                           << errmsg_info_str ("Digest has been already finalized"));
 
   digest.m_buffer = new uint8_t [EVP_MAX_MD_SIZE];
   uint8_t *end = copy (string_to_binary (str.begin ()),

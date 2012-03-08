@@ -24,6 +24,7 @@
 #define SYNC_DIFF_LEAF_H
 
 #include "sync-leaf.h"
+#include <boost/exception/all.hpp>
 
 namespace Sync {
 
@@ -73,6 +74,14 @@ private:
 };
 
 typedef boost::shared_ptr<DiffLeaf> DiffLeafPtr;
+
+std::ostream &
+operator << (std::ostream &os, Operation op);
+
+std::istream &
+operator >> (std::istream &is, Operation &op);
+
+struct SyncDiffLeafOperationParseError : virtual boost::exception, virtual std::exception { };
 
 } // Sync
 

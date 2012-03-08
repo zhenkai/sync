@@ -21,6 +21,8 @@
  */
 
 #include "sync-diff-leaf.h"
+#include <boost/throw_exception.hpp>
+typedef boost::error_info<struct tag_errmsg, std::string> errmsg_info; 
 
 namespace Sync {
 
@@ -35,5 +37,36 @@ DiffLeaf::DiffLeaf (NameInfoConstPtr info)
   , m_op (REMOVE)
 {
 }
+
+std::ostream &
+operator << (std::ostream &os, Operation op)
+{
+  switch (op)
+    {
+    case UPDATE:
+      os << "update";
+      break;
+    case REMOVE:
+      os << "remove";
+      break;
+    }
+  return os;
+}
+
+std::istream &
+operator >> (std::istream &is, Operation &op)
+{
+  std::string operation;
+  is >> operation;
+  if (operation == "update")
+    op = UPDATE;
+  else if (operation == "remove")
+    op = REMOVE;
+  else
+    BOOST_THROW_EXCEPTION (SyncDiffLeafOperationParseError () << errmsg_info (operation));
+
+  return is;
+}
+
 
 }

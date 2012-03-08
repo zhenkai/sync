@@ -130,7 +130,7 @@ private:
   uint32_t m_hashLength;
 };
 
-struct DigestCalculationError : virtual boost::exception { };
+struct DigestCalculationError : virtual boost::exception, virtual std::exception { };
 
 typedef boost::shared_ptr<Digest> DigestPtr;
 typedef boost::shared_ptr<const Digest> DigestConstPtr;
