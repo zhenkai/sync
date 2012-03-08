@@ -155,11 +155,11 @@ static ccn_upcall_res incomingInterest(
   }
 
   string interest;
-  for (int i = 0; i < info->content_comps->n - 1; i++)
+  for (int i = 0; i < info->interest_comps->n - 1; i++)
   {
     char *comp;
     size_t size;
-    ccn_name_comp_get(info->content_ccnb, info->content_comps, i, (const unsigned char **)&comp, &size);
+    ccn_name_comp_get(info->interest_ccnb, info->interest_comps, i, (const unsigned char **)&comp, &size);
     interest += comp;
   }
   f(interest);
