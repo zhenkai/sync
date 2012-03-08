@@ -1,4 +1,4 @@
-.lock-waf_darwin_build
+.lock-waf*
 .waf*
 build/
 *.pyc
