@@ -25,7 +25,6 @@
 #include "sync-full-leaf.h"
 #include <boost/make_shared.hpp>
 #include <boost/foreach.hpp>
-#include <sys/socket.h>
 #include <vector>
 
 using namespace std;
