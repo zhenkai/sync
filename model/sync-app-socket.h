@@ -37,37 +37,37 @@ namespace Sync {
 class SyncAppSocket
 {
 public:
-	/**
-	 * @brief the constructor for SyncAppSocket; the parameter syncPrefix
-	 * should be passed to the constructor of m_syncAppWrapper; the other
-	 * parameter should be passed to the constructor of m_fetcher; furthermore,
-	 * the fetch function of m_fetcher should be a second paramter passed to
-	 * the constructor of m_syncAppWrapper, so that m_syncAppWrapper can tell
-	 * m_fetcher to fetch the actual app data after it learns the names
-	 *
-	 * @param syncPrefix the name prefix for Sync Interest
-	 * @param dataCallback the callback to process data
-	 */
-	SyncAppSocket(std::string syncPrefix, boost::function<void (std::string, std::string)>
-	dataCallback);
+  /**
+   * @brief the constructor for SyncAppSocket; the parameter syncPrefix
+   * should be passed to the constructor of m_syncAppWrapper; the other
+   * parameter should be passed to the constructor of m_fetcher; furthermore,
+   * the fetch function of m_fetcher should be a second paramter passed to
+   * the constructor of m_syncAppWrapper, so that m_syncAppWrapper can tell
+   * m_fetcher to fetch the actual app data after it learns the names
+   *
+   * @param syncPrefix the name prefix for Sync Interest
+   * @param dataCallback the callback to process data
+   */
+  SyncAppSocket (const std::string &syncPrefix, CcnxWrapper::DataCallback dataCallback);
+  ~SyncAppSocket ();
 
-	~SyncAppSocket();
-
-	/**
-	 * @brief publish data from local client and tell SyncLogic to update
-	 * the sync tree by adding the local names
-	 *
-	 * @param prefix the name prefix for the data
-	 * @param dataBuffer the data itself
-	 * @param freshness the freshness time for the data (in seconds)
-	 */
-	bool publish(std::string prefix, uint32_t session, std::string dataBuffer, int freshness);
+  /**
+   * @brief publish data from local client and tell SyncLogic to update
+   * the sync tree by adding the local names
+   *
+   * @param prefix the name prefix for the data
+   * @param session session to which data is published
+   * @param dataBuffer the data itself
+   * @param freshness the freshness time for the data (in seconds)
+   */
+  bool publish (const std::string &prefix, uint32_t session, const std::string &dataBuffer, int freshness);
 
 private:
-	AppDataFetch *m_fetcher;
-	AppDataPublish *m_publisher;
-	SyncLogic *m_syncLogic;
-	boost::shared_ptr<CcnxWrapper> m_ccnxHandle;
+  CcnxWrapperPtr m_ccnxHandle;
+
+  AppDataFetch   m_fetcher;
+  AppDataPublish m_publisher;
+  SyncLogic      m_syncLogic;
 };
 
 } // Sync

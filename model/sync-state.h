@@ -80,11 +80,10 @@ operator << (std::ostream &os, const State &state);
 
 /**
  * @brief Parses an XML representation to the state
- * @param DataBuffer input data
+ * @param in input data stream
  * @param state state
+ * @returns input stream
  */
-// void
-// operator >> (const std::string &DataBuffer, State &state);
 std::istream &
 operator >> (std::istream &in, State &state);
 

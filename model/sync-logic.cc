@@ -29,7 +29,7 @@ namespace Sync
 {
 
 SyncLogic::SyncLogic (const string &syncPrefix,
-                      SyncCallback fetch,
+                      LogicCallback fetch,
                       CcnxWrapperPtr ccnxHandle)
   : m_syncPrefix (syncPrefix)
   , m_fetch (fetch)
@@ -70,15 +70,11 @@ SyncLogic::respondSyncInterest (const string &interest)
 void
 SyncLogic::sendSyncInterest ()
 {
-  function<void (string, string)> f = bind(&SyncLogic::processSyncData, this, _1, _2);
-  stringstream os;
-  os << m_syncPrefix;
-  os << "/";
-  DigestConstPtr digest = m_state.getDigest();
-  os << digest;
-  string name;
-  os >> name;
-  m_ccnxHandle->sendInterest (name, f);
+  ostringstream os;
+  os << m_syncPrefix << "/" << m_state.getDigest();
+  
+  m_ccnxHandle->sendInterest (os.str (),
+                              bind (&SyncLogic::processSyncData, this, _1, _2));
 }
 
 }

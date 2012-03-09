@@ -22,9 +22,8 @@
 
 #ifndef SYNC_APP_DATA_FETCH_H
 #define SYNC_APP_DATA_FETCH_H
+
 #include "sync-ccnx-wrapper.h"
-#include <boost/function.hpp>
-#include <boost/shared_ptr.hpp>
 
 namespace Sync {
 
@@ -36,28 +35,40 @@ namespace Sync {
 class AppDataFetch
 {
 public:
-	/**
-	 * @param dataCallback the callback function to process data
-	 */
-	AppDataFetch(boost::shared_ptr<CcnxWrapper> ccnxHandle,
-		     boost::function<void (std::string, std::string)> dataCallback)
-	{ m_ccnxHandle = ccnxHandle; m_dataCallback = dataCallback; }
+  /**
+   * @brief Constructor
+   * @param ccnxHandle handle for CCNx
+   * @param dataCallback the callback function to process data
+   */
+  AppDataFetch (CcnxWrapperPtr ccnxHandle,
+                CcnxWrapper::DataCallback dataCallback)
+    : m_ccnxHandle (ccnxHandle)
+    , m_dataCallback (dataCallback)
+  { }
 
-	void setDataCallback(boost::function<void (std::string, std::string)> dataCallback)
-	{ m_dataCallback = dataCallback; }
+  /**
+   * @brief Set data callback
+   * @param dataCallback the callback function to process data
+   */
+  void
+  setDataCallback(CcnxWrapper::DataCallback dataCallback)
+  {
+    m_dataCallback = dataCallback;
+  }
 
-	/**
-	 * @brief fetch data for a certain name prefix
-	 *
-	 * @param prefix the prefix for the data
-	 * @param startSeq the start of sequence number range (inclusive)
-	 * @param endSeq the end of sequence number range (inclusive)
-	 */
-	void fetch(std::string prefix, uint32_t startSeq, uint32_t endSeq);
+  /**
+   * @brief Fetch data for a certain name prefix
+   *
+   * @param prefix the prefix for the data
+   * @param startSeq the start of sequence number range (inclusive)
+   * @param endSeq the end of sequence number range (inclusive)
+   */
+  void
+  fetch (const std::string &prefix, uint32_t startSeq, uint32_t endSeq);
 
 private:
-	boost::shared_ptr<CcnxWrapper> m_ccnxHandle;
-	boost::function<void (std::string, std::string)> m_dataCallback;
+  CcnxWrapperPtr m_ccnxHandle;
+  CcnxWrapper::DataCallback m_dataCallback;
 };
 
 

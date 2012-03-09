@@ -22,16 +22,11 @@
 
 #ifndef SYNC_APP_DATA_PUBLISH_H
 #define SYNC_APP_DATA_PUBLISH_H
-#include <boost/shared_ptr.hpp>
+
 #include <boost/unordered_map.hpp>
 #include "sync-seq-no.h"
 #include "sync-ccnx-wrapper.h"
 
-/**
- * \defgroup sync SYNC protocol
- *
- * Implementation of SYNC protocol
- */
 namespace Sync {
 
 struct Seq
@@ -49,39 +44,45 @@ struct Seq
 class AppDataPublish
 {
 public:
-	AppDataPublish(boost::shared_ptr<CcnxWrapper> ccnxHandle)
-	{ m_ccnxHandle = ccnxHandle; }
-	~AppDataPublish() {};
+  AppDataPublish (CcnxWrapperPtr ccnxHandle)
+  : m_ccnxHandle (ccnxHandle)
+  { }
 
-	/**
-	 * @brief get the name (including sequence number) and the content
-	 * (unencoded, just XML stanza) of the most recent published data
-	 *
-	 * @param prefix the name prefix to look for
-	 * @return the pair of name and content
-	 */
-	std::string getRecentData(std::string prefix, uint32_t session);
+  /**
+   * @brief get the name (including sequence number) and the content
+   * (unencoded, just XML stanza) of the most recent published data
+   *
+   * @param prefix the name prefix to look for
+   * @param session session
+   * @return the pair of name and content
+   */
+  std::string
+  getRecentData (const std::string &prefix, uint32_t session);
 
-	/**
-	 * brief get the most recent sequence number for a name prefix
-	 */
-	 u_int32_t getHighestSeq(std::string prefix, uint32_t session);
+  /**
+   * @brief get the most recent sequence number for a name prefix
+   * @param prefix the name prefix to look for
+   * @param session session
+   */
+  uint32_t
+  getHighestSeq (const std::string &prefix, uint32_t session);
 
-	/**
-	 * @brief publish data for a name prefix, updates the corresponding
-	 * sequence number and recent data
-	 *
-	 * @param name data prefix
-	 * @param dataBuffer the data itself
-	 * @param freshness the freshness for the data object
-	 * @return whether the publish succeeded
-	 */
-	bool publishData(std::string name, uint32_t session, std::string dataBuffer, int freshness);
+  /**
+   * @brief publish data for a name prefix, updates the corresponding
+   * sequence number and recent data
+   *
+   * @param name data prefix
+   * @param session session to which data is published
+   * @param dataBuffer the data itself
+   * @param freshness the freshness for the data object
+   * @return whether the publish succeeded
+   */
+  bool publishData (const std::string &name, uint32_t session, const std::string &dataBuffer, int freshness);
 
 private:
-	boost::unordered_map<std::string, Seq> m_sequenceLog;
-	boost::shared_ptr<CcnxWrapper> m_ccnxHandle;
-	boost::unordered_map<std::string, std::string> m_recentData;
+  boost::unordered_map<std::string, Seq> m_sequenceLog;
+  CcnxWrapperPtr m_ccnxHandle;
+  boost::unordered_map<std::string, std::string> m_recentData;
 };
 
 } // Sync

@@ -42,15 +42,16 @@ namespace Sync {
 class SyncLogic
 {
 public:
-  typedef boost::function<void (const std::string &,uint32_t, uint32_t)> SyncCallback;
+  typedef boost::function<void (const std::string &,uint32_t, uint32_t)> LogicCallback;
   
   /**
-   * @brief constructor for this class;
+   * @brief Constructor
    * @param syncPrefix the name prefix to use for the Sync Interest
    * @param fetch the fetch function, which will be called to actually fetch
+   * @param ccnxHandle ccnx handle
    * the app data when new remote names are learned
    */
-  SyncLogic (const std::string &syncPrefix, SyncCallback fetch, CcnxWrapperPtr ccnxHandle);
+  SyncLogic (const std::string &syncPrefix, LogicCallback fetch, CcnxWrapperPtr ccnxHandle);
 
   ~SyncLogic ();
   
@@ -67,6 +68,7 @@ public:
 
   /**
    * @brief process the fetched sync data
+   * @param name name ???
    * @param dataBuffer the sync data
    */
   void processSyncData (const std::string &name, const std::string &dataBuffer);
@@ -80,7 +82,7 @@ private:
   SyncInterestTable m_syncInterestTable;
 
   std::string m_syncPrefix;
-  SyncCallback m_fetch;
+  LogicCallback m_fetch;
   CcnxWrapperPtr m_ccnxHandle;
 };
 

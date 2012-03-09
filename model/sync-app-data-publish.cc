@@ -28,26 +28,29 @@ using namespace boost;
 namespace Sync
 {
 
-string AppDataPublish::getRecentData(string prefix, uint32_t session)
+string
+AppDataPublish::getRecentData (const string &prefix, uint32_t session)
 {
-
+  return "";
 }
 
-uint32_t AppDataPublish::getHighestSeq(string prefix, uint32_t session)
+uint32_t
+AppDataPublish::getHighestSeq (const string &prefix, uint32_t session)
 {
   unordered_map<string, Seq>::iterator i = m_sequenceLog.find(prefix);
 
   if (i != m_sequenceLog.end())
-  {
-    Seq s = i->second;
-    if (s.session == session)
-      return s.seq;
-  }
+    {
+      Seq s = i->second;
+      if (s.session == session)
+        return s.seq;
+    }
 
   return 0;
 }
 
-bool AppDataPublish::publishData(string name, uint32_t session, string dataBuffer, int freshness)
+bool
+AppDataPublish::publishData (const string &name, uint32_t session, const string &dataBuffer, int freshness)
 {
   uint32_t seq = getHighestSeq(name, session);
   if (seq == 0)
@@ -61,10 +64,10 @@ bool AppDataPublish::publishData(string name, uint32_t session, string dataBuffe
   s.seq = seq;
   m_sequenceLog[name] = s;
 
-  string contentName = name;
-  contentName += seq;
+  ostringstream contentNameWithSeqno;
+  contentNameWithSeqno << name << "/" << seq;
 
-  m_ccnxHandle->publishData(contentName, dataBuffer, freshness);
+  m_ccnxHandle->publishData (contentNameWithSeqno.str (), dataBuffer, freshness);
 
   return true;
 }

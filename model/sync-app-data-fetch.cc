@@ -28,15 +28,16 @@ using namespace boost;
 namespace Sync
 {
 
-void AppDataFetch::fetch(string prefix, uint32_t startSeq, uint32_t endSeq)
+void
+AppDataFetch::fetch (const string &prefix, uint32_t startSeq, uint32_t endSeq)
 {
   for (uint32_t i = startSeq; i <= endSeq; i++)
   {
     if (i == 0)
       continue;
-    string interestName = prefix;
-    interestName += i;
-    m_ccnxHandle->sendInterest(interestName, m_dataCallback);
+    ostringstream interestName;
+    interestName << prefix << "/" << i;
+    m_ccnxHandle->sendInterest (interestName.str (), m_dataCallback);
   }
 }
 
