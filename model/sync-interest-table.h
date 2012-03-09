@@ -67,7 +67,7 @@ private:
 	void periodicCheck();
 
 private:
-	static int m_checkPeriod = 4;
+	static const int m_checkPeriod = 4;
 	boost::unordered_map<std::string, time_t> m_table; // pit entries
 	boost::thread m_thread; // thread to check every 4 sec
 	boost::recursive_mutex m_mutex;

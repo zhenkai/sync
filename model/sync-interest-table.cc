@@ -30,7 +30,7 @@ namespace Sync
 
 unordered_set<string> SyncInterestTable::fetchAll()
 {
-	expireInterest();
+	expireInterests();
 
 	recursive_mutex::scoped_lock lock(m_mutex);
 	unordered_set<string> entries;
@@ -50,7 +50,7 @@ bool SyncInterestTable::insert(string interest)
 	m_table.insert(make_pair(interest, currentTime));
 }
 
-void SyncInterestTable::SyncInterestTable() {
+SyncInterestTable::SyncInterestTable() {
 	m_thread = thread(&SyncInterestTable::periodicCheck, this);
 }
 
@@ -70,7 +70,7 @@ void SyncInterestTable::expireInterests() {
 
 void SyncInterestTable::periodicCheck() {
 	sleep(4);
-	expireInterest();
+	expireInterests();
 }
 
 }
