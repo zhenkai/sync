@@ -199,7 +199,7 @@ SyncLogic::respondSyncInterest (const string &interest)
   }
   else
   {
-    int wait = rand() % 100 + 20;
+    int wait = rand() % 80 + 20;
     sleep(wait/1000.0);
   }
 
