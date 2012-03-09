@@ -13,14 +13,23 @@ def options(opt):
 
 def configure(conf):
     conf.load("compiler_cxx")
-    conf.check_cfg(atleast_pkgconfig_version='0.20')
-    conf.check_cfg(package='openssl', args=['--cflags', '--libs'], uselib_store='SSL')
-    # conf.check_cfg(package='libxml-2.0', args=['--cflags', '--libs'], uselib_store='XML')
+
+    if not conf.check_cfg(package='openssl', args=['--cflags', '--libs'], uselib_store='SSL', mandatory=False):
+      libcrypto = conf.check_cc(lib='crypto',
+                                header_name='openssl/crypto.h',
+                                define_name='HAVE_SSL',
+                                uselib_store='SSL')
+    if not conf.get_define ("HAVE_SSL"):
+        conf.fatal ("Cannot find SSL libraries")
 
     conf.load('boost')
     conf.check_boost(lib='system iostreams test thread')
     
-    conf.load('doxygen')
+    try:
+        conf.load('doxygen')
+    except:
+        pass
+
     conf.load('ccnx tinyxml')
     conf.check_ccnx (path=conf.options.ccnx_dir)
     conf.check_tinyxml (path=conf.options.ccnx_dir)
@@ -43,7 +52,6 @@ def build (bld):
                  features=['cxx', 'cxxprogram'],
                  use = 'BOOST_TEST sync')
 
-
 # doxygen docs
 from waflib.Build import BuildContext
 class doxy (BuildContext):
@@ -51,6 +59,8 @@ class doxy (BuildContext):
     fun = "doxygen"
 
 def doxygen (bld):
+    if not bld.env.DOXYGEN:
+        bld.fatal ("ERROR: cannot build documentation (`doxygen' is not found in $PATH)")
     bld (features="doxygen",
          doxyfile='doc/doxygen.conf',
          output_dir = 'doc')
