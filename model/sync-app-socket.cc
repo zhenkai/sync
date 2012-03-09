@@ -28,7 +28,7 @@ using namespace boost;
 namespace Sync
 {
 
-SyncAppSocket::SyncAppSocket(string syncPrefix, function<void (string)> dataCallback)
+SyncAppSocket::SyncAppSocket(string syncPrefix, function<void (string, string)> dataCallback)
 {
   m_ccnxHandle.reset(new CcnxWrapper());
   m_fetcher = new AppDataFetch(m_ccnxHandle, dataCallback);
@@ -45,10 +45,10 @@ SyncAppSocket::~SyncAppSocket()
   delete m_publisher;
 }
 
-bool SyncAppSocket::publish(string prefix, string dataBuffer, int freshness)
+bool SyncAppSocket::publish(string prefix, uint32_t session, string dataBuffer, int freshness)
 {
-  m_publisher->publishData(prefix, dataBuffer, freshness);
-  m_syncLogic->addLocalNames(prefix, m_publisher->getHighestSeq(prefix));
+  m_publisher->publishData(prefix, session, dataBuffer, freshness);
+  m_syncLogic->addLocalNames(prefix, session, m_publisher->getHighestSeq(prefix, session));
 }
 
 }

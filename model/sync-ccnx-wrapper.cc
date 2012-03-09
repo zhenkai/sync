@@ -177,7 +177,7 @@ static ccn_upcall_res incomingData(
                                    ccn_upcall_kind kind,
                                    ccn_upcall_info *info)
 {
-  function<void (string)> f = *(function<void (string)> *)selfp->data;
+  function<void (string, string)> f = *(function<void (string, string)> *)selfp->data;
 
   switch (kind)
     {
@@ -195,15 +195,24 @@ static ccn_upcall_res incomingData(
   char *pcontent;
   size_t len;
   ccn_content_get_value(info->content_ccnb, info->pco->offset[CCN_PCO_E], info->pco, (const unsigned char **)&pcontent, &len);
-  f((string)pcontent);
+  string name;
+  for (int i = 0; i < info->content_comps->n - 1; i++)
+    {
+      char *comp;
+      size_t size;
+      name += "/";
+      ccn_name_comp_get(info->content_ccnb, info->content_comps, i, (const unsigned char **)&comp, &size);
+      name += comp;
+    }
+  f(name, (string)pcontent);
   return CCN_UPCALL_RESULT_OK;
 }
 
-int CcnxWrapper::sendInterest(string strInterest, function<void (string)> dataCallback)
+int CcnxWrapper::sendInterest(string strInterest, function<void (string, string)> dataCallback)
 {
   ccn_charbuf *pname = ccn_charbuf_create();
   ccn_closure *dataClosure = new ccn_closure;
-  function<void (string)> *f = new function<void (string)>(dataCallback);
+  function<void (string, string)> *f = new function<void (string, string)>(dataCallback);
 
   ccn_name_from_uri(pname, strInterest.c_str());
   dataClosure->data = f;

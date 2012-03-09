@@ -24,6 +24,7 @@
 #define SYNC_APP_DATA_PUBLISH_H
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
+#include "sync-seq-no.h"
 #include "sync-ccnx-wrapper.h"
 
 /**
@@ -32,6 +33,12 @@
  * Implementation of SYNC protocol
  */
 namespace Sync {
+
+struct Seq
+{
+  uint32_t session;
+  uint32_t seq;
+};
 
 /**
  * \ingroup sync
@@ -53,12 +60,12 @@ public:
 	 * @param prefix the name prefix to look for
 	 * @return the pair of name and content
 	 */
-	std::pair<std::string, std::string> getRecentData(std::string prefix);
+	std::string getRecentData(std::string prefix, uint32_t session);
 
 	/**
 	 * brief get the most recent sequence number for a name prefix
 	 */
-	 u_int32_t getHighestSeq(std::string prefix);
+	 u_int32_t getHighestSeq(std::string prefix, uint32_t session);
 
 	/**
 	 * @brief publish data for a name prefix, updates the corresponding
@@ -69,10 +76,10 @@ public:
 	 * @param freshness the freshness for the data object
 	 * @return whether the publish succeeded
 	 */
-	bool publishData(std::string name, std::string dataBuffer, int freshness);
+	bool publishData(std::string name, uint32_t session, std::string dataBuffer, int freshness);
 
 private:
-	boost::unordered_map<std::string, uint32_t> m_sequenceLog;
+	boost::unordered_map<std::string, Seq> m_sequenceLog;
 	boost::shared_ptr<CcnxWrapper> m_ccnxHandle;
 	boost::unordered_map<std::string, std::string> m_recentData;
 };

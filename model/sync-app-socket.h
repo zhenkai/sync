@@ -48,7 +48,7 @@ public:
 	 * @param syncPrefix the name prefix for Sync Interest
 	 * @param dataCallback the callback to process data
 	 */
-	SyncAppSocket(std::string syncPrefix, boost::function<void (std::string)>
+	SyncAppSocket(std::string syncPrefix, boost::function<void (std::string, std::string)>
 	dataCallback);
 
 	~SyncAppSocket();
@@ -61,7 +61,7 @@ public:
 	 * @param dataBuffer the data itself
 	 * @param freshness the freshness time for the data (in seconds)
 	 */
-	bool publish(std::string prefix, std::string dataBuffer, int freshness);
+	bool publish(std::string prefix, uint32_t session, std::string dataBuffer, int freshness);
 
 private:
 	AppDataFetch *m_fetcher;

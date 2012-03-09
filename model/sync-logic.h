@@ -28,7 +28,7 @@
 #include "sync-interest-table.h"
 #include "sync-diff-state.h"
 #include "sync-full-state.h"
-#include "sync-app.h"
+#include "sync-std-name-info.h"
 
 namespace Sync {
 
@@ -53,7 +53,7 @@ public:
 	/**
 	 * a wrapper for the same func in SyncApp
 	 */
-	void addLocalNames(std::string prefix, uint32_t seq);
+	void addLocalNames(std::string prefix, uint32_t session, uint32_t seq);
 
 	/**
 	 * @brief respond to the Sync Interest; a lot of logic needs to go in here
@@ -65,14 +65,14 @@ public:
 	 * @brief process the fetched sync data
 	 * @param dataBuffer the sync data
 	 */
-	void processSyncData(std::string dataBuffer);
+	void processSyncData(std::string name, std::string dataBuffer);
 
 private:
 	void sendSyncInterest();
 
 private:
 	boost::shared_ptr<CcnxWrapper> m_ccnxHandle;
-	//boost::shared_ptr<SyncApp> m_syncApp;
+	FullState m_state;
 	boost::function<void (std::string, uint32_t, uint32_t)> m_fetch;
 	SyncInterestTable m_syncInterestTable;
 	std::string m_syncPrefix;

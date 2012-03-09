@@ -68,8 +68,8 @@ public:
    * @return the return code of ccn_express_interest
    */
   int
-  sendInterest(std::string strInterest, boost::function<void (std::string)>
-               dataCallback);
+  sendInterest(std::string strInterest, boost::function<void
+  (std::string, std::string)> dataCallback);
 
   /**
    * @brief set Interest filter (specify what interest you want to receive

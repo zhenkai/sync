@@ -39,9 +39,10 @@ void echo(string str) {
 }
 
 struct TestStruct {
-	string s_str;
-	void set(string str) {
-		s_str = str;
+	string s_str1, s_str2;
+	void set(string str1, string str2) {
+		s_str1 = str1;
+		s_str2 = str2;
 	}
 };
 
@@ -54,8 +55,8 @@ BOOST_AUTO_TEST_CASE (CcnxWrapperTest)
 	TestStruct foo;
 	
 	boost::function<void (string)> globalFunc = echo;
-	boost::function<void (string)> memberFunc =
-	bind1st(mem_fun(&TestStruct::set), &foo);
+	boost::function<void (string, string)> memberFunc =
+	bind(&TestStruct::set, &foo, _1, _2);
 
 	string prefix = "/ucla.edu";
 	ha.setInterestFilter(prefix, globalFunc);
@@ -77,7 +78,8 @@ BOOST_AUTO_TEST_CASE (CcnxWrapperTest)
 
 	// give time for ccnd to react
 	sleep(1);
-	BOOST_CHECK_EQUAL(foo.s_str, data);
+	BOOST_CHECK_EQUAL(foo.s_str1, name);
+	BOOST_CHECK_EQUAL(foo.s_str2, data);
 
 }
 

@@ -40,10 +40,10 @@ public:
 	 * @param dataCallback the callback function to process data
 	 */
 	AppDataFetch(boost::shared_ptr<CcnxWrapper> ccnxHandle,
-		     boost::function<void (std::string)> dataCallback)
+		     boost::function<void (std::string, std::string)> dataCallback)
 	{ m_ccnxHandle = ccnxHandle; m_dataCallback = dataCallback; }
 
-	void setDataCallback(boost::function<void (std::string)> dataCallback)
+	void setDataCallback(boost::function<void (std::string, std::string)> dataCallback)
 	{ m_dataCallback = dataCallback; }
 
 	/**
@@ -57,7 +57,7 @@ public:
 
 private:
 	boost::shared_ptr<CcnxWrapper> m_ccnxHandle;
-	boost::function<void (std::string)> m_dataCallback;
+	boost::function<void (std::string, std::string)> m_dataCallback;
 };
 
 
