@@ -32,6 +32,7 @@ extern "C" {
 #include <ccn/signing.h>
 }
 
+#include <boost/exception/all.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/function.hpp>
@@ -44,6 +45,7 @@ extern "C" {
  */
 namespace Sync {
 
+struct CcnxOperationException : virtual boost::exception, virtual std::exception { };
 /**
  * \ingroup sync
  * @brief A wrapper for ccnx library; clients of this code do not need to deal

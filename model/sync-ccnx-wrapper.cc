@@ -22,6 +22,8 @@
 
 #include "sync-ccnx-wrapper.h"
 #include <poll.h>
+#include <boost/throw_exception.hpp>
+typedef boost::error_info<struct tag_errmsg, std::string> errmsg_info_str; 
 
 using namespace std;
 using namespace boost;
@@ -35,7 +37,9 @@ CcnxWrapper::CcnxWrapper()
   , m_running (true)
 {
   m_handle = ccn_create();
-  ccn_connect(m_handle, NULL);
+  if (ccn_connect(m_handle, NULL) < 0) 
+		BOOST_THROW_EXCEPTION (CcnxOperationException() 
+													<< errmsg_info_str("connection to ccnd failed"));
   initKeyStore();
   createKeyLocator();
   m_thread = thread (&CcnxWrapper::ccnLoop, this);
@@ -90,8 +94,9 @@ CcnxWrapper::initKeyStore ()
 {
   ccn_charbuf *temp = ccn_charbuf_create ();
   m_keyStore = ccn_keystore_create ();
-  ccn_charbuf_putf (temp, "%s/.ccnx/.ccnx_keystore", getenv("HOME"));
-  ccn_keystore_init (m_keyStore, ccn_charbuf_as_string(temp), (char*)"Th1s1sn0t8g00dp8ssw0rd.");
+	string keyStoreFile = string(getenv("HOME")) + string("/.ccnx/.ccnx_keystore");
+  if (ccn_keystore_init (m_keyStore, (char *)keyStoreFile.c_str(), (char*)"Th1s1sn0t8g00dp8ssw0rd.") < 0) 
+		BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str(keyStoreFile.c_str()));
   ccn_charbuf_destroy (&temp);
 }
 
@@ -136,11 +141,14 @@ CcnxWrapper::publishData (const string &name, const string &dataBuffer, int fres
 			 freshness,
 			 NULL,
 			 m_keyLoactor);
-  ccn_encode_ContentObject(content, pname, signed_info,
+  if(ccn_encode_ContentObject(content, pname, signed_info,
 			   dataBuffer.c_str(), dataBuffer.length (),
-			   NULL, getPrivateKey());
+			   NULL, getPrivateKey()) < 0)
+		BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("encode content failed"));
+
   recursive_mutex::scoped_lock lock(m_mutex);
-  ccn_put(m_handle, content->buf, content->length);
+  if (ccn_put(m_handle, content->buf, content->length) < 0)
+		BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("ccnput failed"));
 
   ccn_charbuf_destroy (&pname);
   ccn_charbuf_destroy (&signed_info);
@@ -205,7 +213,9 @@ incomingData(ccn_closure *selfp,
 
   char *pcontent;
   size_t len;
-  ccn_content_get_value(info->content_ccnb, info->pco->offset[CCN_PCO_E], info->pco, (const unsigned char **)&pcontent, &len);
+  if (ccn_content_get_value(info->content_ccnb, info->pco->offset[CCN_PCO_E], info->pco, (const unsigned char **)&pcontent, &len) < 0)
+		BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("decode ContentObject failed"));
+
   string name;
   for (int i = 0; i < info->content_comps->n - 1; i++)
     {
@@ -213,7 +223,7 @@ incomingData(ccn_closure *selfp,
       size_t size;
       name += "/";
       ccn_name_comp_get(info->content_ccnb, info->content_comps, i, (const unsigned char **)&comp, &size);
-      name += comp; // this will also crash if name doesn't have \0 ending
+      name += comp; 
     }
   // this will crash when content doesn't have \0 ending
   (*f) (name, (string)pcontent);
@@ -230,7 +240,8 @@ int CcnxWrapper::sendInterest (const string &strInterest, const DataCallback &da
   
   dataClosure->p = &incomingData;
   recursive_mutex::scoped_lock lock(m_mutex);
-  ccn_express_interest (m_handle, pname, dataClosure, NULL);
+  if (ccn_express_interest (m_handle, pname, dataClosure, NULL) < 0)
+		BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("express interest failed"));
 
   ccn_charbuf_destroy (&pname);
 }
@@ -243,7 +254,8 @@ int CcnxWrapper::setInterestFilter (const string &prefix, const InterestCallback
   ccn_name_from_uri (pname, prefix.c_str());
   interestClosure->data = new InterestCallback (interestCallback); // should be removed when closure is removed
   interestClosure->p = &incomingInterest;
-  ccn_set_interest_filter (m_handle, pname, interestClosure);
+  if(ccn_set_interest_filter (m_handle, pname, interestClosure) < 0)
+		BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("set interest filter failed"));
 
   ccn_charbuf_destroy(&pname);
 }
