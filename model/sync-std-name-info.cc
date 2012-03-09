@@ -63,7 +63,7 @@ StdNameInfo::StdNameInfo (const std::string &name)
 {
   m_id = m_ids ++; // set ID for a newly inserted element
   m_digest << name;
-  m_digest.getHash (); // finalize digest
+  m_digest.finalize ();
 
   // std::cout << "StdNameInfo: " << name << " = " << m_id << "\n";
 }

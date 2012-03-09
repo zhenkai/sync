@@ -58,20 +58,20 @@ struct ordered { };
  * @brief Container for SYNC leaves
  */
 struct LeafContainer : public mi::multi_index_container<
-    LeafPtr,
-    mi::indexed_by<
-      // For fast access to elements using NameInfo
-      mi::hashed_unique<
-        mi::tag<hashed>,
-        mi::const_mem_fun<Leaf, const NameInfo&, &Leaf::getInfo>,
-        NameInfoHash
-        >,
-      mi::ordered_unique<
-        mi::tag<ordered>,
-        mi::const_mem_fun<Leaf, const NameInfo&, &Leaf::getInfo>
-        >
+  LeafPtr,
+  mi::indexed_by<
+    // For fast access to elements using NameInfo
+    mi::hashed_unique<
+      mi::tag<hashed>,
+      mi::const_mem_fun<Leaf, const NameInfo&, &Leaf::getInfo>,
+      NameInfoHash
+      >,
+        mi::ordered_unique<
+          mi::tag<ordered>,
+          mi::const_mem_fun<Leaf, const NameInfo&, &Leaf::getInfo>
+          >
     >
-   >
+  >
 {
 };
 

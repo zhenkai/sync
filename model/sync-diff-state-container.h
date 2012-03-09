@@ -24,9 +24,10 @@
 #define SYNC_DIFF_STATE_CONTAINER_H
 
 #include "sync-diff-state.h"
+#include "sync-digest.h"
 
 #include <boost/multi_index_container.hpp>
-// #include <boost/multi_index/tag.hpp>
+#include <boost/multi_index/tag.hpp>
 // #include <boost/multi_index/ordered_index.hpp>
 // #include <boost/multi_index/composite_key.hpp>
 #include <boost/multi_index/hashed_index.hpp>
@@ -39,14 +40,20 @@ namespace mi = boost::multi_index;
 
 namespace Sync {
 
-// struct DigestHash : public std::unary_function<Digest, std::size_t>
-// {
-//   std::size_t
-//   operator() (const Digest &digest) const
-//   {
-//     return digest % std::limits<std::size_t>::max ();
-//   }
-// };
+struct DigestHash : public std::unary_function<Digest, std::size_t>
+{
+  // std::size_t
+  // operator() (const Digest &digest) const
+  // {
+  //   return digest.getHash ();
+  // }
+
+  std::size_t
+  operator() (DigestConstPtr digest) const
+  {
+    return digest->getHash ();
+  }
+};
 
 /// @cond include_hidden 
 struct sequenced { };
@@ -57,23 +64,21 @@ struct sequenced { };
  * @brief Container for differential states
  */
 struct DiffStateContainer : public mi::multi_index_container<
-    DiffStatePtr,
-    // mi::indexed_by<
-    //   // For fast access to elements using DiffState hashes
-    //   mi::hashed_unique<
-    //     mi::tag<hashed>,
-    //     mi::const_mem_fun<Leaf, const Digest&, &DiffState::getDigest>,
-    //     DigestHash
-    //   >,
-
-  // sequenced index to access older/newer element (like in list)
-      mi::indexed_by<
-        mi::sequenced<mi::tag<sequenced> >
+  DiffStatePtr,
+  mi::indexed_by<
+    // For fast access to elements using DiffState hashes
+    mi::hashed_unique<
+      mi::tag<hashed>,
+      mi::const_mem_fun<DiffState, DigestConstPtr, &DiffState::getDigest>,
+      DigestHash
+      >
+    ,        
+    // sequenced index to access older/newer element (like in list)
+    mi::sequenced<mi::tag<sequenced> >
     >
-   >
+  >
 {
 };
-
 
 } // Sync
 

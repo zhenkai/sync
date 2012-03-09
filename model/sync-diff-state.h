@@ -67,7 +67,7 @@ public:
    */
   DigestConstPtr
   getDigest () const { return m_digest; }
-
+  
   /**
    * @brief Accumulate differences from `this' state to the most current state
    * @returns Accumulated differences from `this' state to the most current state

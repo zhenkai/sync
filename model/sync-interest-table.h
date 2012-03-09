@@ -23,6 +23,7 @@
 #ifndef SYNC_INTEREST_TABLE_H
 #define SYNC_INTEREST_TABLE_H
 #include <string>
+#include <vector>
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 #include <boost/thread/recursive_mutex.hpp>

@@ -161,10 +161,12 @@ Digest::finalize ()
 }
   
 std::size_t
-Digest::getHash ()
+Digest::getHash () const
 {
   if (m_buffer == 0)
-    finalize ();
+    BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
+                           << errmsg_info_str ("Digest has not been yet finalized"));
+  // finalize ();
 
   if (sizeof (std::size_t) > m_hashLength)
     BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()

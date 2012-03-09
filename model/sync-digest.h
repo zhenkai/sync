@@ -64,7 +64,7 @@ public:
    * Side effect: finalize() will be called on `this'
    */
   std::size_t
-  getHash ();
+  getHash () const;
 
   /**
    * @brief Finalize digest. All subsequent calls to "operator <<" will fire an exception

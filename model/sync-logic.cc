@@ -179,19 +179,19 @@ void
 SyncLogic::respondSyncInterest (const string &interest)
 {
   string hash = interest.substr(interest.find_last_of("/") + 1);
-  Digest digest;
-  digest << hash;
+  DigestPtr digest = make_shared<Digest> ();
+  *digest << hash;
+  digest->finalize ();
 
-  if (*m_state.getDigest() == digest)
+  if (*m_state.getDigest() == *digest)
   {
-    m_syncInterestTable.insert(interest);
+    m_syncInterestTable.insert (interest);
     return;
   }
-/*
-  DiffStateContainer::index<hashed>::type& idx = m_log.get<hashed> ();
-  DiffStateContainer::iterator ii = idx.find(digest);
 
-  if (ii != idx.end())
+  DiffStateContainer::iterator ii = m_log.find (digest);
+  
+  if (ii != m_log.end())
   {
     stringstream ss;
     ss << *(*ii)->diff();
@@ -200,17 +200,17 @@ SyncLogic::respondSyncInterest (const string &interest)
   else
   {
     int wait = rand() % 80 + 20;
-    sleep(wait/1000.0);
+    sleep(wait/1000.0); // ??? sleep in this thread???
   }
-
-  if (*m_state.getDigest() == digest)
+  
+  if (*m_state.getDigest() == *digest)
   {
     m_syncInterestTable.insert(interest);
     return;
   }
 
-  ii = idx.find(digest);
-  if (ii != idx.end())
+  ii = m_log.find (digest);
+  if (ii != m_log.end ())
   {
     stringstream ss;
     ss << *(*ii)->diff();
@@ -222,7 +222,6 @@ SyncLogic::respondSyncInterest (const string &interest)
     ss << m_state;
     m_ccnxHandle->publishData(interest + "/state", ss.str(), m_syncResponseFreshness);
   }
-  */
 }
 
 void

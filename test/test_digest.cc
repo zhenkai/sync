@@ -51,6 +51,8 @@ BOOST_AUTO_TEST_CASE (DigestGenerationTest)
   BOOST_CHECK (d1.empty ());
 
   // fix hash
+  d1.finalize ();
+  
   BOOST_CHECK_NO_THROW (d1.getHash ());
   BOOST_CHECK (!d1.empty ());
   BOOST_CHECK (d1 == d1);
@@ -68,12 +70,12 @@ BOOST_AUTO_TEST_CASE (DigestComparison)
   Digest d1;
   BOOST_CHECK_NO_THROW (d1 << "1\n");
   BOOST_CHECK_THROW (d1 == d1, DigestCalculationError);
-  BOOST_CHECK_NO_THROW (d1.getHash ());
+  BOOST_CHECK_NO_THROW (d1.finalize ());
   BOOST_CHECK (d1 == d1);
   
   Digest d2;
   BOOST_CHECK_NO_THROW (d2 << "2\n");
-  BOOST_CHECK_NO_THROW (d2.getHash ());
+  BOOST_CHECK_NO_THROW (d2.finalize ());
   BOOST_CHECK (d1 != d2);
   
   Digest d3;
