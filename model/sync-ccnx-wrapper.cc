@@ -29,17 +29,21 @@ using namespace boost;
 namespace Sync {
 
 CcnxWrapper::CcnxWrapper()
+  : m_handle (0)
+  , m_keyStore (0)
+  , m_keyLoactor (0)
+  , m_running (true)
 {
   m_handle = ccn_create();
   ccn_connect(m_handle, NULL);
   initKeyStore();
   createKeyLocator();
-  m_thread = thread(&CcnxWrapper::ccnLoop, this);
+  m_thread = thread (&CcnxWrapper::ccnLoop, this);
 }
 
 CcnxWrapper::~CcnxWrapper()
 {
-  running = false;
+  m_running = false;
   m_thread.join();
   ccn_disconnect(m_handle);
   ccn_destroy(&m_handle);
@@ -56,10 +60,10 @@ void CcnxWrapper::createKeyLocator()
   ccn_charbuf_append_tt(m_keyLoactor, CCN_DTAG_Key, CCN_DTAG);
   res = ccn_append_pubkey_blob(m_keyLoactor, ccn_keystore_public_key(m_keyStore));
   if (res >= 0)
-  {
-    ccn_charbuf_append_closer(m_keyLoactor); /* </Key> */
-    ccn_charbuf_append_closer(m_keyLoactor); /* </KeyLocator> */
-  }
+    {
+      ccn_charbuf_append_closer(m_keyLoactor); /* </Key> */
+      ccn_charbuf_append_closer(m_keyLoactor); /* </KeyLocator> */
+    }
 }
 
 const ccn_pkey* CcnxWrapper::getPrivateKey()
@@ -94,18 +98,18 @@ void CcnxWrapper::ccnLoop()
   pfds[0].fd = ccn_get_connection_fd(m_handle);
   pfds[0].events = POLLIN;
 
-  while (running)
-  {
-    if (res >= 0)
+  while (m_running)
     {
-      int ret = poll(pfds, 1, 100);
-      if (ret >= 0)
-      {
-	recursive_mutex::scoped_lock lock(m_mutex);
-	res = ccn_run(m_handle, 0);
-      }
+      if (res >= 0)
+        {
+          int ret = poll(pfds, 1, 100);
+          if (ret >= 0)
+            {
+              recursive_mutex::scoped_lock lock(m_mutex);
+              res = ccn_run(m_handle, 0);
+            }
+        }
     }
-  }
 }
 
 int CcnxWrapper::publishData(string name, string dataBuffer, int freshness)
@@ -136,14 +140,14 @@ int CcnxWrapper::publishData(string name, string dataBuffer, int freshness)
 
 
 static ccn_upcall_res incomingInterest(
-  ccn_closure *selfp,
-  ccn_upcall_kind kind,
-  ccn_upcall_info *info)
+                                       ccn_closure *selfp,
+                                       ccn_upcall_kind kind,
+                                       ccn_upcall_info *info)
 {
   function<void (string)> f = *(function<void (string)> *)selfp->data;
 
   switch (kind)
-  {
+    {
     case CCN_UPCALL_FINAL:
       delete selfp;
       return CCN_UPCALL_RESULT_OK;
@@ -153,30 +157,30 @@ static ccn_upcall_res incomingInterest(
 
     default:
       return CCN_UPCALL_RESULT_OK;
-  }
+    }
 
   string interest;
   for (int i = 0; i < info->interest_comps->n - 1; i++)
-  {
-    char *comp;
-    size_t size;
-    interest += "/";
-    ccn_name_comp_get(info->interest_ccnb, info->interest_comps, i, (const unsigned char **)&comp, &size);
-    interest += comp;
-  }
+    {
+      char *comp;
+      size_t size;
+      interest += "/";
+      ccn_name_comp_get(info->interest_ccnb, info->interest_comps, i, (const unsigned char **)&comp, &size);
+      interest += comp;
+    }
   f(interest);
   return CCN_UPCALL_RESULT_OK;
 }
 
 static ccn_upcall_res incomingData(
-  ccn_closure *selfp,
-  ccn_upcall_kind kind,
-  ccn_upcall_info *info)
+                                   ccn_closure *selfp,
+                                   ccn_upcall_kind kind,
+                                   ccn_upcall_info *info)
 {
   function<void (string)> f = *(function<void (string)> *)selfp->data;
 
   switch (kind)
-  {
+    {
     case CCN_UPCALL_FINAL:
       delete selfp;
       return CCN_UPCALL_RESULT_OK;
@@ -186,7 +190,7 @@ static ccn_upcall_res incomingData(
 
     default:
       return CCN_UPCALL_RESULT_OK;
-  }
+    }
 
   char *pcontent;
   size_t len;
