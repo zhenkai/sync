@@ -56,7 +56,7 @@ public:
 	/**
 	 * @brief fetch all Interests and clear the table
 	 */
-	boost::unordered_set<std::string> fetchAll();
+	std::vector<std::string> fetchAll();
 
 private:
 	/**

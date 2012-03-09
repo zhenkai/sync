@@ -28,16 +28,17 @@ using namespace boost;
 namespace Sync
 {
 
-unordered_set<string> SyncInterestTable::fetchAll()
+vector<string> SyncInterestTable::fetchAll()
 {
 	expireInterests();
 
 	recursive_mutex::scoped_lock lock(m_mutex);
-	unordered_set<string> entries;
+	vector<string> entries;
 	for (unordered_map<string, time_t>::iterator it = m_table.begin(); it !=
 		m_table.end(); ++it) {
-		entries.insert(it->first);
+		entries.push_back(it->first);
 	}
+	m_table.clear();
 
 	return entries;
 }

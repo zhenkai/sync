@@ -26,6 +26,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/foreach.hpp>
 #include <sys/socket.h>
+#include <vector>
 
 using namespace std;
 using namespace boost;
@@ -166,10 +167,10 @@ SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
   m_state.update(info, seqN);
   diff->setDigest(m_state.getDigest());
 
-  unordered_set<string> pis = m_syncInterestTable.fetchAll();
+  vector<string> pis = m_syncInterestTable.fetchAll();
   stringstream ss;
   ss << *diff;
-  for (unordered_set<string>::iterator ii = pis.begin(); ii != pis.end(); ++ii)
+  for (vector<string>::iterator ii = pis.begin(); ii != pis.end(); ++ii)
   {
     m_ccnxHandle->publishData(*ii, ss.str(), m_syncResponseFreshness);
   }
