@@ -35,7 +35,7 @@ using namespace Sync;
 using namespace std;
 using namespace boost;
 
-class TestStruct {
+class TestStructApp {
 public:
 	map<string, string> data;
 	void set(string str1, string str2) {
@@ -63,8 +63,8 @@ public:
 
 BOOST_AUTO_TEST_CASE (AppDataPublishAndFetchTest)
 {
-	TestStruct foo;
-	TestStruct bar;
+	TestStructApp foo;
+	TestStructApp bar;
 	
 	string interest = "/april/fool";
 	string seq[5] = {"1", "2", "3", "4", "5"};
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE (AppDataPublishAndFetchTest)
 	}
 
 	boost::function<void (string, string)> setFunc =
-	bind(&TestStruct::set, &bar, _1, _2);
+	bind(&TestStructApp::set, &bar, _1, _2);
 
 	shared_ptr<CcnxWrapper> handle(new CcnxWrapper());
 
@@ -96,13 +96,13 @@ BOOST_AUTO_TEST_CASE (AppDataPublishAndFetchTest)
 
 
 	boost::function<void (string, string)> eraseFunc =
-	bind(&TestStruct::erase, &bar, _1, _2);
+	bind(&TestStructApp::erase, &bar, _1, _2);
 	fetcher.setDataCallback(eraseFunc);
 
 	fetcher.fetch(interest, 1, 5);
 	// give time for ccnd to react
 	sleep(1);
-	TestStruct poo;
+	TestStructApp poo;
 
 	BOOST_CHECK_EQUAL(poo.toString(), bar.toString());
 
