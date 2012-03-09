@@ -187,7 +187,7 @@ SyncLogic::respondSyncInterest (const string &interest)
     m_syncInterestTable.insert(interest);
     return;
   }
-
+/*
   DiffStateContainer::index<hashed>::type& idx = m_log.get<hashed> ();
   DiffStateContainer::iterator ii = idx.find(digest);
 
@@ -222,6 +222,7 @@ SyncLogic::respondSyncInterest (const string &interest)
     ss << m_state;
     m_ccnxHandle->publishData(interest + "/state", ss.str(), m_syncResponseFreshness);
   }
+  */
 }
 
 void
