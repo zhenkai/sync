@@ -45,7 +45,9 @@ unordered_set<string> SyncInterestTable::fetchAll()
 bool SyncInterestTable::insert(string interest)
 {
 	recursive_mutex::scoped_lock lock(m_mutex);
-	m_table.erase(m_table.find(interest));
+	unordered_map<string, time_t>::iterator it = m_table.find(interest);
+	if (it != m_table.end())
+		m_table.erase(it);
 	time_t currentTime = time(0);
 	m_table.insert(make_pair(interest, currentTime));
 }

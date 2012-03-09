@@ -26,6 +26,7 @@
 #include <boost/unordered_map.hpp>
 #include "sync-seq-no.h"
 #include "sync-ccnx-wrapper.h"
+#include <utility>
 
 namespace Sync {
 
@@ -82,7 +83,7 @@ public:
 private:
   boost::unordered_map<std::string, Seq> m_sequenceLog;
   CcnxWrapperPtr m_ccnxHandle;
-  boost::unordered_map<std::string, std::string> m_recentData;
+  boost::unordered_map<std::pair<std::string, uint32_t>, std::string> m_recentData;
 };
 
 } // Sync
