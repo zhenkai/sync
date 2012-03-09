@@ -88,10 +88,12 @@ operator << (std::ostream &os, const State &state);
 std::istream &
 operator >> (std::istream &in, State &state);
 
+namespace Error {
 /**
  * @brief Will be thrown when XML cannot be properly decoded to State
  */
 struct SyncXmlDecodingFailure : virtual boost::exception, virtual std::exception { };
+}
 
 } // Sync
 

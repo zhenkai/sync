@@ -81,7 +81,9 @@ operator << (std::ostream &os, Operation op);
 std::istream &
 operator >> (std::istream &is, Operation &op);
 
+namespace Error {
 struct SyncDiffLeafOperationParseError : virtual boost::exception, virtual std::exception { };
+} // Error
 
 } // Sync
 

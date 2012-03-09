@@ -30,6 +30,7 @@ using boost::test_tools::output_test_stream;
 #include <sstream>
 
 using namespace Sync;
+using namespace Sync::Error;
 using namespace std;
 using namespace boost;
 

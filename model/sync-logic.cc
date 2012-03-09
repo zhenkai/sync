@@ -28,33 +28,36 @@ using namespace boost;
 namespace Sync
 {
 
-SyncLogic::SyncLogic(string syncPrefix,
-			       function<void (string, uint32_t, uint32_t)> fetch,
-			       shared_ptr<CcnxWrapper> ccnxHandle)
+SyncLogic::SyncLogic (const string &syncPrefix,
+                      SyncCallback fetch,
+                      CcnxWrapperPtr ccnxHandle)
+  : m_syncPrefix (syncPrefix)
+  , m_fetch (fetch)
+  , m_ccnxHandle (ccnxHandle)
 {
-  m_syncPrefix = syncPrefix;
-  m_fetch = fetch;
-  m_ccnxHandle = ccnxHandle;
 }
 
-SyncLogic::~SyncLogic()
-{
-
-}
-
-void SyncLogic::processSyncData(string name, string dataBuffer)
+SyncLogic::~SyncLogic ()
 {
 
 }
 
-void SyncLogic::addLocalNames(string prefix, uint32_t session, uint32_t seq)
+void
+SyncLogic::processSyncData (const string &name, const string &dataBuffer)
+{
+
+}
+
+void
+SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
 {
   NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
   SeqNo seqN(session, seq);
   m_state.update(info, seqN);
 }
 
-void SyncLogic::respondSyncInterest(string interest)
+void
+SyncLogic::respondSyncInterest (const string &interest)
 {
   string hash = interest.substr(interest.find_last_of("/") + 1);
 
@@ -64,7 +67,8 @@ void SyncLogic::respondSyncInterest(string interest)
 
 }
 
-void SyncLogic::sendSyncInterest()
+void
+SyncLogic::sendSyncInterest ()
 {
   function<void (string, string)> f = bind(&SyncLogic::processSyncData, this, _1, _2);
   stringstream os;
@@ -74,7 +78,7 @@ void SyncLogic::sendSyncInterest()
   os << digest;
   string name;
   os >> name;
-  m_ccnxHandle->sendInterest(name, f);
+  m_ccnxHandle->sendInterest (name, f);
 }
 
 }

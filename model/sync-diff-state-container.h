@@ -23,8 +23,6 @@
 #ifndef SYNC_DIFF_STATE_CONTAINER_H
 #define SYNC_DIFF_STATE_CONTAINER_H
 
-namespace Sync {
-
 #include "sync-diff-state.h"
 
 #include <boost/multi_index_container.hpp>
@@ -39,6 +37,8 @@ namespace Sync {
 
 namespace mi = boost::multi_index;
 
+namespace Sync {
+
 // struct DigestHash : public std::unary_function<Digest, std::size_t>
 // {
 //   std::size_t
@@ -48,13 +48,15 @@ namespace mi = boost::multi_index;
 //   }
 // };
 
+/// @cond include_hidden 
 struct sequenced { };
- 
+/// @endcond
+
 /**
  * \ingroup sync
  * @brief Container for differential states
  */
-struct LeafContainer : public mi::multi_index_container<
+struct DiffStateContainer : public mi::multi_index_container<
     DiffStatePtr,
     // mi::indexed_by<
     //   // For fast access to elements using DiffState hashes
@@ -66,7 +68,7 @@ struct LeafContainer : public mi::multi_index_container<
 
   // sequenced index to access older/newer element (like in list)
       mi::indexed_by<
-        mi::sequenced<mi::tag<seqenced> >
+        mi::sequenced<mi::tag<sequenced> >
     >
    >
 {

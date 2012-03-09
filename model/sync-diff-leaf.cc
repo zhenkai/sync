@@ -24,6 +24,8 @@
 #include <boost/throw_exception.hpp>
 typedef boost::error_info<struct tag_errmsg, std::string> errmsg_info; 
 
+using namespace Sync::Error;
+
 namespace Sync {
 
 DiffLeaf::DiffLeaf (NameInfoConstPtr info, const SeqNo &seq)

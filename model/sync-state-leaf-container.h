@@ -48,8 +48,10 @@ struct NameInfoHash : public std::unary_function<NameInfo, std::size_t>
   }
 };
 
+/// @cond include_hidden 
 struct hashed { };
 struct ordered { };
+/// @endcond
 
 /**
  * \ingroup sync

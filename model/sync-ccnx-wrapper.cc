@@ -53,12 +53,10 @@ CcnxWrapper::~CcnxWrapper()
 
 void CcnxWrapper::createKeyLocator()
 {
-  int res;
-
   m_keyLoactor = ccn_charbuf_create();
   ccn_charbuf_append_tt(m_keyLoactor, CCN_DTAG_KeyLocator, CCN_DTAG);
   ccn_charbuf_append_tt(m_keyLoactor, CCN_DTAG_Key, CCN_DTAG);
-  res = ccn_append_pubkey_blob(m_keyLoactor, ccn_keystore_public_key(m_keyStore));
+  int res = ccn_append_pubkey_blob(m_keyLoactor, ccn_keystore_public_key(m_keyStore));
   if (res >= 0)
     {
       ccn_charbuf_append_closer(m_keyLoactor); /* </Key> */
@@ -202,8 +200,9 @@ static ccn_upcall_res incomingData(
       size_t size;
       name += "/";
       ccn_name_comp_get(info->content_ccnb, info->content_comps, i, (const unsigned char **)&comp, &size);
-      name += comp;
+      name += comp; // this will also crash if name doesn't have \0 ending
     }
+  // this will crash when content doesn't have \0 ending
   f(name, (string)pcontent);
   return CCN_UPCALL_RESULT_OK;
 }

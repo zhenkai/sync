@@ -95,6 +95,7 @@ public:
   publishData(std::string name, std::string dataBuffer, int freshness);
 
 private:
+  /// @cond include_hidden 
   void
   createKeyLocator ();
 
@@ -112,7 +113,7 @@ private:
 
   void
   ccnLoop ();
-
+  /// @endcond
 private:
   ccn* m_handle;
   ccn_keystore *m_keyStore;
@@ -122,6 +123,8 @@ private:
   boost::thread m_thread;
   bool m_running;
 };
+
+typedef boost::shared_ptr<CcnxWrapper> CcnxWrapperPtr;
 
 } // Sync
 

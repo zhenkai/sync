@@ -88,7 +88,7 @@ struct hex_to_4_bit
     if ((unsigned)ch < 128)
       value = lookup_table [(unsigned)ch];
     if (value == -1)
-      BOOST_THROW_EXCEPTION (Sync::DigestCalculationError () << errmsg_info_int ((int)ch));
+      BOOST_THROW_EXCEPTION (Sync::Error::DigestCalculationError () << errmsg_info_int ((int)ch));
     
     return value;
   }
@@ -139,7 +139,7 @@ Digest::reset ()
 
   int ok = EVP_DigestInit_ex (m_context, HASH_FUNCTION (), 0);
   if (!ok)
-    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+    BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
                            << errmsg_info_str ("EVP_DigestInit_ex returned error")
                            << errmsg_info_int (ok));
 }
@@ -155,7 +155,7 @@ Digest::finalize ()
   int ok = EVP_DigestFinal_ex (m_context,
 			       m_buffer, &m_hashLength);
   if (!ok)
-    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+    BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
                            << errmsg_info_str ("EVP_DigestFinal_ex returned error")
                            << errmsg_info_int (ok));
 }
@@ -167,7 +167,7 @@ Digest::getHash ()
     finalize ();
 
   if (sizeof (std::size_t) > m_hashLength)
-    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+    BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
                            << errmsg_info_str ("Hash length is less than size_t")
                            << errmsg_info_int (m_hashLength));
   
@@ -180,15 +180,15 @@ bool
 Digest::operator == (const Digest &digest) const
 {
   if (m_buffer == 0)
-    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+    BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
                            << errmsg_info_str ("Digest1 is empty"));
 
   if (digest.m_buffer == 0)
-    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+    BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
                            << errmsg_info_str ("Digest2 is empty"));
 
   if (m_hashLength != digest.m_hashLength)
-    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+    BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
                            << errmsg_info_str ("Digest lengths are not the same")
                            << errmsg_info_int (m_hashLength)
                            << errmsg_info_int (digest.m_hashLength));
@@ -204,12 +204,12 @@ Digest::update (const uint8_t *buffer, size_t size)
   
   // cannot update Digest when it has been finalized
   if (m_buffer != 0)
-    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+    BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
                            << errmsg_info_str ("Digest has been already finalized"));
 
   bool ok = EVP_DigestUpdate (m_context, buffer, size);
   if (!ok)
-    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+    BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
                            << errmsg_info_str ("EVP_DigestUpdate returned error")
                            << errmsg_info_int (ok));
 }
@@ -219,7 +219,7 @@ Digest &
 Digest::operator << (const Digest &src)
 {
   if (src.m_buffer == 0) 
-    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+    BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
                            << errmsg_info_str ("Digest has not been yet finalized"));
 
   update (src.m_buffer, src.m_hashLength);
@@ -248,7 +248,7 @@ operator >> (std::istream &is, Digest &digest)
   is >> str; // read string first
 
   if (str.size () == 0)
-    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+    BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
                            << errmsg_info_str ("Input is empty"));
   
   // uint8_t padding = (3 - str.size () % 3) % 3;
@@ -256,7 +256,7 @@ operator >> (std::istream &is, Digest &digest)
 
   // only empty digest object can be used for reading
   if (digest.m_buffer != 0)
-    BOOST_THROW_EXCEPTION (DigestCalculationError ()
+    BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
                            << errmsg_info_str ("Digest has been already finalized"));
 
   digest.m_buffer = new uint8_t [EVP_MAX_MD_SIZE];

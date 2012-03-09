@@ -38,6 +38,8 @@ using namespace boost;
 
 typedef error_info<struct tag_errmsg, string> info_str; 
 
+using namespace Sync::Error;
+
 namespace Sync {
 
 #ifdef _DEBUG
