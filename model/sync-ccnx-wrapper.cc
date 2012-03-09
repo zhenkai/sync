@@ -157,7 +157,7 @@ incomingInterest(ccn_closure *selfp,
 
   switch (kind)
     {
-    case CCN_UPCALL_FINAL:
+    case CCN_UPCALL_FINAL: // effective in unit tests
       delete f;
       delete selfp;
       return CCN_UPCALL_RESULT_OK;
@@ -191,8 +191,8 @@ incomingData(ccn_closure *selfp,
 
   switch (kind)
     {
-    case CCN_UPCALL_FINAL:
-      delete f; // this never called in unit tests... 
+    case CCN_UPCALL_FINAL:  // effecitve in unit tests
+      delete f; 
       delete selfp;
       return CCN_UPCALL_RESULT_OK;
 
