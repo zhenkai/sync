@@ -30,12 +30,47 @@ namespace Sync
 
 unordered_set<string> SyncInterestTable::fetchAll()
 {
-  return m_table;
+	expireInterest();
+
+	recursive_mutex::scoped_lock lock(m_mutex);
+	unordered_set<string> entries;
+	for (unordered_map<string, time_t>::iterator it = m_table.begin(); it !=
+		m_table.end(); ++it) {
+		entries.insert(it->first);
+	}
+
+	return entries;
 }
 
 bool SyncInterestTable::insert(string interest)
 {
-  m_table.insert(interest);
+	recursive_mutex::scoped_lock lock(m_mutex);
+	m_table.erase(m_table.find(interest));
+	time_t currentTime = time(0);
+	m_table.insert(make_pair(interest, currentTime));
+}
+
+void SyncInterestTable::SyncInterestTable() {
+	m_thread = thread(&SyncInterestTable::periodicCheck, this);
+}
+
+void SyncInterestTable::expireInterests() {
+	recursive_mutex::scoped_lock lock(m_mutex);
+	time_t currentTime = time(0);
+	unordered_map<string, time_t>::iterator it = m_table.begin(); 
+	while(it != m_table.end()) {
+		time_t timestamp = it->second;
+		if (currentTime - timestamp > m_checkPeriod) {
+			it = m_table.erase(it);
+		}
+		else
+			++it;
+	}
+}
+
+void SyncInterestTable::periodicCheck() {
+	sleep(4);
+	expireInterest();
 }
 
 }

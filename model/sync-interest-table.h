@@ -23,7 +23,11 @@
 #ifndef SYNC_INTEREST_TABLE_H
 #define SYNC_INTEREST_TABLE_H
 #include <string>
+#include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
+#include <boost/thread/recursive_mutex.hpp>
+#include <boost/thread/thread.hpp>
+#include <ctime>
 
 /**
  * \defgroup sync SYNC protocol
@@ -35,14 +39,17 @@ namespace Sync {
 /**
  * \ingroup sync
  * @brief A table to keep unanswered Sync Interest
+ * all access operation to the table should grab the 
+ * mutex first
  */
 class SyncInterestTable
 {
-private:
-	boost::unordered_set<std::string> m_table;
 public:
+	SyncInterestTable();
+
 	/**
-	 * @brief Insert an interest
+	 * @brief Insert an interest, if interest already exists, update the
+	 * timestamp
 	 */
 	bool insert(std::string interest);
 
@@ -50,6 +57,20 @@ public:
 	 * @brief fetch all Interests and clear the table
 	 */
 	boost::unordered_set<std::string> fetchAll();
+
+private:
+	/**
+	 * @brief periodically called to expire Interest
+	 */
+	void expireInterests();
+
+	void periodicCheck();
+
+private:
+	static int m_checkPeriod = 4;
+	boost::unordered_map<std::string, time_t> m_table; // pit entries
+	boost::thread m_thread; // thread to check every 4 sec
+	boost::recursive_mutex m_mutex;
 
 };
 
