@@ -42,8 +42,8 @@ namespace Sync {
 class SyncLogic
 {
 public:
-  typedef boost::function<void (const std::string &,uint32_t, uint32_t)> LogicCallback;
-  
+  typedef boost::function<void (const std::string &, uint32_t, uint32_t)> LogicCallback;
+
   /**
    * @brief Constructor
    * @param syncPrefix the name prefix to use for the Sync Interest
@@ -54,7 +54,7 @@ public:
   SyncLogic (const std::string &syncPrefix, LogicCallback fetch, CcnxWrapperPtr ccnxHandle);
 
   ~SyncLogic ();
-  
+
   /**
    * a wrapper for the same func in SyncApp
    */
@@ -78,12 +78,14 @@ private:
 
 private:
   FullState m_state;
-  DiffStateContainer m_log;  
+  DiffStateContainer m_log;
   SyncInterestTable m_syncInterestTable;
 
   std::string m_syncPrefix;
   LogicCallback m_fetch;
   CcnxWrapperPtr m_ccnxHandle;
+
+  static const int m_syncResponseFreshness = 2;
 };
 
 
