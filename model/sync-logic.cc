@@ -41,6 +41,7 @@ SyncLogic::SyncLogic (const string &syncPrefix,
   , m_ccnxHandle (ccnxHandle)
 {
   srandom(time(NULL));
+  m_ccnxHandle->setInterestFilter(syncPrefix, bind(&SyncLogic::respondSyncInterest, this, _1));
 }
 
 SyncLogic::~SyncLogic ()
