@@ -60,6 +60,8 @@ public:
    */
   void addLocalNames (const std::string &prefix, uint32_t session, uint32_t seq);
 
+  void checkAgain (const std::string &interest, DigestPtr digest);
+
   /**
    * @brief respond to the Sync Interest; a lot of logic needs to go in here
    * @param interest the Sync Interest in string format
@@ -68,7 +70,7 @@ public:
 
   /**
    * @brief process the fetched sync data
-   * @param name name ???
+   * @param name the data name
    * @param dataBuffer the sync data
    */
   void processSyncData (const std::string &name, const std::string &dataBuffer);
@@ -84,6 +86,8 @@ private:
   std::string m_syncPrefix;
   LogicCallback m_fetch;
   CcnxWrapperPtr m_ccnxHandle;
+
+  boost::thread m_thread;
 
   static const int m_syncResponseFreshness = 2;
 };

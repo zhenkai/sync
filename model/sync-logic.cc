@@ -186,6 +186,33 @@ SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
 }
 
 void
+SyncLogic::checkAgain (const string &interest, DigestPtr digest)
+{
+  int wait = rand() % 80 + 20;
+  sleep(wait/1000.0);
+
+  if (*m_state.getDigest() == *digest)
+  {
+    m_syncInterestTable.insert(interest);
+    return;
+  }
+
+  DiffStateContainer::iterator ii = m_log.find (digest);
+  if (ii != m_log.end ())
+  {
+    stringstream ss;
+    ss << *(*ii)->diff();
+    m_ccnxHandle->publishData(interest, ss.str(), m_syncResponseFreshness);
+  }
+  else
+  {
+    stringstream ss;
+    ss << m_state;
+    m_ccnxHandle->publishData(interest + "/state", ss.str(), m_syncResponseFreshness);
+  }
+}
+
+void
 SyncLogic::respondSyncInterest (const string &interest)
 {
   string hash = interest.substr(interest.find_last_of("/") + 1);
@@ -209,28 +236,8 @@ SyncLogic::respondSyncInterest (const string &interest)
   }
   else
   {
-    int wait = rand() % 80 + 20;
-    sleep(wait/1000.0); // ??? sleep in this thread???
-  }
-
-  if (*m_state.getDigest() == *digest)
-  {
-    m_syncInterestTable.insert(interest);
-    return;
-  }
-
-  ii = m_log.find (digest);
-  if (ii != m_log.end ())
-  {
-    stringstream ss;
-    ss << *(*ii)->diff();
-    m_ccnxHandle->publishData(interest, ss.str(), m_syncResponseFreshness);
-  }
-  else
-  {
-    stringstream ss;
-    ss << m_state;
-    m_ccnxHandle->publishData(interest + "/state", ss.str(), m_syncResponseFreshness);
+    m_thread.join();
+    m_thread = thread(&SyncLogic::checkAgain, this, interest, digest);
   }
 }
 
