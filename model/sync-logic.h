@@ -60,8 +60,6 @@ public:
    */
   void addLocalNames (const std::string &prefix, uint32_t session, uint32_t seq);
 
-  void checkAgain (const std::string &interest, DigestPtr digest);
-
   /**
    * @brief respond to the Sync Interest; a lot of logic needs to go in here
    * @param interest the Sync Interest in string format
@@ -77,6 +75,7 @@ public:
 
 private:
   void sendSyncInterest ();
+  void checkAgain (const std::string &interest, DigestPtr digest);
 
 private:
   FullState m_state;
