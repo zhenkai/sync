@@ -55,6 +55,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
   stringstream ss(dataBuffer);
 
   const LeafContainer &fullLc = m_state.getLeaves();
+  DiffStatePtr diffLog = make_shared<DiffState>();
 
   if (last == "state")
   {
@@ -75,6 +76,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 	prefix += seq.getSession();
 	m_fetch(prefix, 1, seq.getSeq());
 	m_state.update(pInfo, seq);
+	diffLog->update(pInfo, seq);
       }
       else
       {
@@ -91,6 +93,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 	    m_fetch(prefix, 1, seq.getSeq());
 
 	  m_state.update(pInfo, seq);
+	  diffLog->update(pInfo, seq);
 	}
       }
     }
@@ -118,6 +121,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 
 	    NameInfoConstPtr pInfo = StdNameInfo::FindOrCreate(info.toString());
 	    m_state.update(pInfo, seq);
+	    diffLog->update(pInfo, seq);
 	  }
 	  else
 	  {
@@ -135,6 +139,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 
 	      NameInfoConstPtr pInfo = StdNameInfo::FindOrCreate(info.toString());
 	      m_state.update(pInfo, seq);
+	      diffLog->update(pInfo, seq);
 	    }
 	  }
 	  break;
@@ -144,6 +149,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 	  {
 	    NameInfoConstPtr pInfo = StdNameInfo::FindOrCreate(info.toString());
   	    m_state.remove(pInfo);
+	    diffLog->remove(pInfo);
 	  }
 	  break;
 
@@ -153,6 +159,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
     }
   }
 
+  m_log.insert(diffLog);
   sendSyncInterest();
 }
 
@@ -165,6 +172,7 @@ SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
   diff->update(info, seqN);
   m_state.update(info, seqN);
   diff->setDigest(m_state.getDigest());
+  m_log.insert(diff);
 
   vector<string> pis = m_syncInterestTable.fetchAll();
   stringstream ss;
@@ -190,7 +198,7 @@ SyncLogic::respondSyncInterest (const string &interest)
   }
 
   DiffStateContainer::iterator ii = m_log.find (digest);
-  
+
   if (ii != m_log.end())
   {
     stringstream ss;
@@ -202,7 +210,7 @@ SyncLogic::respondSyncInterest (const string &interest)
     int wait = rand() % 80 + 20;
     sleep(wait/1000.0); // ??? sleep in this thread???
   }
-  
+
   if (*m_state.getDigest() == *digest)
   {
     m_syncInterestTable.insert(interest);
