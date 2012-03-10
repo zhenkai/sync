@@ -46,6 +46,13 @@ struct TestStruct {
 	}
 };
 
+void sleeping(string str) {
+	for(int i = 0; i < 5; i++) {
+		cout << "Every 5 seconds"<<endl;
+		sleep(5);
+	}
+}
+
 BOOST_AUTO_TEST_CASE (CcnxWrapperTest)
 {
 
@@ -81,6 +88,14 @@ BOOST_AUTO_TEST_CASE (CcnxWrapperTest)
 	BOOST_CHECK_EQUAL(foo.s_str1, name);
 	BOOST_CHECK_EQUAL(foo.s_str2, data);
 
+	CcnxWrapper hc;
+	boost::function<void (string)> func = sleeping;
+	hc.setInterestFilter("/test", func);
+
+	hb.sendInterest("/test/1", memberFunc);
+	sleep(2);
+	hb.sendInterest("/test/2", memberFunc);
+	sleep(60);
 }
 
 
