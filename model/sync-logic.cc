@@ -159,6 +159,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
     }
   }
 
+  diffLog->setDigest(m_state.getDigest());
   m_log.insert(diffLog);
   sendSyncInterest();
 }
