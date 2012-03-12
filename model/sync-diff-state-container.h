@@ -40,20 +40,24 @@ namespace mi = boost::multi_index;
 
 namespace Sync {
 
-struct DigestHash : public std::unary_function<Digest, std::size_t>
+struct DigestPtrHash : public std::unary_function<Digest, std::size_t>
 {
-  // std::size_t
-  // operator() (const Digest &digest) const
-  // {
-  //   return digest.getHash ();
-  // }
-
   std::size_t
   operator() (DigestConstPtr digest) const
   {
     return digest->getHash ();
   }
 };
+
+struct DigestPtrEqual : public std::unary_function<Digest, std::size_t>
+{
+  bool
+  operator() (DigestConstPtr digest1, DigestConstPtr digest2) const
+  {
+    return *digest1 == *digest2;
+  }
+};
+
 
 /// @cond include_hidden 
 struct sequenced { };
@@ -70,7 +74,8 @@ struct DiffStateContainer : public mi::multi_index_container<
     mi::hashed_unique<
       mi::tag<hashed>,
       mi::const_mem_fun<DiffState, DigestConstPtr, &DiffState::getDigest>,
-      DigestHash
+      DigestPtrHash,
+      DigestPtrEqual
       >
     ,        
     // sequenced index to access older/newer element (like in list)

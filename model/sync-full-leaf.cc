@@ -37,7 +37,7 @@ void
 FullLeaf::updateDigest ()
 {
   m_digest.reset ();
-  m_digest << getInfo ().getDigest () << *getSeq ().getDigest ();
+  m_digest << getInfo ()->getDigest () << *getSeq ().getDigest ();
   m_digest.finalize ();
 }
 

@@ -156,6 +156,7 @@ BOOST_AUTO_TEST_CASE (FullStateXml)
   ostringstream os;
   os << state;
   string s = os.str ();
+  // cout << s << endl; 
   erase_all (s, "\n");
   BOOST_CHECK_EQUAL (s, xml1);
   }

@@ -81,7 +81,7 @@ FullState::getDigest ()
 }
 
 // from State
-void
+bool
 FullState::update (NameInfoConstPtr info, const SeqNo &seq)
 {
 #ifndef STANDALONE  
@@ -92,18 +92,23 @@ FullState::update (NameInfoConstPtr info, const SeqNo &seq)
 
   m_digest.reset ();
 
-  LeafContainer::iterator item = m_leaves.find (*info);
+  LeafContainer::iterator item = m_leaves.find (info);
   if (item == m_leaves.end ())
     {
       m_leaves.insert (make_shared<FullLeaf> (info, cref (seq)));
     }
   else
     {
-      m_leaves.modify (item, ll::bind (&Leaf::setSeq, *ll::_1, seq));
+      if ((*item)->getSeq () == seq || seq < (*item)->getSeq ())
+        return false;
+      
+      m_leaves.modify (item,
+                       ll::bind (&Leaf::setSeq, *ll::_1, seq));
     }
+  return true;
 }
 
-void
+bool
 FullState::remove (NameInfoConstPtr info)
 {
 #ifndef STANDALONE  
@@ -114,7 +119,14 @@ FullState::remove (NameInfoConstPtr info)
 
   m_digest.reset ();
 
-  m_leaves.erase (*info);
+  LeafContainer::iterator item = m_leaves.find (info);
+  if (item != m_leaves.end ())
+    {
+      m_leaves.erase (info);
+      return true;
+    }
+  else
+    return false;
 }
 
 } // Sync

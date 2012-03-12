@@ -67,10 +67,10 @@ public:
   getDigest ();
   
   // from State
-  virtual void
+  virtual bool
   update (NameInfoConstPtr info, const SeqNo &seq);
 
-  virtual void
+  virtual bool
   remove (NameInfoConstPtr info);
   
 private:

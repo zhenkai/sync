@@ -64,7 +64,7 @@ operator << (std::ostream &os, const State &state)
         {
           os << "<item>"; DEBUG_ENDL;
         }
-      os << "<name>" << leaf->getInfo () << "</name>"; DEBUG_ENDL;
+      os << "<name>" << *leaf->getInfo () << "</name>"; DEBUG_ENDL;
       if (diffLeaf == 0 || (diffLeaf != 0 && diffLeaf->getOperation () == UPDATE))
         {
           os << "<seq>" << leaf->getSeq () << "</seq>"; DEBUG_ENDL;

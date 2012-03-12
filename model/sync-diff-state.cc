@@ -61,22 +61,26 @@ DiffState::operator += (const DiffState &state)
 }
   
 // from State
-void
+bool
 DiffState::update (NameInfoConstPtr info, const SeqNo &seq)
 {
-  m_leaves.erase (*info);
+  m_leaves.erase (info);
 
   DiffLeafPtr leaf = make_shared<DiffLeaf> (info, cref (seq));
   m_leaves.insert (leaf);
+
+  return true;
 }
 
-void
+bool
 DiffState::remove (NameInfoConstPtr info)
 {
-  m_leaves.erase (*info);
+  m_leaves.erase (info);
 
   DiffLeafPtr leaf = make_shared<DiffLeaf> (info);
   m_leaves.insert (leaf);
+
+  return true;
 }
 
 } // ns3

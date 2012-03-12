@@ -39,10 +39,10 @@ const boost::posix_time::time_duration SyncLogic::m_delayedCheckTime = boost::po
 
 
 SyncLogic::SyncLogic (const string &syncPrefix,
-                      LogicCallback fetch,
+                      LogicCallback fetchCallback,
                       CcnxWrapperPtr ccnxHandle)
   : m_syncPrefix (syncPrefix)
-  , m_fetch (fetch)
+  , m_fetchCallback (fetchCallback)
   , m_ccnxHandle (ccnxHandle)
   , m_delayedCheckThreadRunning (true)
 {
@@ -173,9 +173,8 @@ void
 SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 {
   string last = name.substr(name.find_last_of("/") + 1);
-  stringstream ss(dataBuffer);
+  istringstream ss (dataBuffer);
 
-  const LeafContainer &fullLc = m_state.getLeaves();
   DiffStatePtr diffLog = make_shared<DiffState>();
 
   if (last == "state")
@@ -184,39 +183,38 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
     ss >> full;
     BOOST_FOREACH (LeafConstPtr leaf, full.getLeaves().get<ordered>())
     {
-      shared_ptr<const FullLeaf> fullLeaf = dynamic_pointer_cast<const FullLeaf>(leaf);
-      const NameInfo &info = fullLeaf->getInfo();
-      LeafContainer::iterator it = fullLc.find(info);
-      NameInfoConstPtr pInfo = StdNameInfo::FindOrCreate(info.toString());
-      SeqNo seq = fullLeaf->getSeq();
+      NameInfoConstPtr info = leaf->getInfo ();
+      LeafContainer::iterator it = m_state.getLeaves().find (info);
 
-      if (it == fullLc.end())
-      {
-	string prefix = info.toString();
-	prefix += "/";
-	prefix += seq.getSession();
-	m_fetch(prefix, 1, seq.getSeq());
-	m_state.update(pInfo, seq);
-	diffLog->update(pInfo, seq);
-      }
-      else
-      {
-	SeqNo currSeq = (*it)->getSeq();
-	if (currSeq < seq)
-	{
-	  string prefix = info.toString();
-	  prefix += "/";
-	  prefix += seq.getSession();
+      SeqNo seq = leaf->getSeq ();
 
-	  if (currSeq.getSession() == seq.getSession())
-	    m_fetch(prefix, currSeq.getSeq() + 1, seq.getSeq());
-	  else
-	    m_fetch(prefix, 1, seq.getSeq());
+      // if (it == m_state.getLeaves().end())
+      // {
+      //   string prefix = info.toString();
+      //   prefix += "/";
+      //   prefix += seq.getSession();
+      //   m_fetchCallback (prefix, 1, seq.getSeq());
+      //   m_state.update(pInfo, seq);
+      //   diffLog->update(pInfo, seq);
+      // }
+      // else
+      // {
+      //   SeqNo currSeq = (*it)->getSeq();
+      //   if (currSeq < seq)
+      //   {
+      //     string prefix = info.toString();
+      //     prefix += "/";
+      //     prefix += seq.getSession();
 
-	  m_state.update(pInfo, seq);
-	  diffLog->update(pInfo, seq);
-	}
-      }
+      //     if (currSeq.getSession() == seq.getSession())
+      //       m_fetchCallback(prefix, currSeq.getSeq() + 1, seq.getSeq());
+      //     else
+      //       m_fetchCallback(prefix, 1, seq.getSeq());
+
+      //     m_state.update(pInfo, seq);
+      //     diffLog->update(pInfo, seq);
+      //   }
+      // }
     }
   }
   else
@@ -225,63 +223,74 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
     ss >> diff;
     BOOST_FOREACH (LeafConstPtr leaf, diff.getLeaves().get<ordered>())
     {
-      shared_ptr<const DiffLeaf> diffLeaf = dynamic_pointer_cast<const DiffLeaf>(leaf);
-      const NameInfo &info = diffLeaf->getInfo();
-      LeafContainer::iterator it = fullLc.find(info);
+      shared_ptr<const DiffLeaf> diffLeaf = dynamic_pointer_cast<const DiffLeaf> (leaf);
+      if (diffLeaf == 0)
+        {
+          return;
+          /// \todo Log the error
+        }
+      NameInfoConstPtr info = diffLeaf->getInfo();
+      LeafContainer::iterator it = m_state.getLeaves().find (info);
       SeqNo seq = diffLeaf->getSeq();
 
-      switch (diffLeaf->getOperation())
-      {
-	case UPDATE:
-	  if (it == fullLc.end())
-	  {
-	    string prefix = info.toString();
-	    prefix += "/";
-	    prefix += seq.getSession();
-	    m_fetch(prefix, 1, seq.getSeq());
+      // switch (diffLeaf->getOperation())
+      // {
+      //   case UPDATE:
+      //     if (it == m_state.getLeaves().end())
+      //     {
+      //       string prefix = info.toString();
+      //       prefix += "/";
+      //       prefix += seq.getSession();
+      //       m_fetchCallback(prefix, 1, seq.getSeq());
 
-	    NameInfoConstPtr pInfo = StdNameInfo::FindOrCreate(info.toString());
-	    m_state.update(pInfo, seq);
-	    diffLog->update(pInfo, seq);
-	  }
-	  else
-	  {
-	    SeqNo currSeq = (*it)->getSeq();
-	    if (currSeq < seq)
-	    {
-	      string prefix = info.toString();
-	      prefix += "/";
-	      prefix += seq.getSession();
+      //       NameInfoConstPtr pInfo = StdNameInfo::FindOrCreate(info.toString());
+      //       m_state.update(pInfo, seq);
+      //       diffLog->update(pInfo, seq);
+      //     }
+      //     else
+      //     {
+      //       SeqNo currSeq = (*it)->getSeq();
+      //       if (currSeq < seq)
+      //       {
+      //         string prefix = info.toString();
+      //         prefix += "/";
+      //         prefix += seq.getSession();
 
-	      if (currSeq.getSession() == seq.getSession())
-	        m_fetch(prefix, currSeq.getSeq() + 1, seq.getSeq());
-	      else
-	        m_fetch(prefix, 1, seq.getSeq());
+      //         if (currSeq.getSession() == seq.getSession())
+      //           m_fetchCallback(prefix, currSeq.getSeq() + 1, seq.getSeq());
+      //         else
+      //           m_fetchCallback(prefix, 1, seq.getSeq());
 
-	      NameInfoConstPtr pInfo = StdNameInfo::FindOrCreate(info.toString());
-	      m_state.update(pInfo, seq);
-	      diffLog->update(pInfo, seq);
-	    }
-	  }
-	  break;
+      //         NameInfoConstPtr pInfo = StdNameInfo::FindOrCreate(info.toString());
+      //         m_state.update(pInfo, seq);
+      //         diffLog->update(pInfo, seq);
+      //       }
+      //     }
+      //     break;
 
-	case REMOVE:
-	  if (it != fullLc.end())
-	  {
-	    NameInfoConstPtr pInfo = StdNameInfo::FindOrCreate(info.toString());
-  	    m_state.remove(pInfo);
-	    diffLog->remove(pInfo);
-	  }
-	  break;
+      //   case REMOVE:
+      //     if (it != m_state.getLeaves().end())
+      //     {
+      //       NameInfoConstPtr pInfo = StdNameInfo::FindOrCreate(info.toString());
+      //       m_state.remove(pInfo);
+      //       diffLog->remove(pInfo);
+      //     }
+      //     break;
 
-	default:
-	  break;
-      }
+      //   default:
+      //     break;
+      // }
     }
   }
 
   diffLog->setDigest(m_state.getDigest());
-  m_log.insert(diffLog);
+  m_log.insert (diffLog);
+
+  // notify upper layer
+  BOOST_FOREACH (LeafConstPtr leaf, diffLog->getLeaves ())
+    {
+    }
+  
   sendSyncInterest();
 }
 
@@ -301,7 +310,7 @@ SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
   ss << *diff;
   for (vector<string>::iterator ii = pis.begin(); ii != pis.end(); ++ii)
   {
-    m_ccnxHandle->publishData(*ii, ss.str(), m_syncResponseFreshness);
+    m_ccnxHandle->publishData (*ii, ss.str(), m_syncResponseFreshness);
   }
 }
 

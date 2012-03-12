@@ -46,8 +46,8 @@ public:
   /**
    * @brief Get name of the leaf
    */
-  const NameInfo &
-  getInfo () const { return *m_info; }
+  NameInfoConstPtr
+  getInfo () const { return m_info; }
 
   /**
    * @brief Get sequence number of the leaf

@@ -48,14 +48,14 @@ public:
    * @param info name of the leaf
    * @param seq  sequence number of the leaf
    */
-  virtual void
+  virtual bool
   update (NameInfoConstPtr info, const SeqNo &seq) = 0;
 
   /**
    * @brief Remove leaf from the state tree
    * @param info name of the leaf
    */
-  virtual void
+  virtual bool
   remove (NameInfoConstPtr info) = 0;
 
   /**

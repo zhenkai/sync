@@ -101,7 +101,7 @@ private:
   SyncInterestTable m_syncInterestTable;
 
   std::string m_syncPrefix;
-  LogicCallback m_fetch;
+  LogicCallback m_fetchCallback;
   CcnxWrapperPtr m_ccnxHandle;
 
   boost::thread m_delayedCheckThread;

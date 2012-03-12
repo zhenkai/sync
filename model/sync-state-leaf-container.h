@@ -42,9 +42,27 @@ namespace Sync {
 struct NameInfoHash : public std::unary_function<NameInfo, std::size_t>
 {
   std::size_t
-  operator() (const NameInfo &prefix) const
+  operator() (NameInfoConstPtr prefix) const
   {
-    return prefix.getHashId ();
+    return prefix->getHashId ();
+  }
+};
+
+struct NameInfoEqual : public std::unary_function<NameInfo, std::size_t>
+{
+  bool
+  operator() (NameInfoConstPtr prefix1, NameInfoConstPtr prefix2) const
+  {
+    return *prefix1 == *prefix2;
+  }
+};
+
+struct NameInfoCompare : public std::unary_function<NameInfo, std::size_t>
+{
+  bool
+  operator() (NameInfoConstPtr prefix1, NameInfoConstPtr prefix2) const
+  {
+    return *prefix1 < *prefix2;
   }
 };
 
@@ -63,13 +81,16 @@ struct LeafContainer : public mi::multi_index_container<
     // For fast access to elements using NameInfo
     mi::hashed_unique<
       mi::tag<hashed>,
-      mi::const_mem_fun<Leaf, const NameInfo&, &Leaf::getInfo>,
-      NameInfoHash
+      mi::const_mem_fun<Leaf, NameInfoConstPtr, &Leaf::getInfo>,
+      NameInfoHash,
+      NameInfoEqual
       >,
-        mi::ordered_unique<
-          mi::tag<ordered>,
-          mi::const_mem_fun<Leaf, const NameInfo&, &Leaf::getInfo>
-          >
+        
+    mi::ordered_unique<
+      mi::tag<ordered>,
+      mi::const_mem_fun<Leaf, NameInfoConstPtr, &Leaf::getInfo>,
+      NameInfoCompare
+      >
     >
   >
 {
