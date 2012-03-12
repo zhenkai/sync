@@ -30,11 +30,6 @@
 #include <boost/thread/thread.hpp>
 #include <ctime>
 
-/**
- * \defgroup sync SYNC protocol
- *
- * Implementation of SYNC protocol
- */
 namespace Sync {
 
 /**
@@ -46,32 +41,38 @@ namespace Sync {
 class SyncInterestTable
 {
 public:
-	SyncInterestTable();
+  SyncInterestTable ();
+  ~SyncInterestTable ();
 
-	/**
-	 * @brief Insert an interest, if interest already exists, update the
-	 * timestamp
-	 */
-	bool insert(std::string interest);
+  /**
+   * @brief Insert an interest, if interest already exists, update the
+   * timestamp
+   */
+  bool insert (std::string interest);
 
-	/**
-	 * @brief fetch all Interests and clear the table
-	 */
-	std::vector<std::string> fetchAll();
-
-private:
-	/**
-	 * @brief periodically called to expire Interest
-	 */
-	void expireInterests();
-
-	void periodicCheck();
+  /**
+   * @brief fetch all Interests and clear the table
+   */
+  std::vector<std::string>
+  fetchAll ();
 
 private:
-	static const int m_checkPeriod = 4;
-	boost::unordered_map<std::string, time_t> m_table; // pit entries
-	boost::thread m_thread; // thread to check every 4 sec
-	boost::recursive_mutex m_mutex;
+  /**
+   * @brief periodically called to expire Interest
+   */
+  void expireInterests ();
+
+  void periodicCheck ();
+
+private:
+  typedef boost::unordered_map<std::string, time_t> TableContainer;
+  
+  static const int m_checkPeriod = 4;
+  TableContainer m_table; // pit entries
+  
+  boost::thread m_thread; // thread to check every 4 sec
+  volatile bool m_running;
+  boost::recursive_mutex m_mutex;
 
 };
 

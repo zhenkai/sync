@@ -37,74 +37,74 @@ using namespace boost;
 
 class TestStructApp {
 public:
-	map<string, string> data;
-	void set(string str1, string str2) {
-		data.insert(make_pair(str1, str2));
-	}
+  map<string, string> data;
+  void set(string str1, string str2) {
+    data.insert(make_pair(str1, str2));
+  }
 
-	void erase(string str1, string str2) {
-		data.erase(str1);
-	}
+  void erase(string str1, string str2) {
+    data.erase(str1);
+  }
 
-	string toString(){
-		map<string, string>::iterator it = data.begin(); 
-		string str = "";
-		for (; it != data.end(); ++it){
-			str += "<";
-			str += it->first;
-			str += "|";
-			str += it->second;
-			str += ">";
-		}
-		return str;
-	}
+  string toString(){
+    map<string, string>::iterator it = data.begin(); 
+    string str = "";
+    for (; it != data.end(); ++it){
+      str += "<";
+      str += it->first;
+      str += "|";
+      str += it->second;
+      str += ">";
+    }
+    return str;
+  }
 
 };
 
 BOOST_AUTO_TEST_CASE (AppDataPublishAndFetchTest)
 {
-	TestStructApp foo;
-	TestStructApp bar;
+  TestStructApp foo;
+  TestStructApp bar;
 	
-	string interest = "/april/fool";
-	string seq[5] = {"1", "2", "3", "4", "5"};
-	string str[5] = {"panda", "express", "tastes", "so", "good"};
+  string interest = "/april/fool";
+  string seq[5] = {"1", "2", "3", "4", "5"};
+  string str[5] = {"panda", "express", "tastes", "so", "good"};
 
-	for (int i = 0; i < 5; i++) {
-		foo.set(interest + "/" + seq[i], str[i]);
-	}
+  for (int i = 0; i < 5; i++) {
+    foo.set(interest + "/" + seq[i], str[i]);
+  }
 
-	boost::function<void (string, string)> setFunc =
-	bind(&TestStructApp::set, &bar, _1, _2);
+  boost::function<void (string, string)> setFunc =
+    bind(&TestStructApp::set, &bar, _1, _2);
 
-	shared_ptr<CcnxWrapper> handle(new CcnxWrapper());
+  shared_ptr<CcnxWrapper> handle(new CcnxWrapper());
 
-	AppDataFetch fetcher(handle, setFunc);
-	AppDataPublish publisher(handle);
+  AppDataFetch fetcher(handle, setFunc);
+  AppDataPublish publisher(handle);
 
-	for (int i = 1; i <= 5; i++) {
-		publisher.publishData(interest, 0, str[i - 1], 5);
-	}
+  for (int i = 1; i <= 5; i++) {
+    publisher.publishData(interest, 0, str[i - 1], 5);
+  }
 
-	BOOST_CHECK_EQUAL(publisher.getHighestSeq(interest, 0), 5);
-	BOOST_CHECK_EQUAL(publisher.getRecentData(interest, 0), str[4]);
+  BOOST_CHECK_EQUAL(publisher.getHighestSeq(interest, 0), 5);
+  BOOST_CHECK_EQUAL(publisher.getRecentData(interest, 0), str[4]);
 
-	fetcher.fetch(interest, 1, 5);
-	// give time for ccnd to react
-	sleep(1);
-	BOOST_CHECK_EQUAL(foo.toString(), bar.toString());
+  fetcher.fetch(interest, 1, 5);
+  // give time for ccnd to react
+  sleep(1);
+  BOOST_CHECK_EQUAL(foo.toString(), bar.toString());
 
 
-	boost::function<void (string, string)> eraseFunc =
-	bind(&TestStructApp::erase, &bar, _1, _2);
-	fetcher.setDataCallback(eraseFunc);
+  boost::function<void (string, string)> eraseFunc =
+    bind(&TestStructApp::erase, &bar, _1, _2);
+  fetcher.setDataCallback(eraseFunc);
 
-	fetcher.fetch(interest, 1, 5);
-	// give time for ccnd to react
-	sleep(1);
-	TestStructApp poo;
+  fetcher.fetch(interest, 1, 5);
+  // give time for ccnd to react
+  sleep(1);
+  TestStructApp poo;
 
-	BOOST_CHECK_EQUAL(poo.toString(), bar.toString());
+  BOOST_CHECK_EQUAL(poo.toString(), bar.toString());
 
 }
 

@@ -28,52 +28,85 @@ using namespace boost;
 namespace Sync
 {
 
-vector<string> SyncInterestTable::fetchAll()
+SyncInterestTable::SyncInterestTable ()
+  : m_running (true)
 {
-	expireInterests();
-
-	recursive_mutex::scoped_lock lock(m_mutex);
-	vector<string> entries;
-	for (unordered_map<string, time_t>::iterator it = m_table.begin(); it !=
-		m_table.end(); ++it) {
-		entries.push_back(it->first);
-	}
-	m_table.clear();
-
-	return entries;
+  m_thread = thread (&SyncInterestTable::periodicCheck, this);
 }
 
-bool SyncInterestTable::insert(string interest)
+SyncInterestTable::~SyncInterestTable ()
 {
-	recursive_mutex::scoped_lock lock(m_mutex);
-	unordered_map<string, time_t>::iterator it = m_table.find(interest);
-	if (it != m_table.end())
-		m_table.erase(it);
-	time_t currentTime = time(0);
-	m_table.insert(make_pair(interest, currentTime));
+  // cout << "request interrupt: " << this_thread::get_id () << endl;
+  m_running = false;
+  m_thread.interrupt ();
+  m_thread.join ();
 }
 
-SyncInterestTable::SyncInterestTable() {
-	m_thread = thread(&SyncInterestTable::periodicCheck, this);
+vector<string>
+SyncInterestTable::fetchAll ()
+{
+  expireInterests();
+
+  recursive_mutex::scoped_lock lock (m_mutex);
+  
+  vector<string> entries;
+  for (unordered_map<string, time_t>::iterator it = m_table.begin();
+       it != m_table.end();
+       ++it)
+    {
+      entries.push_back(it->first);
+    }
+  m_table.clear ();
+
+  return entries;
 }
 
-void SyncInterestTable::expireInterests() {
-	recursive_mutex::scoped_lock lock(m_mutex);
-	time_t currentTime = time(0);
-	unordered_map<string, time_t>::iterator it = m_table.begin(); 
-	while(it != m_table.end()) {
-		time_t timestamp = it->second;
-		if (currentTime - timestamp > m_checkPeriod) {
-			it = m_table.erase(it);
-		}
-		else
-			++it;
-	}
+bool
+SyncInterestTable::insert(string interest)
+{
+  recursive_mutex::scoped_lock lock (m_mutex);
+  TableContainer::iterator it = m_table.find (interest);
+  if (it != m_table.end())
+    m_table.erase(it);
+  time_t currentTime = time(0);
+  m_table.insert (make_pair(interest, currentTime));
 }
 
-void SyncInterestTable::periodicCheck() {
-	sleep(4);
-	expireInterests();
+void SyncInterestTable::expireInterests()
+{
+  recursive_mutex::scoped_lock lock (m_mutex);
+  time_t currentTime = time(0);
+  TableContainer::iterator it = m_table.begin (); 
+  while (it != m_table.end())
+    {
+    time_t timestamp = it->second;
+    if (currentTime - timestamp > m_checkPeriod) {
+      it = m_table.erase(it);
+    }
+    else
+      ++it;
+  }
+}
+
+void SyncInterestTable::periodicCheck ()
+{
+  while (m_running)
+    {
+      try
+        {
+          // cout << "enterSleep: " << this_thread::get_id () << endl;
+      
+          this_thread::sleep (posix_time::seconds(4));
+          expireInterests ();
+        }
+      catch (boost::thread_interrupted e)
+        {
+          // should I just assign m_running = false here?
+          
+          // cout << "interrupted: " << this_thread::get_id () << endl;
+          // do nothing
+        }
+    }
 }
 
 }
