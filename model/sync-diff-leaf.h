@@ -74,6 +74,7 @@ private:
 };
 
 typedef boost::shared_ptr<DiffLeaf> DiffLeafPtr;
+typedef boost::shared_ptr<const DiffLeaf> DiffLeafConstPtr;
 
 std::ostream &
 operator << (std::ostream &os, Operation op);

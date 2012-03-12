@@ -81,7 +81,7 @@ FullState::getDigest ()
 }
 
 // from State
-bool
+boost::tuple<bool/*inserted*/, bool/*updated*/, SeqNo/*oldSeqNo*/>
 FullState::update (NameInfoConstPtr info, const SeqNo &seq)
 {
 #ifndef STANDALONE  
@@ -96,16 +96,20 @@ FullState::update (NameInfoConstPtr info, const SeqNo &seq)
   if (item == m_leaves.end ())
     {
       m_leaves.insert (make_shared<FullLeaf> (info, cref (seq)));
+      return make_tuple (true, false, SeqNo ());
     }
   else
     {
       if ((*item)->getSeq () == seq || seq < (*item)->getSeq ())
-        return false;
-      
+        {
+          return make_tuple (false, false, SeqNo ());
+        }
+
+      SeqNo old = (*item)->getSeq ();
       m_leaves.modify (item,
                        ll::bind (&Leaf::setSeq, *ll::_1, seq));
+      return make_tuple (false, true, old);
     }
-  return true;
 }
 
 bool
@@ -122,7 +126,7 @@ FullState::remove (NameInfoConstPtr info)
   LeafContainer::iterator item = m_leaves.find (info);
   if (item != m_leaves.end ())
     {
-      m_leaves.erase (info);
+      m_leaves.erase (item);
       return true;
     }
   else

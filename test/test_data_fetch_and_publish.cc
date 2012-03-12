@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE (AppDataPublishAndFetchTest)
   string str[5] = {"panda", "express", "tastes", "so", "good"};
 
   for (int i = 0; i < 5; i++) {
-    foo.set(interest + "/" + seq[i], str[i]);
+    foo.set(interest + "/" + "0/" /*session*/ + seq[i], str[i]);
   }
 
   boost::function<void (string, string)> setFunc =
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE (AppDataPublishAndFetchTest)
   BOOST_CHECK_EQUAL(publisher.getHighestSeq(interest, 0), 5);
   BOOST_CHECK_EQUAL(publisher.getRecentData(interest, 0), str[4]);
 
-  fetcher.fetch(interest, 1, 5);
+  fetcher.onUpdate (interest, SeqNo (0,5), SeqNo (0,0));
   // give time for ccnd to react
   sleep(1);
   BOOST_CHECK_EQUAL(foo.toString(), bar.toString());
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE (AppDataPublishAndFetchTest)
     bind(&TestStructApp::erase, &bar, _1, _2);
   fetcher.setDataCallback(eraseFunc);
 
-  fetcher.fetch(interest, 1, 5);
+  fetcher.onUpdate (interest, SeqNo (0,5), SeqNo (0,0));
   // give time for ccnd to react
   sleep(1);
   TestStructApp poo;

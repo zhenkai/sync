@@ -25,6 +25,7 @@
 
 #include "sync-state-leaf-container.h"
 #include <boost/exception/all.hpp>
+#include "boost/tuple/tuple.hpp"
 
 /**
  * \defgroup sync SYNC protocol
@@ -48,7 +49,7 @@ public:
    * @param info name of the leaf
    * @param seq  sequence number of the leaf
    */
-  virtual bool
+  virtual boost::tuple<bool/*inserted*/, bool/*updated*/, SeqNo/*oldSeqNo*/>
   update (NameInfoConstPtr info, const SeqNo &seq) = 0;
 
   /**

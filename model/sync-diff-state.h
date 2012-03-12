@@ -86,7 +86,7 @@ public:
   operator += (const DiffState &state);
   
   // from State
-  virtual bool
+  virtual boost::tuple<bool/*inserted*/, bool/*updated*/, SeqNo/*oldSeqNo*/>
   update (NameInfoConstPtr info, const SeqNo &seq);
 
   virtual bool

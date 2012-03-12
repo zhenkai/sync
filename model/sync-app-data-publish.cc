@@ -31,10 +31,10 @@ namespace Sync
 string
 AppDataPublish::getRecentData (const string &prefix, uint32_t session)
 {
-	if (m_recentData.find(make_pair(prefix, session)) != m_recentData.end())
-		return m_recentData[make_pair(prefix, session)];
-	else
-		return "";
+  if (m_recentData.find(make_pair(prefix, session)) != m_recentData.end())
+    return m_recentData[make_pair(prefix, session)];
+  else
+    return "";
 }
 
 uint32_t
@@ -68,14 +68,14 @@ AppDataPublish::publishData (const string &name, uint32_t session, const string 
   m_sequenceLog[name] = s;
 
   ostringstream contentNameWithSeqno;
-  contentNameWithSeqno << name << "/" << seq;
+  contentNameWithSeqno << name << "/" << session << "/" << seq;
 
   m_ccnxHandle->publishData (contentNameWithSeqno.str (), dataBuffer, freshness);
 
   unordered_map<pair<string, uint32_t>, string>::iterator it = m_recentData.find(make_pair(name, session));
-	if (it != m_recentData.end()) 
-		m_recentData.erase(it);
-	m_recentData.insert(make_pair(make_pair(name, session), dataBuffer));
+  if (it != m_recentData.end()) 
+    m_recentData.erase(it);
+  m_recentData.insert(make_pair(make_pair(name, session), dataBuffer));
 
   return true;
 }
