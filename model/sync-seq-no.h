@@ -36,6 +36,16 @@ class SeqNo
 {
 public:
   /**
+   * @brief Default constructor.  Creates an zero sequence number with zero session ID (basically is an invalid object)
+   */
+  SeqNo ()
+    : m_valid (false)
+    , m_session (0)
+    , m_seq (0)
+  {
+  }
+  
+  /**
    * @brief Copy constructor
    * @param seq sequence number object to copy from
    */
@@ -51,6 +61,7 @@ public:
   SeqNo &
   operator = (const SeqNo &seq)
   {
+    m_valid = seq.m_valid;
     m_session = seq.m_session;
     m_seq = seq.m_seq;
 
@@ -62,7 +73,8 @@ public:
    * @param seq Sequence number
    */
   SeqNo (uint32_t seq)
-    : m_session (0)
+    : m_valid (true)
+    , m_session (0)
     , m_seq (seq)
   { }
 
@@ -72,7 +84,8 @@ public:
    * @param seq Sequence number
    */
   SeqNo (uint32_t session, uint32_t seq)
-    : m_session (session)
+    : m_valid (true)
+    , m_session (session)
     , m_seq (seq)
   { }
 
@@ -108,6 +121,12 @@ public:
     return m_session == seq.m_session && m_seq == seq.m_seq;
   }
 
+  bool
+  isValid () const
+  {
+    return m_valid;
+  }
+  
   /**
    * @brief Get session id
    */
@@ -121,6 +140,8 @@ public:
   { return m_seq; }
   
 private:
+  bool m_valid;
+  
   /**
    * @brief Session ID (e.g., after crash, application will choose new session ID.
    *

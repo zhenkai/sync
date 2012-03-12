@@ -42,15 +42,20 @@ BOOST_AUTO_TEST_CASE (InterestTableTest)
   BOOST_CHECK_NO_THROW (delete table);
 }
 
-void func (const std::string &, uint32_t, uint32_t)
+void funcUpdate (const std::string &, const SeqNo &newSeq, const SeqNo &oldSeq)
 {
-  cout << "func\n";
+  cout << "funcUpdate\n";
+}
+
+void funcRemove (const std::string &)
+{
+  cout << "funcRemove\n";
 }
 
 BOOST_AUTO_TEST_CASE (SyncLogicTest)
 {  
   SyncLogic *logic = 0;
-  BOOST_CHECK_NO_THROW (logic = new SyncLogic ("/prefix", func, make_shared<CcnxWrapper> ()));
+  BOOST_CHECK_NO_THROW (logic = new SyncLogic ("/prefix", funcUpdate, funcRemove, make_shared<CcnxWrapper> ()));
   BOOST_CHECK_EQUAL (logic->getListChecksSize (), 0);
 
   // 0s

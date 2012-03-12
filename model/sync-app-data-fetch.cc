@@ -29,16 +29,32 @@ namespace Sync
 {
 
 void
-AppDataFetch::fetch (const string &prefix, uint32_t startSeq, uint32_t endSeq)
+AppDataFetch::onUpdate (const std::string &prefix, const SeqNo &newSeq, const SeqNo &oldSeq)
 {
-  for (uint32_t i = startSeq; i <= endSeq; i++)
-  {
-    if (i == 0)
-      continue;
-    ostringstream interestName;
-    interestName << prefix << "/" << i;
-    m_ccnxHandle->sendInterest (interestName.str (), m_dataCallback);
-  }
+  // sequence number logic here
+  uint32_t start = 0;
+  if (oldSeq.isValid ())
+    {
+      start = oldSeq.getSeq () + 1;
+    }
+  uint32_t end = newSeq.getSeq ();
+
+  //
+  // add logic for wrap around
+  //
+
+  for (uint32_t i = start; i <= end; i++)
+    {
+      ostringstream interestName;
+      interestName << prefix << "/" << newSeq.getSession () << "/" << i;
+      m_ccnxHandle->sendInterest (interestName.str (), m_dataCallback);
+    }
+}
+
+void
+AppDataFetch::onRemove (const std::string &prefix)
+{
+  // I guess this should be somewhere in app
 }
 
 }

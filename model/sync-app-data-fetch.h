@@ -24,6 +24,7 @@
 #define SYNC_APP_DATA_FETCH_H
 
 #include "sync-ccnx-wrapper.h"
+#include "sync-seq-no.h"
 
 namespace Sync {
 
@@ -57,15 +58,23 @@ public:
   }
 
   /**
-   * @brief Fetch data for a certain name prefix
+   * @brief Fired from SyncLogic when new data is available
    *
    * @param prefix the prefix for the data
-   * @param startSeq the start of sequence number range (inclusive)
-   * @param endSeq the end of sequence number range (inclusive)
+   * @param newSeq old session ID/sequence number
+   * @param oldSeq new session ID/sequence number
    */
   void
-  fetch (const std::string &prefix, uint32_t startSeq, uint32_t endSeq);
+  onUpdate (const std::string &prefix, const SeqNo &newSeq, const SeqNo &oldSeq);
 
+  /**
+   * @brief Fired from SyncLogic when data is removed
+   *
+   * @param prefix the prefix for the data
+   */
+  void
+  onRemove (const std::string &prefix);
+  
 private:
   CcnxWrapperPtr m_ccnxHandle;
   CcnxWrapper::DataCallback m_dataCallback;

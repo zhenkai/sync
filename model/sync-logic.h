@@ -25,6 +25,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 #include "boost/date_time/posix_time/posix_time_types.hpp"
+#include <boost/thread/recursive_mutex.hpp>
 
 #include "sync-ccnx-wrapper.h"
 #include "sync-interest-table.h"
@@ -44,7 +45,8 @@ namespace Sync {
 class SyncLogic
 {
 public:
-  typedef boost::function<void (const std::string &, uint32_t, uint32_t)> LogicCallback;
+  typedef boost::function< void ( const std::string &/*prefix*/, const SeqNo &/*newSeq*/, const SeqNo &/*oldSeq*/ ) > LogicUpdateCallback;
+  typedef boost::function< void ( const std::string &/*prefix*/ ) > LogicRemoveCallback;
 
   /**
    * @brief Constructor
@@ -53,7 +55,10 @@ public:
    * @param ccnxHandle ccnx handle
    * the app data when new remote names are learned
    */
-  SyncLogic (const std::string &syncPrefix, LogicCallback fetch, CcnxWrapperPtr ccnxHandle);
+  SyncLogic (const std::string &syncPrefix,
+             LogicUpdateCallback onUpdate,
+             LogicRemoveCallback onRemove,
+             CcnxWrapperPtr ccnxHandle);
 
   ~SyncLogic ();
 
@@ -106,10 +111,13 @@ private:
 
   FullState m_state;
   DiffStateContainer m_log;
+  boost::recursive_mutex m_stateMutex;
+
   SyncInterestTable m_syncInterestTable;
 
   std::string m_syncPrefix;
-  LogicCallback m_fetchCallback;
+  LogicUpdateCallback m_onUpdate;
+  LogicRemoveCallback m_onRemove;
   CcnxWrapperPtr m_ccnxHandle;
 
   boost::thread m_delayedCheckThread;

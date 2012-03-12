@@ -263,4 +263,32 @@ BOOST_AUTO_TEST_CASE (DiffStateXml)
 
 }
 
+BOOST_AUTO_TEST_CASE (DiffStateDiffTest)
+{
+  DiffStatePtr root = make_shared<DiffState> ();
+
+  DiffStatePtr head = make_shared<DiffState> ();
+  root->setNext (head);
+  
+  head->update (StdNameInfo::FindOrCreate ("3"), SeqNo (1));
+  head->remove (StdNameInfo::FindOrCreate ("1"));
+  
+  DiffStatePtr tail = make_shared<DiffState> ();
+  head->setNext (tail);
+
+  tail->update (StdNameInfo::FindOrCreate ("3"), SeqNo (2));  
+
+  {
+  ostringstream os;
+  os << *root->diff ();
+  string diffState = os.str ();
+  erase_all (diffState, "\n");
+  BOOST_CHECK_EQUAL (diffState,
+                     "<state>"
+                     "<item action=\"remove\"><name>1</name></item>"
+                     "<item action=\"update\"><name>3</name><seq><session>0</session><seqno>2</seqno></seq></item>"
+                     "</state>");
+  }
+}
+
 BOOST_AUTO_TEST_SUITE_END()
