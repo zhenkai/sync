@@ -99,7 +99,7 @@ private:
   void sendSyncInterest ();
 
 	void 
-	processPendingSyncInterests();
+	processPendingSyncInterests(DiffStatePtr &diff);
 
 private:
   typedef std::list< boost::tuple< boost::system_time, boost::function< void ( ) > > > DelayedChecksList;

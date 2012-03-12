@@ -68,7 +68,7 @@ public:
    *
 	 * @param the prefix for the participant
    */
-	bool remove (const std::string &prefix) {return m_syncLogic->remove(prefix);}
+	void remove (const std::string &prefix) {m_syncLogic.remove(prefix);}
 
 private:
   CcnxWrapperPtr m_ccnxHandle;
