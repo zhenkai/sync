@@ -43,7 +43,7 @@ DiffStatePtr
 DiffState::diff () const
 {
   DiffStatePtr ret = make_shared<DiffState> ();
-
+  
   DiffStatePtr state = m_next;
   while (state != 0)
     {
@@ -57,6 +57,21 @@ DiffState::diff () const
 DiffState &
 DiffState::operator += (const DiffState &state)
 {
+  BOOST_FOREACH (LeafConstPtr _leaf, state.getLeaves ())
+    {
+      DiffLeafConstPtr leaf = dynamic_pointer_cast<const DiffLeaf> (_leaf);
+      BOOST_ASSERT (leaf != 0);
+
+      if (leaf->getOperation () == UPDATE)
+        update (leaf->getInfo (), leaf->getSeq ());
+      else if (leaf->getOperation () == REMOVE)
+        remove (leaf->getInfo ());
+      else
+        {
+          BOOST_ASSERT (false);
+        }
+    }
+  
   return *this;
 }
   

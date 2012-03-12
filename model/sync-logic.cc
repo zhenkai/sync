@@ -246,6 +246,10 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
         }
 
       diffLog->setDigest(m_state.getDigest());
+      if (m_log.size () > 0)
+        {
+          m_log.get<sequenced> ().front ()->setNext (diffLog);
+        }
       m_log.insert (diffLog);
     }
   catch (Error::SyncXmlDecodingFailure &e)
@@ -256,15 +260,6 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 
   if (diffLog->getLeaves ().size () > 0)
     {
-      // notify upper layer
-      BOOST_FOREACH (LeafConstPtr leaf, diffLog->getLeaves ())
-        {
-          DiffLeafConstPtr diffLeaf = dynamic_pointer_cast<const DiffLeaf> (leaf);
-          BOOST_ASSERT (diffLeaf != 0);
-          
-          // m_fetchCallback (prefix, 1, seq.getSeq());
-        }
-  
       sendSyncInterest();
     }
 }
