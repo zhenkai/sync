@@ -24,6 +24,7 @@
 #include <poll.h>
 #include <boost/throw_exception.hpp>
 typedef boost::error_info<struct tag_errmsg, std::string> errmsg_info_str;
+typedef boost::error_info<struct tag_errmsg, int> errmsg_info_int;
 
 using namespace std;
 using namespace boost;
@@ -253,8 +254,11 @@ int CcnxWrapper::setInterestFilter (const string &prefix, const InterestCallback
   ccn_name_from_uri (pname, prefix.c_str());
   interestClosure->data = new InterestCallback (interestCallback); // should be removed when closure is removed
   interestClosure->p = &incomingInterest;
-  if(ccn_set_interest_filter (m_handle, pname, interestClosure) < 0)
-    BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("set interest filter failed"));
+  int ret = ccn_set_interest_filter (m_handle, pname, interestClosure);
+  if (ret < 0)
+    {
+      BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("set interest filter failed") << errmsg_info_int (ret));
+    }
 
   ccn_charbuf_destroy(&pname);
 }

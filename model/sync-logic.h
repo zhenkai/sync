@@ -24,6 +24,8 @@
 #define SYNC_LOGIC_H
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
+#include "boost/date_time/posix_time/posix_time_types.hpp"
+
 #include "sync-ccnx-wrapper.h"
 #include "sync-interest-table.h"
 #include "sync-diff-state.h"
@@ -73,11 +75,27 @@ public:
    */
   void processSyncData (const std::string &name, const std::string &dataBuffer);
 
+#ifdef _DEBUG
+  size_t
+  getListChecksSize ()
+  {
+    boost::lock_guard<boost::mutex> lock (m_listChecksMutex);
+    return m_listChecks.size ();
+  }
+#endif
+  
 private:
+  void delayedChecksLoop ();
+
+  void
+  processSyncInterest (DigestConstPtr digest, const std::string &interestname, bool timedProcessing=false);
+  
   void sendSyncInterest ();
-  void checkAgain (const std::string &interest, DigestPtr digest);
+  // void checkAgain (const std::string &interest, DigestPtr digest);
 
 private:
+  typedef std::list< boost::tuple< boost::system_time, boost::function< void ( ) > > > DelayedChecksList;
+
   FullState m_state;
   DiffStateContainer m_log;
   SyncInterestTable m_syncInterestTable;
@@ -86,8 +104,13 @@ private:
   LogicCallback m_fetch;
   CcnxWrapperPtr m_ccnxHandle;
 
-  boost::thread m_thread;
+  boost::thread m_delayedCheckThread;
+  bool          m_delayedCheckThreadRunning;
+  DelayedChecksList m_listChecks;
+  boost::condition_variable m_listChecksCondition;
+  boost::mutex  m_listChecksMutex;
 
+  static const boost::posix_time::time_duration m_delayedCheckTime;
   static const int m_syncResponseFreshness = 2;
 };
 

@@ -25,6 +25,8 @@
 #include "sync-full-leaf.h"
 #include <boost/make_shared.hpp>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <vector>
 
 using namespace std;
@@ -33,20 +35,138 @@ using namespace boost;
 namespace Sync
 {
 
+const boost::posix_time::time_duration SyncLogic::m_delayedCheckTime = boost::posix_time::seconds (4.0);
+
+
 SyncLogic::SyncLogic (const string &syncPrefix,
                       LogicCallback fetch,
                       CcnxWrapperPtr ccnxHandle)
   : m_syncPrefix (syncPrefix)
   , m_fetch (fetch)
   , m_ccnxHandle (ccnxHandle)
+  , m_delayedCheckThreadRunning (true)
 {
   srandom(time(NULL));
-  m_ccnxHandle->setInterestFilter(syncPrefix, bind(&SyncLogic::respondSyncInterest, this, _1));
+  m_ccnxHandle->setInterestFilter (syncPrefix,
+                                   bind (&SyncLogic::respondSyncInterest, this, _1));
+
+  m_delayedCheckThread = thread (&SyncLogic::delayedChecksLoop, this);
 }
 
 SyncLogic::~SyncLogic ()
 {
+  m_delayedCheckThreadRunning = false;
+  // cout << "Requested stop" << this_thread::get_id () << endl;
+  m_delayedCheckThread.interrupt ();
+  m_delayedCheckThread.join ();
+}
 
+void
+SyncLogic::delayedChecksLoop ()
+{
+  while (m_delayedCheckThreadRunning)
+    {
+      try
+        {
+          DelayedChecksList::value_type tuple;
+          
+          {
+            unique_lock<mutex> lock (m_listChecksMutex);
+            while (m_delayedCheckThreadRunning && m_listChecks.size () == 0)
+              {
+                m_listChecksCondition.wait (lock);
+                // cout << "Got something" << endl;
+              }
+
+            if (m_listChecks.size () == 0) continue;
+
+            tuple = m_listChecks.front ();
+            m_listChecks.pop_front ();
+            // cout << "pop" << endl;
+            // release the mutex
+          }
+
+          // waiting and calling
+          
+          // cout << "Duration: " << tuple.get<0> () - get_system_time () << endl;
+          this_thread::sleep (tuple.get<0> ()); 
+          
+          if (!m_delayedCheckThreadRunning) continue;
+          tuple.get<1> () (); // call the scheduled function
+        }
+      catch (thread_interrupted e)
+        {
+          // cout << "interrupted: " << this_thread::get_id () << endl;
+          // do nothing
+        }
+    }
+  // cout << "Exited...\n";
+}
+
+
+
+void
+SyncLogic::respondSyncInterest (const string &interest)
+{
+  string hash = interest.substr(interest.find_last_of("/") + 1);
+  DigestPtr digest = make_shared<Digest> ();
+  try
+    {
+      istringstream is (hash);
+      is >> *digest;
+    }
+  catch (Error::DigestCalculationError &e)
+    {
+      // log error. ignoring it for now, later we should log it
+      return;
+    }
+
+  processSyncInterest (digest, interest);
+}
+
+void
+SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &interestName, bool timedProcessing/*=false*/)
+{
+  // cout << "SyncLogic::processSyncInterest " << timedProcessing << endl;
+    
+  if (*m_state.getDigest() == *digest)
+  {
+    m_syncInterestTable.insert (interestName);
+    return;
+  }
+
+  DiffStateContainer::iterator stateInDiffLog = m_log.find (digest);
+
+  if (stateInDiffLog != m_log.end ())
+  {
+    m_ccnxHandle->publishData (interestName,
+                               lexical_cast<string> (*(*stateInDiffLog)->diff ()),
+                               m_syncResponseFreshness);
+    return;
+  }
+
+  if (!timedProcessing)
+    {
+      {
+        // Alex: Should we ignore interests if interest with the same digest is already in the wait queue?
+        
+        lock_guard<mutex> lock (m_listChecksMutex);
+        system_time delay = get_system_time () + m_delayedCheckTime;
+        // do we need randomization??
+        // delay += boost::ptime::milliseconds (rand() % 80 + 20);
+      
+        m_listChecks.push_back (make_tuple (delay,
+                                            bind (&SyncLogic::processSyncInterest, this, digest, interestName, true))
+                                );
+      }
+      m_listChecksCondition.notify_one ();
+    }
+  else
+    {
+      m_ccnxHandle->publishData (interestName + "/state",
+                                 lexical_cast<string> (m_state),
+                                 m_syncResponseFreshness);
+    }
 }
 
 void
@@ -176,68 +296,12 @@ SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
   diff->setDigest(m_state.getDigest());
   m_log.insert(diff);
 
-  vector<string> pis = m_syncInterestTable.fetchAll();
+  vector<string> pis = m_syncInterestTable.fetchAll ();
   stringstream ss;
   ss << *diff;
   for (vector<string>::iterator ii = pis.begin(); ii != pis.end(); ++ii)
   {
     m_ccnxHandle->publishData(*ii, ss.str(), m_syncResponseFreshness);
-  }
-}
-
-void
-SyncLogic::checkAgain (const string &interest, DigestPtr digest)
-{
-  int wait = rand() % 80 + 20;
-  sleep(wait/1000.0);
-
-  if (*m_state.getDigest() == *digest)
-  {
-    m_syncInterestTable.insert(interest);
-    return;
-  }
-
-  DiffStateContainer::iterator ii = m_log.find (digest);
-  if (ii != m_log.end ())
-  {
-    stringstream ss;
-    ss << *(*ii)->diff();
-    m_ccnxHandle->publishData(interest, ss.str(), m_syncResponseFreshness);
-  }
-  else
-  {
-    stringstream ss;
-    ss << m_state;
-    m_ccnxHandle->publishData(interest + "/state", ss.str(), m_syncResponseFreshness);
-  }
-}
-
-void
-SyncLogic::respondSyncInterest (const string &interest)
-{
-  string hash = interest.substr(interest.find_last_of("/") + 1);
-  DigestPtr digest = make_shared<Digest> ();
-  *digest << hash;
-  digest->finalize ();
-
-  if (*m_state.getDigest() == *digest)
-  {
-    m_syncInterestTable.insert (interest);
-    return;
-  }
-
-  DiffStateContainer::iterator ii = m_log.find (digest);
-
-  if (ii != m_log.end())
-  {
-    stringstream ss;
-    ss << *(*ii)->diff();
-    m_ccnxHandle->publishData(interest, ss.str(), m_syncResponseFreshness);
-  }
-  else
-  {
-    m_thread.join();
-    m_thread = thread(&SyncLogic::checkAgain, this, interest, digest);
   }
 }
 

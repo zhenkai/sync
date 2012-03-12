@@ -28,8 +28,7 @@ using boost::test_tools::output_test_stream;
 #include <boost/make_shared.hpp>
 
 #include "../model/sync-interest-table.h"
-#include "../model/sync-app-data-fetch.h"
-#include "../model/sync-app-data-publish.h"
+#include "../model/sync-logic.h"
 
 using namespace Sync;
 using namespace std;
@@ -41,5 +40,46 @@ BOOST_AUTO_TEST_CASE (InterestTableTest)
   BOOST_CHECK_NO_THROW (table = new SyncInterestTable ());
 
   BOOST_CHECK_NO_THROW (delete table);
+}
+
+void func (const std::string &, uint32_t, uint32_t)
+{
+  cout << "func\n";
+}
+
+BOOST_AUTO_TEST_CASE (SyncLogicTest)
+{  
+  SyncLogic *logic = 0;
+  BOOST_CHECK_NO_THROW (logic = new SyncLogic ("/prefix", func, make_shared<CcnxWrapper> ()));
+  BOOST_CHECK_EQUAL (logic->getListChecksSize (), 0);
+
+  // 0s
+  BOOST_CHECK_NO_THROW (logic->respondSyncInterest ("/prefix/e5fa44f2b31c1fb553b6021e7360d07d5d91ff5e")); 
+  sleep (1);
+
+  // 1s
+  BOOST_CHECK_NO_THROW (logic->respondSyncInterest ("/prefix/e5fa44f2b31c1fb553b6021e7360d07d5d91ff5e")); 
+  sleep (1);
+
+  // 2s
+  // cout << "Wait queue size: " << logic->getListChecksSize () << endl;
+  BOOST_CHECK_EQUAL (logic->getListChecksSize (), 1);
+
+  // 2s
+  BOOST_CHECK_NO_THROW (logic->respondSyncInterest ("/prefix/e5fa44f2b31c1fb553b6021e7360d07d5d91ff5e"));  
+  // cout << "Wait queue size: " << logic->getListChecksSize () << endl;
+  BOOST_CHECK_EQUAL (logic->getListChecksSize (), 2);
+
+  this_thread::sleep (posix_time::milliseconds (2500)); // make two interests expire
+
+  // 4.5s
+  // cout << "(after 3.3s) Wait queue size: " << logic->getListChecksSize () << endl;
+  BOOST_CHECK_EQUAL (logic->getListChecksSize (), 1);
+
+  BOOST_CHECK_NO_THROW (logic->respondSyncInterest ("/prefix/e5fa44f2b31c1fb553b6021e7360d07d5d91ff5e"));
+  sleep (5);
+  BOOST_CHECK_EQUAL (logic->getListChecksSize (), 0);
+  
+  BOOST_CHECK_NO_THROW (delete logic);
 }
 
