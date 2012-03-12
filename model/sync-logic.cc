@@ -181,55 +181,55 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
     {
       recursive_mutex::scoped_lock lock (m_stateMutex);
       
-      string last = name.substr(name.find_last_of("/") + 1);
-      istringstream ss (dataBuffer);
+  string last = name.substr(name.find_last_of("/") + 1);
+  istringstream ss (dataBuffer);
 
-      if (last == "state")
-        {
-          FullState full;
-          ss >> full;
+  if (last == "state")
+  {
+    FullState full;
+    ss >> full;
           BOOST_FOREACH (LeafConstPtr leaf, full.getLeaves()) // order doesn't matter
-            {
-              NameInfoConstPtr info = leaf->getInfo ();
-              SeqNo seq = leaf->getSeq ();
+    {
+      NameInfoConstPtr info = leaf->getInfo ();
+      SeqNo seq = leaf->getSeq ();
 
               bool inserted = false;
               bool updated = false;
               SeqNo oldSeq;
               tie (inserted, updated, oldSeq) = m_state.update (info, seq);
-                  
+
               if (updated)
                 {
                   diffLog->update (info, seq);
                   m_onUpdate (info->toString (), seq.getSeq(), oldSeq);
-                }
-            }
+    }
+  }
         }
-      else
-        {
-          DiffState diff;
-          ss >> diff;
-          BOOST_FOREACH (LeafConstPtr leaf, diff.getLeaves().get<ordered>())
-            {
+  else
+  {
+    DiffState diff;
+    ss >> diff;
+    BOOST_FOREACH (LeafConstPtr leaf, diff.getLeaves().get<ordered>())
+    {
               DiffLeafConstPtr diffLeaf = dynamic_pointer_cast<const DiffLeaf> (leaf);
               BOOST_ASSERT (diffLeaf != 0);
 
-              NameInfoConstPtr info = diffLeaf->getInfo ();
+      NameInfoConstPtr info = diffLeaf->getInfo();
               if (diffLeaf->getOperation() == UPDATE)
                 {
-                  SeqNo seq = diffLeaf->getSeq ();
-                  
+      SeqNo seq = diffLeaf->getSeq();
+
                   bool inserted = false;
                   bool updated = false;
                   SeqNo oldSeq;
                   tie (inserted, updated, oldSeq) = m_state.update (info, seq);
-                  
+
                   if (updated)
                     {
                       diffLog->update (info, seq);
                       m_onUpdate (info->toString (), seq.getSeq(), oldSeq);
-                    }
-                }
+    }
+  }
               else if (diffLeaf->getOperation() == REMOVE)
                 {
                   if (m_state.remove (info))
@@ -245,8 +245,8 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
             }
         }
 
-      diffLog->setDigest(m_state.getDigest());
-      m_log.insert (diffLog);
+  diffLog->setDigest(m_state.getDigest());
+  m_log.insert (diffLog);
     }
   catch (Error::SyncXmlDecodingFailure &e)
     {
@@ -256,29 +256,37 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 
   if (diffLog->getLeaves ().size () > 0)
     {
-      // notify upper layer
-      BOOST_FOREACH (LeafConstPtr leaf, diffLog->getLeaves ())
-        {
+  // notify upper layer
+  BOOST_FOREACH (LeafConstPtr leaf, diffLog->getLeaves ())
+    {
           DiffLeafConstPtr diffLeaf = dynamic_pointer_cast<const DiffLeaf> (leaf);
           BOOST_ASSERT (diffLeaf != 0);
           
             // m_fetchCallback (prefix, 1, seq.getSeq());
-        }
-
-      sendSyncInterest ();
     }
+  
+  sendSyncInterest();
+}
 }
 
 void
-SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
+SyncLogic::processPendingSyncInterests(DiffStatePtr &diff) {
+  diff->setDigest(m_state.getDigest());
+	m_log.insert(diff);
+
+  vector<string> pis = m_syncInterestTable.fetchAll ();
+  stringstream ss;
+  ss << *diff;
+  for (vector<string>::iterator ii = pis.begin(); ii != pis.end(); ++ii)
+  {
+    m_ccnxHandle->publishData (*ii, ss.str(), m_syncResponseFreshness);
+  }
+}
+
+void
+SyncLogic::processPendingSyncInterests(DiffStatePtr &diff) 
 {
   recursive_mutex::scoped_lock lock (m_stateMutex);
-
-  NameInfoConstPtr info = StdNameInfo::FindOrCreate (prefix);
-  SeqNo seqN(session, seq);
-  DiffStatePtr diff = make_shared<DiffState>();
-  diff->update(info, seqN);
-  m_state.update(info, seqN);
   diff->setDigest(m_state.getDigest());
   m_log.insert(diff);
 
@@ -289,6 +297,33 @@ SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
   {
     m_ccnxHandle->publishData (*ii, ss.str(), m_syncResponseFreshness);
   }
+}
+
+void
+SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
+{
+  recursive_mutex::scoped_lock lock (m_stateMutex);
+  NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
+  SeqNo seqN(session, seq);
+  m_state.update(info, seqN);
+
+  DiffStatePtr diff = make_shared<DiffState>();
+  diff->update(info, seqN);
+
+  processPendingSyncInterests(diff);
+}
+
+void
+SyncLogic::remove(const string &prefix) 
+{
+  recursive_mutex::scoped_lock lock (m_stateMutex);
+  NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
+  m_state.remove(info);	
+
+  DiffStatePtr diff = make_shared<DiffState>();
+  diff->remove(info);
+
+  processPendingSyncInterests(diff);
 }
 
 void
