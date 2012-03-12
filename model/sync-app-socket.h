@@ -62,6 +62,14 @@ public:
    */
   bool publish (const std::string &prefix, uint32_t session, const std::string &dataBuffer, int freshness);
 
+  /**
+   * @brief delete a participant's subtree from the sync tree; SyncLogic will do the work
+	 * this is just a wrapper
+   *
+	 * @param the prefix for the participant
+   */
+	bool remove (const std::string &prefix) {return m_syncLogic->remove(prefix);}
+
 private:
   CcnxWrapperPtr m_ccnxHandle;
 

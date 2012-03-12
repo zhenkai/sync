@@ -75,6 +75,12 @@ public:
    */
   void processSyncData (const std::string &name, const std::string &dataBuffer);
 
+  /**
+   * @brief remove a participant's subtree from the sync tree
+   * @param the name prefix for the participant
+   */
+	void remove(const std::string &prefix);
+
 #ifdef _DEBUG
   size_t
   getListChecksSize ()
@@ -91,7 +97,9 @@ private:
   processSyncInterest (DigestConstPtr digest, const std::string &interestname, bool timedProcessing=false);
   
   void sendSyncInterest ();
-  // void checkAgain (const std::string &interest, DigestPtr digest);
+
+	void 
+	processPendingSyncInterests();
 
 private:
   typedef std::list< boost::tuple< boost::system_time, boost::function< void ( ) > > > DelayedChecksList;

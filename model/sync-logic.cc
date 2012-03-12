@@ -295,15 +295,9 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 }
 
 void
-SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
-{
-  NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
-  SeqNo seqN(session, seq);
-  DiffStatePtr diff = make_shared<DiffState>();
-  diff->update(info, seqN);
-  m_state.update(info, seqN);
+SyncLogic::processPendingSyncInterests(DiffStatePtr &diff) {
   diff->setDigest(m_state.getDigest());
-  m_log.insert(diff);
+	m_log.insert(diff);
 
   vector<string> pis = m_syncInterestTable.fetchAll ();
   stringstream ss;
@@ -312,6 +306,30 @@ SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
   {
     m_ccnxHandle->publishData (*ii, ss.str(), m_syncResponseFreshness);
   }
+}
+
+void
+SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
+{
+  NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
+  SeqNo seqN(session, seq);
+  m_state.update(info, seqN);
+
+  DiffStatePtr diff = make_shared<DiffState>();
+  diff->update(info, seqN);
+
+	processPendingSyncInterests(diff);
+}
+
+void
+SyncLogic::remove(const string &prefix) {
+  NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
+	m_state.remove(info);	
+
+  DiffStatePtr diff = make_shared<DiffState>();
+	diff->remove(info);
+
+	processPendingSyncInterests(diff);
 }
 
 void
