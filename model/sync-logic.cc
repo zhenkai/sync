@@ -204,6 +204,8 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
         {
           m_log.get<sequenced> ().front ()->setNext (diffLog);
         }
+      m_log.erase (m_state.getDigest());
+      /// @todo Optimization
       m_log.insert (diffLog);
     }
   catch (Error::SyncXmlDecodingFailure &e)
@@ -225,11 +227,13 @@ SyncLogic::processPendingSyncInterests (DiffStatePtr &diffLog)
   recursive_mutex::scoped_lock lock (m_stateMutex);
 
   diffLog->setDigest (m_state.getDigest());  
-  if (m_log.get<sequenced> ().size () > 0)
+  if (m_log.size () > 0)
     {
       m_log.get<sequenced> ().front ()->setNext (diffLog);
     }
-  m_log.get<sequenced> ().push_back (diffLog);
+  m_log.erase (m_state.getDigest()); // remove diff state with the same digest.  next pointers are still valid
+  /// @todo Optimization
+  m_log.insert (diffLog);
 
   vector<string> pis = m_syncInterestTable.fetchAll ();
   if (pis.size () > 0)
