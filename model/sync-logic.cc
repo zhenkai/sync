@@ -152,7 +152,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
               SeqNo oldSeq;
               tie (inserted, updated, oldSeq) = m_state.update (info, seq);
 
-              if (updated)
+              if (inserted || updated)
                 {
                   diffLog->update (info, seq);
                   m_onUpdate (info->toString (), seq.getSeq(), oldSeq);
@@ -178,7 +178,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
                   SeqNo oldSeq;
                   tie (inserted, updated, oldSeq) = m_state.update (info, seq);
 
-                  if (updated)
+                  if (inserted || updated)
                     {
                       diffLog->update (info, seq);
                       m_onUpdate (info->toString (), seq.getSeq(), oldSeq);
