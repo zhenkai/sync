@@ -66,7 +66,7 @@ SyncLogic::~SyncLogic ()
 void
 SyncLogic::respondSyncInterest (const string &interest)
 {
-	//cout << "Respond Sync Interest" << endl;
+	cout << "Respond Sync Interest" << endl;
   string hash = interest.substr(interest.find_last_of("/") + 1);
   DigestPtr digest = make_shared<Digest> ();
   try
@@ -122,7 +122,7 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
 void
 SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 {
-	//cout << "Process Sync Data" <<endl;
+	cout << "Process Sync Data" <<endl;
   DiffStatePtr diffLog = make_shared<DiffState> ();
   
   try
@@ -261,7 +261,7 @@ SyncLogic::remove(const string &prefix)
 void
 SyncLogic::sendSyncInterest ()
 {
-	//cout << "Sending Sync Interest" << endl;
+	cout << "Sending Sync Interest" << endl;
   recursive_mutex::scoped_lock lock (m_stateMutex);
 
   ostringstream os;
