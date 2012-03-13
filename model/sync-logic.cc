@@ -211,13 +211,23 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
     }
   catch (Error::SyncXmlDecodingFailure &e)
     {
-      // log error
-      return;
+      diffLog.reset ();
+      // don't do anything
     }
 
+  // if state has changed, then it is safe to express a new interest
   if (diffLog->getLeaves ().size () > 0)
     {
-      sendSyncInterest();
+      sendSyncInterest ();
+    }
+  else
+    {
+      // should not reexpress the same interest. Need at least wait for data lifetime
+      // Otherwise we will get immediate reply from the local daemon and there will be 100% utilization
+      m_scheduler.cancel (REEXPRESSING_INTEREST);
+      m_scheduler.schedule (posix_time::seconds (m_syncResponseFreshness),
+                            bind (&SyncLogic::sendSyncInterest, this),
+                            REEXPRESSING_INTEREST);
     }
 }
 
