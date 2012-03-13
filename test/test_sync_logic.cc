@@ -59,12 +59,9 @@ BOOST_AUTO_TEST_CASE (SyncLogicTest)
 {
   Handler h1 ("1"), h2 ("2");
 
-  SyncLogic l1 ("/bcast", bind (&Handler::onUpdate, &h1, _1, _2, _3), bind (&Handler::onRemove, &h1, _1), make_shared<CcnxWrapper> ());
-  SyncLogic L2 ("/bcast", bind (&Handler::onUpdate, &h2, _1, _2, _3), bind (&Handler::onRemove, &h2, _1), make_shared<CcnxWrapper> ());
+  SyncLogic l1 ("/bcast", bind (&Handler::onUpdate, &h1, _1, _2, _3), bind (&Handler::onRemove, &h1, _1));
+  SyncLogic L2 ("/bcast", bind (&Handler::onUpdate, &h2, _1, _2, _3), bind (&Handler::onRemove, &h2, _1));
 
   sleep (10);
   // l1.  
 }
-
-
-
