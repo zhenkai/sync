@@ -83,13 +83,23 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
 {
   //cout << "SyncLogic::processSyncInterest " << timedProcessing << endl;
   recursive_mutex::scoped_lock lock (m_stateMutex);
-    
-  if (*m_state.getDigest() == *digest)
-  {
-    m_syncInterestTable.insert (interestName);
-    return;
-  }
 
+  if (*m_state.getDigest() == *digest)
+    {
+      // cout << interestName << "\n";
+      m_syncInterestTable.insert (interestName);
+      return;
+    }
+
+  // Special case when state is not empty and we have received request with zero-root digest
+  if (digest->zero ())
+    {
+      m_ccnxHandle->publishData (interestName + "/state",
+                                 lexical_cast<string> (m_state),
+                                 m_syncResponseFreshness);
+      return;
+    }
+  
   DiffStateContainer::iterator stateInDiffLog = m_log.find (digest);
 
   if (stateInDiffLog != m_log.end ())

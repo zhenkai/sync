@@ -108,6 +108,14 @@ public:
   inline Digest &
   operator << (uint32_t value);
 
+  /**
+   * @brief Checks if the stored hash is zero-root hash
+   *
+   * Zero-root hash is a valid hash that optimally represents an empty state
+   */
+  bool
+  zero () const;
+  
 private:
   Digest &
   operator = (Digest &digest) { return *this; }

@@ -128,6 +128,18 @@ Digest::empty () const
   return m_buffer == 0;
 }
 
+bool
+Digest::zero () const
+{
+  if (m_buffer == 0)
+    BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
+                           << errmsg_info_str ("Digest has not been yet finalized"));
+
+  if (m_hashLength == 1 && m_buffer[0] == 0)
+    return true;  
+}
+
+
 void
 Digest::reset ()
 {
@@ -159,16 +171,11 @@ Digest::finalize ()
                            << errmsg_info_str ("EVP_DigestFinal_ex returned error")
                            << errmsg_info_int (ok));
 }
-  
+
 std::size_t
 Digest::getHash () const
 {
-  if (m_buffer == 0)
-    BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
-                           << errmsg_info_str ("Digest has not been yet finalized"));
-
-  if (m_hashLength == 1 && m_buffer[0] == 0)
-    return 0;
+  if (zero ()) return 0;
   
   if (sizeof (std::size_t) > m_hashLength)
     {
