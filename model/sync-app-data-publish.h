@@ -68,7 +68,7 @@ public:
    * @param session session
    */
   uint32_t
-  getHighestSeq (const std::string &prefix, uint32_t session);
+  getNextSeq (const std::string &prefix, uint32_t session);
 
   /**
    * @brief publish data for a name prefix, updates the corresponding

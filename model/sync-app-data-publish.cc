@@ -42,7 +42,7 @@ AppDataPublish::getRecentData (const string &prefix, uint32_t session)
 }
 
 uint32_t
-AppDataPublish::getHighestSeq (const string &prefix, uint32_t session)
+AppDataPublish::getNextSeq (const string &prefix, uint32_t session)
 {
   unordered_map<string, Seq>::iterator i = m_sequenceLog.find(prefix);
 
@@ -62,21 +62,21 @@ AppDataPublish::publishData (const string &name, uint32_t session, const string 
   uint32_t seq = 0;
 	try
 		{
-			seq =  getHighestSeq(name, session);
+			seq =  getNextSeq(name, session);
 		}
 	catch (GetSeqException &e){
     m_sequenceLog.erase(name);
 	}
 
-  Seq s;
-  s.session = session;
-  s.seq = seq;
-  m_sequenceLog[name] = s;
-
   ostringstream contentNameWithSeqno;
   contentNameWithSeqno << name << "/" << session << "/" << seq;
 
   m_ccnxHandle->publishData (contentNameWithSeqno.str (), dataBuffer, freshness);
+
+  Seq s;
+  s.session = session;
+  s.seq = seq + 1;
+  m_sequenceLog[name] = s;
 
   unordered_map<pair<string, uint32_t>, string>::iterator it = m_recentData.find(make_pair(name, session));
   if (it != m_recentData.end()) 
