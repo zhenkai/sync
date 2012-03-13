@@ -76,7 +76,7 @@ public:
 	void start() {m_syncLogic.start();}
 
 private:
-  CcnxWrapperPtr m_ccnxHandle;
+	CcnxWrapperPtr m_appHandle;
 
   AppDataFetch   m_fetcher;
   AppDataPublish m_publisher;

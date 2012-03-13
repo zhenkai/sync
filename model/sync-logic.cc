@@ -37,12 +37,11 @@ namespace Sync
 
 SyncLogic::SyncLogic (const std::string &syncPrefix,
                       LogicUpdateCallback onUpdate,
-                      LogicRemoveCallback onRemove,
-                      CcnxWrapperPtr ccnxHandle)
+                      LogicRemoveCallback onRemove)
   : m_syncPrefix (syncPrefix)
   , m_onUpdate (onUpdate)
+	, m_ccnxHandle(new CcnxWrapper())
   , m_onRemove (onRemove)
-  , m_ccnxHandle (ccnxHandle)
   , m_randomGenerator (static_cast<unsigned int> (std::time (0)))
   , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (20,100))
 {
