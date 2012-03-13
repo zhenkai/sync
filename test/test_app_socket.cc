@@ -44,13 +44,14 @@ public:
 
   string toString(){
     map<string, string>::iterator it = data.begin(); 
-    string str = "";
+    string str = "\n";
     for (; it != data.end(); ++it){
       str += "<";
       str += it->first;
       str += "|";
       str += it->second;
       str += ">";
+			str += "\n";
     }
     return str;
   }
