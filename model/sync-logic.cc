@@ -37,12 +37,11 @@ namespace Sync
 
 SyncLogic::SyncLogic (const std::string &syncPrefix,
                       LogicUpdateCallback onUpdate,
-                      LogicRemoveCallback onRemove,
-                      CcnxWrapperPtr ccnxHandle)
+                      LogicRemoveCallback onRemove)
   : m_syncPrefix (syncPrefix)
   , m_onUpdate (onUpdate)
   , m_onRemove (onRemove)
-  , m_ccnxHandle (ccnxHandle)
+  , m_ccnxHandle(new CcnxWrapper())
   , m_randomGenerator (static_cast<unsigned int> (std::time (0)))
   , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (20,100))
 {
@@ -63,6 +62,7 @@ SyncLogic::~SyncLogic ()
 void
 SyncLogic::respondSyncInterest (const string &interest)
 {
+  // cout << "Respond Sync Interest" << endl;
   string hash = interest.substr(interest.find_last_of("/") + 1);
   DigestPtr digest = make_shared<Digest> ();
   try
@@ -82,7 +82,7 @@ SyncLogic::respondSyncInterest (const string &interest)
 void
 SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &interestName, bool timedProcessing/*=false*/)
 {
-  // cout << "SyncLogic::processSyncInterest " << timedProcessing << endl;
+  //cout << "SyncLogic::processSyncInterest " << timedProcessing << endl;
   recursive_mutex::scoped_lock lock (m_stateMutex);
     
   if (*m_state.getDigest() == *digest)
@@ -119,6 +119,7 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
 void
 SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 {
+  // cout << "Process Sync Data" <<endl;
   DiffStatePtr diffLog = make_shared<DiffState> ();
   
   try
@@ -211,6 +212,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 void
 SyncLogic::processPendingSyncInterests (DiffStatePtr &diffLog) 
 {
+  //cout << "Process Pending Interests" <<endl;
   recursive_mutex::scoped_lock lock (m_stateMutex);
 
   diffLog->setDigest(m_state.getDigest());
@@ -223,18 +225,19 @@ SyncLogic::processPendingSyncInterests (DiffStatePtr &diffLog)
   vector<string> pis = m_syncInterestTable.fetchAll ();
   if (pis.size () > 0)
     {
-      stringstream ss;
+  stringstream ss;
       ss << *diffLog;
-      for (vector<string>::iterator ii = pis.begin(); ii != pis.end(); ++ii)
-        {
-          m_ccnxHandle->publishData (*ii, ss.str(), m_syncResponseFreshness);
-        }
-    }
+  for (vector<string>::iterator ii = pis.begin(); ii != pis.end(); ++ii)
+  {
+    m_ccnxHandle->publishData (*ii, ss.str(), m_syncResponseFreshness);
+  }
+}
 }
 
 void
 SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
 {
+  //cout << "Add local names" <<endl;
   recursive_mutex::scoped_lock lock (m_stateMutex);
   NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
   SeqNo seqN(session, seq);
@@ -262,6 +265,7 @@ SyncLogic::remove(const string &prefix)
 void
 SyncLogic::sendSyncInterest ()
 {
+  // cout << "Sending Sync Interest" << endl;
   recursive_mutex::scoped_lock lock (m_stateMutex);
 
   ostringstream os;

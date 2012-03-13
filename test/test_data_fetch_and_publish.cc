@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE (AppDataPublishAndFetchTest)
   TestStructApp bar;
 	
   string interest = "/april/fool";
-  string seq[5] = {"1", "2", "3", "4", "5"};
+  string seq[5] = {"0", "1", "2", "3", "4" };
   string str[5] = {"panda", "express", "tastes", "so", "good"};
 
   for (int i = 0; i < 5; i++) {
@@ -86,10 +86,10 @@ BOOST_AUTO_TEST_CASE (AppDataPublishAndFetchTest)
     publisher.publishData(interest, 0, str[i - 1], 5);
   }
 
-  BOOST_CHECK_EQUAL(publisher.getHighestSeq(interest, 0), 5);
+  BOOST_CHECK_EQUAL(publisher.getNextSeq(interest, 0), 5);
   BOOST_CHECK_EQUAL(publisher.getRecentData(interest, 0), str[4]);
 
-  fetcher.onUpdate (interest, SeqNo (0,5), SeqNo (0,0));
+  fetcher.onUpdate (interest, SeqNo (0,4), SeqNo (0,-1));
   // give time for ccnd to react
   sleep(1);
   BOOST_CHECK_EQUAL(foo.toString(), bar.toString());
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE (AppDataPublishAndFetchTest)
     bind(&TestStructApp::erase, &bar, _1, _2);
   fetcher.setDataCallback(eraseFunc);
 
-  fetcher.onUpdate (interest, SeqNo (0,5), SeqNo (0,0));
+  fetcher.onUpdate (interest, SeqNo (0,4), SeqNo (0,-1));
   // give time for ccnd to react
   sleep(1);
   TestStructApp poo;

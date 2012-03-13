@@ -144,7 +144,7 @@ void funcRemove( const std::string &/*prefix*/ )
 BOOST_AUTO_TEST_CASE (SyncLogicSchedulerTest)
 {  
   SyncLogic *logic = 0;
-  BOOST_CHECK_NO_THROW (logic = new SyncLogic ("/prefix", funcUpdate, funcRemove, make_shared<CcnxWrapper> ()));
+  BOOST_CHECK_NO_THROW (logic = new SyncLogic ("/prefix", funcUpdate, funcRemove));
 
   Scheduler &scheduler = logic->getScheduler ();
   BOOST_CHECK_EQUAL (scheduler.getEventsSize (), 0);

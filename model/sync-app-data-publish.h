@@ -36,6 +36,8 @@ struct Seq
   uint32_t seq;
 };
 
+struct GetSeqException : virtual boost::exception, virtual std::exception { };
+
 /**
  * \ingroup sync
  * @brief publishes application data using incrementing sequence number (for
@@ -66,7 +68,7 @@ public:
    * @param session session
    */
   uint32_t
-  getHighestSeq (const std::string &prefix, uint32_t session);
+  getNextSeq (const std::string &prefix, uint32_t session);
 
   /**
    * @brief publish data for a name prefix, updates the corresponding

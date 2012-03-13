@@ -29,13 +29,12 @@ namespace Sync
 {
 
 SyncAppSocket::SyncAppSocket (const string &syncPrefix, CcnxWrapper::DataCallback dataCallback)
-  : m_ccnxHandle (new CcnxWrapper())
-  , m_fetcher (m_ccnxHandle, dataCallback)
-  , m_publisher (m_ccnxHandle)
+	: m_appHandle (new CcnxWrapper())
+  , m_fetcher (m_appHandle, dataCallback)
+  , m_publisher (m_appHandle)
   , m_syncLogic (syncPrefix,
                  bind (&AppDataFetch::onUpdate, m_fetcher, _1, _2, _3),
-                 bind (&AppDataFetch::onRemove, m_fetcher, _1),
-                 m_ccnxHandle)
+                 bind (&AppDataFetch::onRemove, m_fetcher, _1))
 {
 }
 
@@ -46,7 +45,7 @@ SyncAppSocket::~SyncAppSocket()
 bool SyncAppSocket::publish (const string &prefix, uint32_t session, const string &dataBuffer, int freshness)
 {
   m_publisher.publishData (prefix, session, dataBuffer, freshness);
-  m_syncLogic.addLocalNames (prefix, session, m_publisher.getHighestSeq (prefix, session));
+  m_syncLogic.addLocalNames (prefix, session, m_publisher.getNextSeq (prefix, session));
 }
 
 }

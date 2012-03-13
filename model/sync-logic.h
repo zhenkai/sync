@@ -26,6 +26,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/random.hpp>
+#include <memory>
 
 #include "sync-ccnx-wrapper.h"
 #include "sync-interest-table.h"
@@ -59,8 +60,7 @@ public:
    */
   SyncLogic (const std::string &syncPrefix,
              LogicUpdateCallback onUpdate,
-             LogicRemoveCallback onRemove,
-             CcnxWrapperPtr ccnxHandle);
+             LogicRemoveCallback onRemove);
 
   ~SyncLogic ();
 
@@ -87,6 +87,11 @@ public:
    * @param prefix the name prefix for the participant
    */
   void remove (const std::string &prefix);
+
+  /**
+   * @brief start the sync process
+   */
+	 void start();
 
 #ifdef _DEBUG
   Scheduler &
@@ -116,7 +121,7 @@ private:
   std::string m_syncPrefix;
   LogicUpdateCallback m_onUpdate;
   LogicRemoveCallback m_onRemove;
-  CcnxWrapperPtr m_ccnxHandle;
+  std::auto_ptr<CcnxWrapper> m_ccnxHandle;
 
   Scheduler m_scheduler;
 

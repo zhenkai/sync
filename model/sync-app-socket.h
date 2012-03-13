@@ -70,8 +70,13 @@ public:
    */
   void remove (const std::string &prefix) {m_syncLogic.remove(prefix);}
 
+  /**
+   * @brief start sync process
+   */
+	void start() {m_syncLogic.start();}
+
 private:
-  CcnxWrapperPtr m_ccnxHandle;
+	CcnxWrapperPtr m_appHandle;
 
   AppDataFetch   m_fetcher;
   AppDataPublish m_publisher;
