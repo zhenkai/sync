@@ -58,7 +58,7 @@ public:
 
   /**
    * @brief Schedule an event at relative time 'reltime'
-   * @param abstime Relative time
+   * @param reltime Relative time
    * @param event function to be called at the time
    */
   void

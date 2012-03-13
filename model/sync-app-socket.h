@@ -64,11 +64,11 @@ public:
 
   /**
    * @brief delete a participant's subtree from the sync tree; SyncLogic will do the work
-	 * this is just a wrapper
+   * this is just a wrapper
    *
-	 * @param the prefix for the participant
+   * @param prefix the prefix for the participant
    */
-	void remove (const std::string &prefix) {m_syncLogic.remove(prefix);}
+  void remove (const std::string &prefix) {m_syncLogic.remove(prefix);}
 
 private:
   CcnxWrapperPtr m_ccnxHandle;

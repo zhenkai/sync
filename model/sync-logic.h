@@ -52,7 +52,8 @@ public:
   /**
    * @brief Constructor
    * @param syncPrefix the name prefix to use for the Sync Interest
-   * @param fetch the fetch function, which will be called to actually fetch
+   * @param onUpdate function that will be called when new state is detected
+   * @param onRemove function that will be called when state is removed
    * @param ccnxHandle ccnx handle
    * the app data when new remote names are learned
    */
@@ -83,9 +84,9 @@ public:
 
   /**
    * @brief remove a participant's subtree from the sync tree
-   * @param the name prefix for the participant
+   * @param prefix the name prefix for the participant
    */
-  void remove(const std::string &prefix);
+  void remove (const std::string &prefix);
 
 #ifdef _DEBUG
   Scheduler &
