@@ -40,6 +40,7 @@ public:
   map<string, string> data;
   void set(string str1, string str2) {
     data.insert(make_pair(str1, str2));
+		cout << "Got: "<< str1 <<" => "<< str2 <<endl;
   }
 
   string toString(){

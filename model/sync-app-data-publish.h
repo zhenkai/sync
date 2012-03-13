@@ -36,6 +36,8 @@ struct Seq
   uint32_t seq;
 };
 
+struct GetSeqException : virtual boost::exception, virtual std::exception { };
+
 /**
  * \ingroup sync
  * @brief publishes application data using incrementing sequence number (for

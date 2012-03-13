@@ -21,12 +21,16 @@
  */
 
 #include "sync-app-data-publish.h"
+#include <boost/throw_exception.hpp>
+typedef boost::error_info<struct tag_errmsg, std::string> errmsg_info_str;
+typedef boost::error_info<struct tag_errmsg, int> errmsg_info_int;
 
 using namespace std;
 using namespace boost;
 
 namespace Sync
 {
+
 
 string
 AppDataPublish::getRecentData (const string &prefix, uint32_t session)
@@ -48,20 +52,22 @@ AppDataPublish::getHighestSeq (const string &prefix, uint32_t session)
       if (s.session == session)
         return s.seq;
     }
-
-  return 0;
+	else
+    BOOST_THROW_EXCEPTION(GetSeqException() << errmsg_info_str("No corresponding seq"));
 }
 
 bool
 AppDataPublish::publishData (const string &name, uint32_t session, const string &dataBuffer, int freshness)
 {
-  uint32_t seq = getHighestSeq(name, session);
-  if (seq == 0)
+  uint32_t seq = 0;
+	try
+		{
+			seq =  getHighestSeq(name, session);
+		}
+	catch (GetSeqException &e){
     m_sequenceLog.erase(name);
+	}
 
-  seq++;
-  if (seq == 0)
-    seq = 1;
   Seq s;
   s.session = session;
   s.seq = seq;
