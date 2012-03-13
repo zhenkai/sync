@@ -69,9 +69,10 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
 	boost::function<void(string, string)> f3 = bind(&TestSocketApp::set, &a3, _1,
 	_2);
 	
+	string syncPrefix("/let/us/sync");
 	string p1("/irl.cs.ucla.edu"), p2("/yakshi.org"), p3("/google.com");
 
-	SyncAppSocket s1(p1, f1), s2(p2, f2), s3(p3, f3);
+	SyncAppSocket s1(syncPrefix, f1), s2(syncPrefix, f2), s3(syncPrefix, f3);
 
 
 	// single source
