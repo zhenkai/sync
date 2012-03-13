@@ -251,7 +251,7 @@ SyncLogic::sendSyncInterest ()
   recursive_mutex::scoped_lock lock (m_stateMutex);
 
   ostringstream os;
-  os << m_syncPrefix << "/" << m_state.getDigest();
+  os << m_syncPrefix << "/" << *m_state.getDigest();
 
   m_ccnxHandle->sendInterest (os.str (),
                               bind (&SyncLogic::processSyncData, this, _1, _2));
