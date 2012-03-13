@@ -147,25 +147,25 @@ BOOST_AUTO_TEST_CASE (SyncLogicSchedulerTest)
   BOOST_CHECK_NO_THROW (logic = new SyncLogic ("/prefix", funcUpdate, funcRemove));
 
   Scheduler &scheduler = logic->getScheduler ();
-  BOOST_CHECK_EQUAL (scheduler.getEventsSize (), 0);
-
-  BOOST_CHECK_NO_THROW (logic->respondSyncInterest ("/prefix/e5fa44f2b31c1fb553b6021e7360d07d5d91ff5e")); 
   BOOST_CHECK_EQUAL (scheduler.getEventsSize (), 1);
 
+  BOOST_CHECK_NO_THROW (logic->respondSyncInterest ("/prefix/e5fa44f2b31c1fb553b6021e7360d07d5d91ff5e")); 
+  BOOST_CHECK_EQUAL (scheduler.getEventsSize (), 2);
+
   this_thread::sleep (posix_time::milliseconds (100)); // max waiting time
-  BOOST_CHECK_EQUAL (scheduler.getEventsSize (), 0);
+  BOOST_CHECK_EQUAL (scheduler.getEventsSize (), 1);
 
   BOOST_CHECK_NO_THROW (logic->respondSyncInterest ("/prefix/e5fa44f2b31c1fb553b6021e7360d07d5d91ff5e")); 
   BOOST_CHECK_NO_THROW (logic->respondSyncInterest ("/prefix/e5fa44f2b31c1fb553b6021e7360d07d5d91ff5e")); 
   BOOST_CHECK_NO_THROW (logic->respondSyncInterest ("/prefix/e5fa44f2b31c1fb553b6021e7360d07d5d91ff5e")); 
   BOOST_CHECK_NO_THROW (logic->respondSyncInterest ("/prefix/e5fa44f2b31c1fb553b6021e7360d07d5d91ff5e"));
-  BOOST_CHECK_EQUAL (scheduler.getEventsSize (), 4);  
+  BOOST_CHECK_EQUAL (scheduler.getEventsSize (), 5);  
 
   this_thread::sleep (posix_time::milliseconds (19)); // min waiting time is 20
-  BOOST_CHECK_EQUAL (scheduler.getEventsSize (), 4);  
+  BOOST_CHECK_EQUAL (scheduler.getEventsSize (), 5);  
 
   this_thread::sleep (posix_time::milliseconds (100)); // max waiting time
-  BOOST_CHECK_EQUAL (scheduler.getEventsSize (), 0);
+  BOOST_CHECK_EQUAL (scheduler.getEventsSize (), 1);
   
   BOOST_CHECK_NO_THROW (delete logic);
 }
