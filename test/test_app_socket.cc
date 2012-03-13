@@ -71,12 +71,11 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
 	string p1("/irl.cs.ucla.edu"), p2("/yakshi.org"), p3("/google.com");
 
 	SyncAppSocket s1(p1, f1), s2(p2, f2), s3(p3, f3);
-	BOOST_CHECK_EQUAL(a1.toString(), a2.toString());
-	BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
 
 	// single source
 	s1.publish(p1, 0, "Very funny Scotty, now beam down my clothes", 10); 
 	usleep(10000);
+	BOOST_CHECK(a1.toString() != "");
 	BOOST_CHECK_EQUAL(a1.toString(), a2.toString());
 	BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
 
@@ -103,6 +102,7 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
 	usleep(10000);
 	BOOST_CHECK_EQUAL(a1.toString(), a2.toString());
 	BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
+
 }
 
 
