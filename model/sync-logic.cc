@@ -48,6 +48,9 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
 {
   m_ccnxHandle->setInterestFilter (syncPrefix,
                                    bind (&SyncLogic::respondSyncInterest, this, _1));
+
+	// We need to send out our Sync Interest when we're ready
+	sendSyncInterest();
 }
 
 SyncLogic::~SyncLogic ()
@@ -58,6 +61,7 @@ SyncLogic::~SyncLogic ()
 void
 SyncLogic::respondSyncInterest (const string &interest)
 {
+	//cout << "Respond Sync Interest" << endl;
   string hash = interest.substr(interest.find_last_of("/") + 1);
   DigestPtr digest = make_shared<Digest> ();
   try
@@ -77,7 +81,7 @@ SyncLogic::respondSyncInterest (const string &interest)
 void
 SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &interestName, bool timedProcessing/*=false*/)
 {
-  // cout << "SyncLogic::processSyncInterest " << timedProcessing << endl;
+  //cout << "SyncLogic::processSyncInterest " << timedProcessing << endl;
   recursive_mutex::scoped_lock lock (m_stateMutex);
     
   if (*m_state.getDigest() == *digest)
@@ -113,6 +117,7 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
 void
 SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 {
+	//cout << "Process Sync Data" <<endl;
   DiffStatePtr diffLog = make_shared<DiffState> ();
   
   try
@@ -196,7 +201,8 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
       return;
     }
 
-  if (diffLog->getLeaves ().size () > 0)
+	// Zhenkai: shouldn't we all ways send a new Sync Interest?
+  //if (diffLog->getLeaves ().size () > 0)
     {
       sendSyncInterest();
     }
@@ -205,6 +211,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 void
 SyncLogic::processPendingSyncInterests(DiffStatePtr &diff) 
 {
+	//cout << "Process Pending Interests" <<endl;
   recursive_mutex::scoped_lock lock (m_stateMutex);
   diff->setDigest(m_state.getDigest());
   m_log.insert(diff);
@@ -221,6 +228,7 @@ SyncLogic::processPendingSyncInterests(DiffStatePtr &diff)
 void
 SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
 {
+	//cout << "Add local names" <<endl;
   recursive_mutex::scoped_lock lock (m_stateMutex);
   NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
   SeqNo seqN(session, seq);
@@ -248,6 +256,7 @@ SyncLogic::remove(const string &prefix)
 void
 SyncLogic::sendSyncInterest ()
 {
+	//cout << "Sending Sync Interest" << endl;
   recursive_mutex::scoped_lock lock (m_stateMutex);
 
   ostringstream os;
