@@ -88,6 +88,11 @@ public:
    */
   void remove (const std::string &prefix);
 
+  /**
+   * @brief start the sync process
+   */
+	 void start();
+
 #ifdef _DEBUG
   Scheduler &
   getScheduler () { return m_delayedChecksScheduler; }

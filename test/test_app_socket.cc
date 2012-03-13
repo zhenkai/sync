@@ -74,6 +74,9 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
 
 	SyncAppSocket s1(syncPrefix, f1), s2(syncPrefix, f2), s3(syncPrefix, f3);
 
+	s1.start();
+	s2.start();
+	s3.start();
 
 	// single source
 	string data0 = "Very funny Scotty, now beam down my clothes";

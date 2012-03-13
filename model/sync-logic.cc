@@ -49,6 +49,11 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   m_ccnxHandle->setInterestFilter (syncPrefix,
                                    bind (&SyncLogic::respondSyncInterest, this, _1));
 
+
+}
+
+void SyncLogic::start()
+{
 	// We need to send out our Sync Interest when we're ready
 	sendSyncInterest();
 }
