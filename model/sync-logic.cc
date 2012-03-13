@@ -48,7 +48,6 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   m_ccnxHandle->setInterestFilter (syncPrefix,
                                    bind (&SyncLogic::respondSyncInterest, this, _1));
 
-  sendSyncInterest ();
   m_scheduler.schedule (posix_time::seconds (4),
                         bind (&SyncLogic::sendSyncInterest, this),
                         REEXPRESSING_INTEREST);
@@ -62,7 +61,7 @@ SyncLogic::~SyncLogic ()
 void
 SyncLogic::respondSyncInterest (const string &interest)
 {
-  // cout << "Respond Sync Interest" << endl;
+	//cout << "Respond Sync Interest" << endl;
   string hash = interest.substr(interest.find_last_of("/") + 1);
   DigestPtr digest = make_shared<Digest> ();
   try
@@ -119,7 +118,7 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
 void
 SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 {
-  // cout << "Process Sync Data" <<endl;
+	//cout << "Process Sync Data" <<endl;
   DiffStatePtr diffLog = make_shared<DiffState> ();
   
   try
@@ -212,7 +211,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 void
 SyncLogic::processPendingSyncInterests (DiffStatePtr &diffLog) 
 {
-  //cout << "Process Pending Interests" <<endl;
+	//cout << "Process Pending Interests" <<endl;
   recursive_mutex::scoped_lock lock (m_stateMutex);
 
   diffLog->setDigest(m_state.getDigest());
@@ -237,7 +236,7 @@ SyncLogic::processPendingSyncInterests (DiffStatePtr &diffLog)
 void
 SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
 {
-  //cout << "Add local names" <<endl;
+	//cout << "Add local names" <<endl;
   recursive_mutex::scoped_lock lock (m_stateMutex);
   NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
   SeqNo seqN(session, seq);
@@ -265,7 +264,7 @@ SyncLogic::remove(const string &prefix)
 void
 SyncLogic::sendSyncInterest ()
 {
-  // cout << "Sending Sync Interest" << endl;
+	//cout << "Sending Sync Interest" << endl;
   recursive_mutex::scoped_lock lock (m_stateMutex);
 
   ostringstream os;
