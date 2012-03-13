@@ -22,16 +22,17 @@
 
 #ifndef SYNC_LOGIC_H
 #define SYNC_LOGIC_H
+
 #include <boost/shared_ptr.hpp>
-#include <boost/function.hpp>
-#include "boost/date_time/posix_time/posix_time_types.hpp"
 #include <boost/thread/recursive_mutex.hpp>
+#include <boost/random.hpp>
 
 #include "sync-ccnx-wrapper.h"
 #include "sync-interest-table.h"
 #include "sync-diff-state.h"
 #include "sync-full-state.h"
 #include "sync-std-name-info.h"
+#include "sync-scheduler.h"
 
 #include "sync-diff-state-container.h"
 
@@ -84,31 +85,27 @@ public:
    * @brief remove a participant's subtree from the sync tree
    * @param the name prefix for the participant
    */
-	void remove(const std::string &prefix);
+  void remove(const std::string &prefix);
 
 #ifdef _DEBUG
-  size_t
-  getListChecksSize ()
-  {
-    boost::lock_guard<boost::mutex> lock (m_listChecksMutex);
-    return m_listChecks.size ();
-  }
+  Scheduler &
+  getScheduler () { return m_delayedChecksScheduler; }
 #endif
   
 private:
-  void delayedChecksLoop ();
+  void
+  delayedChecksLoop ();
 
   void
   processSyncInterest (DigestConstPtr digest, const std::string &interestname, bool timedProcessing=false);
   
-  void sendSyncInterest ();
+  void
+  sendSyncInterest ();
 
-	void 
-	processPendingSyncInterests(DiffStatePtr &diff);
+  void 
+  processPendingSyncInterests(DiffStatePtr &diff);
 
 private:
-  typedef std::list< boost::tuple< boost::system_time, boost::function< void ( ) > > > DelayedChecksList;
-
   FullState m_state;
   DiffStateContainer m_log;
   boost::recursive_mutex m_stateMutex;
@@ -120,13 +117,11 @@ private:
   LogicRemoveCallback m_onRemove;
   CcnxWrapperPtr m_ccnxHandle;
 
-  boost::thread m_delayedCheckThread;
-  bool          m_delayedCheckThreadRunning;
-  DelayedChecksList m_listChecks;
-  boost::condition_variable m_listChecksCondition;
-  boost::mutex  m_listChecksMutex;
+  Scheduler m_delayedChecksScheduler;
 
-  static const boost::posix_time::time_duration m_delayedCheckTime;
+  boost::mt19937 m_randomGenerator;
+  boost::variate_generator<boost::mt19937&, boost::uniform_int<> > m_rangeUniformRandom;
+  
   static const int m_syncResponseFreshness = 2;
 };
 

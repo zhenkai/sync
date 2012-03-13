@@ -126,6 +126,7 @@ CcnxWrapper::ccnLoop ()
 int
 CcnxWrapper::publishData (const string &name, const string &dataBuffer, int freshness)
 {
+  // cout << "Publish: " << name << endl;
   ccn_charbuf *pname = ccn_charbuf_create();
   ccn_charbuf *signed_info = ccn_charbuf_create();
   ccn_charbuf *content = ccn_charbuf_create();

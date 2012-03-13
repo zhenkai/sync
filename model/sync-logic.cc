@@ -35,9 +35,6 @@ using namespace boost;
 namespace Sync
 {
 
-const boost::posix_time::time_duration SyncLogic::m_delayedCheckTime = boost::posix_time::seconds (4.0);
-
-
 SyncLogic::SyncLogic (const std::string &syncPrefix,
                       LogicUpdateCallback onUpdate,
                       LogicRemoveCallback onRemove,
@@ -46,65 +43,16 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   , m_onUpdate (onUpdate)
   , m_onRemove (onRemove)
   , m_ccnxHandle (ccnxHandle)
-  , m_delayedCheckThreadRunning (true)
+  , m_randomGenerator (static_cast<unsigned int> (std::time (0)))
+  , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (20,100))
 {
-  srandom(time(NULL));
   m_ccnxHandle->setInterestFilter (syncPrefix,
                                    bind (&SyncLogic::respondSyncInterest, this, _1));
-
-  m_delayedCheckThread = thread (&SyncLogic::delayedChecksLoop, this);
 }
 
 SyncLogic::~SyncLogic ()
 {
-  m_delayedCheckThreadRunning = false;
-  // cout << "Requested stop" << this_thread::get_id () << endl;
-  m_delayedCheckThread.interrupt ();
-  m_delayedCheckThread.join ();
 }
-
-void
-SyncLogic::delayedChecksLoop ()
-{
-  while (m_delayedCheckThreadRunning)
-    {
-      try
-        {
-          DelayedChecksList::value_type tuple;
-          
-          {
-            unique_lock<mutex> lock (m_listChecksMutex);
-            while (m_delayedCheckThreadRunning && m_listChecks.size () == 0)
-              {
-                m_listChecksCondition.wait (lock);
-                // cout << "Got something" << endl;
-              }
-
-            if (m_listChecks.size () == 0) continue;
-
-            tuple = m_listChecks.front ();
-            m_listChecks.pop_front ();
-            // cout << "pop" << endl;
-            // release the mutex
-          }
-
-          // waiting and calling
-          
-          // cout << "Duration: " << tuple.get<0> () - get_system_time () << endl;
-          this_thread::sleep (tuple.get<0> ()); 
-          
-          if (!m_delayedCheckThreadRunning) continue;
-          tuple.get<1> () (); // call the scheduled function
-        }
-      catch (thread_interrupted e)
-        {
-          // cout << "interrupted: " << this_thread::get_id () << endl;
-          // do nothing
-        }
-    }
-  // cout << "Exited...\n";
-}
-
 
 
 void
@@ -150,19 +98,9 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
 
   if (!timedProcessing)
     {
-      {
-        // Alex: Should we ignore interests if interest with the same digest is already in the wait queue?
-        
-        lock_guard<mutex> lock (m_listChecksMutex);
-        system_time delay = get_system_time () + m_delayedCheckTime;
-        // do we need randomization??
-        // delay += boost::ptime::milliseconds (rand() % 80 + 20);
+      m_delayedChecksScheduler.schedule (posix_time::milliseconds (m_rangeUniformRandom ()) /*from 20 to 100ms*/,
+                                         bind (&SyncLogic::processSyncInterest, this, digest, interestName, true));
       
-        m_listChecks.push_back (make_tuple (delay,
-                                            bind (&SyncLogic::processSyncInterest, this, digest, interestName, true))
-                                );
-      }
-      m_listChecksCondition.notify_one ();
     }
   else
     {
