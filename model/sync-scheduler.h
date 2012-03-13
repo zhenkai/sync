@@ -52,18 +52,26 @@ public:
    * @brief Schedule an event at absolute time 'abstime'
    * @param abstime Absolute time
    * @param event function to be called at the time
+   * @param label Label for the event
    */
   void
-  schedule (const boost::system_time &abstime, Event event);
+  schedule (const boost::system_time &abstime, Event event, uint32_t label);
 
   /**
    * @brief Schedule an event at relative time 'reltime'
    * @param reltime Relative time
    * @param event function to be called at the time
+   * @param label Label for the event
    */
   void
-  schedule (const boost::posix_time::time_duration &reltime, Event event); 
+  schedule (const boost::posix_time::time_duration &reltime, Event event, uint32_t label); 
 
+  /**
+   * @brief Cancel all events for the label
+   * @param label Label of the event that needs to be cancelled
+   */
+  void
+  cancel (uint32_t label);
 
 #ifdef _DEBUG
   size_t

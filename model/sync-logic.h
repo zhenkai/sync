@@ -90,7 +90,7 @@ public:
 
 #ifdef _DEBUG
   Scheduler &
-  getScheduler () { return m_delayedChecksScheduler; }
+  getScheduler () { return m_scheduler; }
 #endif
   
 private:
@@ -118,12 +118,18 @@ private:
   LogicRemoveCallback m_onRemove;
   CcnxWrapperPtr m_ccnxHandle;
 
-  Scheduler m_delayedChecksScheduler;
+  Scheduler m_scheduler;
 
   boost::mt19937 m_randomGenerator;
   boost::variate_generator<boost::mt19937&, boost::uniform_int<> > m_rangeUniformRandom;
   
   static const int m_syncResponseFreshness = 2;
+
+  enum EventLabels
+    {
+      DELAYED_INTEREST_PROCESSING = 1,
+      REEXPRESSING_INTEREST = 2
+    };
 };
 
 

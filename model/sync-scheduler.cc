@@ -70,7 +70,10 @@ Scheduler::threadLoop ()
 	      // sleeping
 
 	      if (nextTime - get_system_time () > posix_time::time_duration (0,0,0,0))
-		continue; // something changes, try again
+                {
+                  // cout << "expected here" << endl;
+                  continue; // something changes, try again
+                }
 	    }
 
 	  if (!m_threadRunning) continue;
@@ -80,7 +83,11 @@ Scheduler::threadLoop ()
 	  {
 	    lock_guard<mutex> lock (m_eventsMutex);
 
-	    BOOST_ASSERT (m_events.size () != 0);
+	    if (m_events.size () == 0)
+              {
+                // cout << "Here" << endl;
+                continue;
+              }
 	    
 	    event = m_events.begin ()->event;
 	    m_events.erase (m_events.begin ());
@@ -88,7 +95,7 @@ Scheduler::threadLoop ()
 
 	  event (); // calling the event outside the locked mutex
         }
-      catch (thread_interrupted e)
+      catch (thread_interrupted &e)
         {
           // cout << "interrupted: " << this_thread::get_id () << endl;
           // do nothing
@@ -99,21 +106,35 @@ Scheduler::threadLoop ()
 
 
 void
-Scheduler::schedule (const boost::system_time &abstime, Event event)
+Scheduler::schedule (const boost::system_time &abstime, Event event, uint32_t label)
 {
   {
     lock_guard<mutex> lock (m_eventsMutex);
-    m_events.insert (LogicEvent (abstime, event));
+    m_events.insert (LogicEvent (abstime, event, label));
   }
   m_eventsCondition.notify_one ();
   m_thread.interrupt (); // interrupt sleep, if currently sleeping
 }
 
 void
-Scheduler::schedule (const boost::posix_time::time_duration &reltime, Event event)
+Scheduler::schedule (const boost::posix_time::time_duration &reltime, Event event, uint32_t label)
 {
   // cout << reltime << endl;
-  schedule (boost::get_system_time () + reltime, event);
+  schedule (boost::get_system_time () + reltime, event, label);
 }
+
+void
+Scheduler::cancel (uint32_t label)
+{
+  {
+    // cout << "Canceling label " << label << " size: " << m_events.size () << endl;
+    lock_guard<mutex> lock (m_eventsMutex);
+    m_events.get<byLabel> ().erase (label);
+    // cout << "Canceled label " << label << " size: " << m_events.size () << endl;
+  }
+  m_eventsCondition.notify_one ();
+  m_thread.interrupt (); // interrupt sleep, if currently sleeping
+}
+
 
 } // Sync

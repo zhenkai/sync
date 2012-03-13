@@ -48,6 +48,11 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
 {
   m_ccnxHandle->setInterestFilter (syncPrefix,
                                    bind (&SyncLogic::respondSyncInterest, this, _1));
+
+  sendSyncInterest ();
+  m_scheduler.schedule (posix_time::seconds (4),
+                        bind (&SyncLogic::sendSyncInterest, this),
+                        REEXPRESSING_INTEREST);
 }
 
 SyncLogic::~SyncLogic ()
@@ -98,8 +103,9 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
 
   if (!timedProcessing)
     {
-      m_delayedChecksScheduler.schedule (posix_time::milliseconds (m_rangeUniformRandom ()) /*from 20 to 100ms*/,
-                                         bind (&SyncLogic::processSyncInterest, this, digest, interestName, true));
+      m_scheduler.schedule (posix_time::milliseconds (m_rangeUniformRandom ()) /*from 20 to 100ms*/,
+                            bind (&SyncLogic::processSyncInterest, this, digest, interestName, true),
+                            DELAYED_INTEREST_PROCESSING);
       
     }
   else
@@ -203,19 +209,27 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 }
 
 void
-SyncLogic::processPendingSyncInterests(DiffStatePtr &diff) 
+SyncLogic::processPendingSyncInterests (DiffStatePtr &diffLog) 
 {
   recursive_mutex::scoped_lock lock (m_stateMutex);
-  diff->setDigest(m_state.getDigest());
-  m_log.insert(diff);
+
+  diffLog->setDigest(m_state.getDigest());
+  if (m_log.size () > 0)
+    {
+      m_log.get<sequenced> ().front ()->setNext (diffLog);
+    }
+  m_log.insert (diffLog);
 
   vector<string> pis = m_syncInterestTable.fetchAll ();
-  stringstream ss;
-  ss << *diff;
-  for (vector<string>::iterator ii = pis.begin(); ii != pis.end(); ++ii)
-  {
-    m_ccnxHandle->publishData (*ii, ss.str(), m_syncResponseFreshness);
-  }
+  if (pis.size () > 0)
+    {
+      stringstream ss;
+      ss << *diffLog;
+      for (vector<string>::iterator ii = pis.begin(); ii != pis.end(); ++ii)
+        {
+          m_ccnxHandle->publishData (*ii, ss.str(), m_syncResponseFreshness);
+        }
+    }
 }
 
 void
@@ -255,6 +269,11 @@ SyncLogic::sendSyncInterest ()
 
   m_ccnxHandle->sendInterest (os.str (),
                               bind (&SyncLogic::processSyncData, this, _1, _2));
+
+  m_scheduler.cancel (REEXPRESSING_INTEREST);
+  m_scheduler.schedule (posix_time::seconds (4),
+                        bind (&SyncLogic::sendSyncInterest, this),
+                        REEXPRESSING_INTEREST);
 }
 
 }

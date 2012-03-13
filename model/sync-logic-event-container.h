@@ -44,14 +44,20 @@ typedef boost::function< void ( ) > Event;
 
 struct LogicEvent
 {
-  LogicEvent (const boost::system_time &_time, Event _event)
+  LogicEvent (const boost::system_time &_time, Event _event, uint32_t _label)
     : time (_time)
     , event (_event)
+    , lbl (_label)
   { }
   
   boost::system_time time;
   Event event;
+  uint32_t lbl;
 };
+
+/// @cond include_hidden
+struct byLabel { } ;
+/// @endcond
 
 /**
  * \ingroup sync
@@ -63,6 +69,11 @@ struct EventsContainer : public mi::multi_index_container<
 
     mi::ordered_non_unique<
       mi::member<LogicEvent, boost::system_time, &LogicEvent::time>
+      >,
+
+    mi::ordered_non_unique<
+      mi::tag<byLabel>,
+      mi::member<LogicEvent, uint32_t, &LogicEvent::lbl>
       >
     >
   >

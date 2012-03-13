@@ -45,6 +45,12 @@ using namespace boost;
 //   cout << "funcRemove\n";
 // }
 
+enum SCHEDULE_LABELS
+  {
+    TEST_LABEL,
+    ANOTHER_LABEL
+  };
+
 struct SchedulerFixture
 {
   SchedulerFixture ()
@@ -61,7 +67,9 @@ struct SchedulerFixture
     counter ++;
 
     if (counter < 9)
-    scheduler->schedule (boost::posix_time::milliseconds (100), boost::bind (&SchedulerFixture::everySecond, this));
+    scheduler->schedule (boost::posix_time::milliseconds (100),
+                         boost::bind (&SchedulerFixture::everySecond, this),
+                         TEST_LABEL);
   }
 
   void setCounterFive ()
@@ -84,27 +92,39 @@ BOOST_AUTO_TEST_CASE (BasicTest)
 {
   BOOST_CHECK_NO_THROW (scheduler = new Scheduler ());
 
-  scheduler->schedule (posix_time::milliseconds (100), bind (&SchedulerFixture::everySecond, this));
+  scheduler->schedule (posix_time::milliseconds (100),
+                       bind (&SchedulerFixture::everySecond, this),
+                       TEST_LABEL);
 
   sleep (1);
   // cout << counter << endl;
   BOOST_CHECK_EQUAL (counter, 9); // generally, should be 9
 
   scheduler->schedule (posix_time::seconds (2),
-		       bind (&SchedulerFixture::setCounterFive, this));
+		       bind (&SchedulerFixture::setCounterFive, this),
+                       TEST_LABEL);
 
   this_thread::sleep (posix_time::milliseconds (400)); // just in case
 
   scheduler->schedule (posix_time::milliseconds (600),
-		       bind (&SchedulerFixture::setCounterThree, this));
+		       bind (&SchedulerFixture::setCounterThree, this),
+                       TEST_LABEL);
 
   this_thread::sleep (posix_time::milliseconds (500));
   BOOST_CHECK_EQUAL (counter, 9); // still 9
-
+  
   this_thread::sleep (posix_time::milliseconds (200));
   BOOST_CHECK_EQUAL (counter, 3);
 
   this_thread::sleep (posix_time::milliseconds (1000));
+  BOOST_CHECK_EQUAL (counter, 5);
+
+  scheduler->schedule (posix_time::milliseconds (100),
+		       bind (&SchedulerFixture::setCounterThree, this),
+                       ANOTHER_LABEL);
+  this_thread::sleep (posix_time::milliseconds (50));
+  scheduler->cancel (ANOTHER_LABEL);
+  this_thread::sleep (posix_time::milliseconds (150));
   BOOST_CHECK_EQUAL (counter, 5);
   
   BOOST_CHECK_NO_THROW (delete scheduler);
@@ -121,7 +141,7 @@ void funcRemove( const std::string &/*prefix*/ )
 {
 }
 
-BOOST_AUTO_TEST_CASE (SyncLogicTest)
+BOOST_AUTO_TEST_CASE (SyncLogicSchedulerTest)
 {  
   SyncLogic *logic = 0;
   BOOST_CHECK_NO_THROW (logic = new SyncLogic ("/prefix", funcUpdate, funcRemove, make_shared<CcnxWrapper> ()));

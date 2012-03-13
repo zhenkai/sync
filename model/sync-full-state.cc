@@ -64,18 +64,24 @@ FullState::getDigest ()
 {
   if (m_digest == 0)
     {
-      // std::cout << "getDigest: ";
       m_digest = make_shared<Digest> ();
-      BOOST_FOREACH (LeafConstPtr leaf, m_leaves.get<ordered> ())
+      if (m_leaves.get<ordered> ().size () > 0)
         {
-          FullLeafConstPtr fullLeaf = dynamic_pointer_cast<const FullLeaf> (leaf);
-          BOOST_ASSERT (fullLeaf != 0);
-          *m_digest << fullLeaf->getDigest ();
-          // std::cout << *leaf << "[" << fullLeaf->getDigest () << "] ";
+          BOOST_FOREACH (LeafConstPtr leaf, m_leaves.get<ordered> ())
+            {
+              FullLeafConstPtr fullLeaf = dynamic_pointer_cast<const FullLeaf> (leaf);
+              BOOST_ASSERT (fullLeaf != 0);
+              *m_digest << fullLeaf->getDigest ();
+              // std::cout << *leaf << "[" << fullLeaf->getDigest () << "] ";
+            }
+          m_digest->finalize ();
         }
-      // std::cout << "\n";
+      else
+        {
+          std::istringstream is ("00"); //zero state
+          is >> *m_digest;
+        }
     }
-  m_digest->finalize ();
 
   return m_digest;
 }
