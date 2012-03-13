@@ -72,7 +72,6 @@ FullState::getDigest ()
               FullLeafConstPtr fullLeaf = dynamic_pointer_cast<const FullLeaf> (leaf);
               BOOST_ASSERT (fullLeaf != 0);
               *m_digest << fullLeaf->getDigest ();
-              // std::cout << *leaf << "[" << fullLeaf->getDigest () << "] ";
             }
           m_digest->finalize ();
         }

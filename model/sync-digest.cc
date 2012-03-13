@@ -166,12 +166,16 @@ Digest::getHash () const
   if (m_buffer == 0)
     BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
                            << errmsg_info_str ("Digest has not been yet finalized"));
-  // finalize ();
 
+  if (m_hashLength == 1 && m_buffer[0] == 0)
+    return 0;
+  
   if (sizeof (std::size_t) > m_hashLength)
-    BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
-                           << errmsg_info_str ("Hash length is less than size_t")
-                           << errmsg_info_int (m_hashLength));
+    {
+      BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
+                             << errmsg_info_str ("Hash is not zero and length is less than size_t")
+                             << errmsg_info_int (m_hashLength));
+    }
   
   // just getting first sizeof(std::size_t) bytes
   // not ideal, but should work pretty well
@@ -190,10 +194,13 @@ Digest::operator == (const Digest &digest) const
                            << errmsg_info_str ("Digest2 is empty"));
 
   if (m_hashLength != digest.m_hashLength)
-    BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
-                           << errmsg_info_str ("Digest lengths are not the same")
-                           << errmsg_info_int (m_hashLength)
-                           << errmsg_info_int (digest.m_hashLength));
+    return false;
+
+  // Allow different hash size
+  // BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
+  //                        << errmsg_info_str ("Digest lengths are not the same")
+  //                        << errmsg_info_int (m_hashLength)
+  //                        << errmsg_info_int (digest.m_hashLength));
 
   return memcmp (m_buffer, digest.m_buffer, m_hashLength) == 0;
 }

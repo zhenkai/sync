@@ -118,7 +118,7 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
 void
 SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 {
-	//cout << "Process Sync Data" <<endl;
+  //cout << "Process Sync Data" <<endl;
   DiffStatePtr diffLog = make_shared<DiffState> ();
   
   try
@@ -211,41 +211,41 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 void
 SyncLogic::processPendingSyncInterests (DiffStatePtr &diffLog) 
 {
-	//cout << "Process Pending Interests" <<endl;
+  //cout << "Process Pending Interests" <<endl;
   recursive_mutex::scoped_lock lock (m_stateMutex);
 
-  diffLog->setDigest(m_state.getDigest());
-  if (m_log.size () > 0)
+  diffLog->setDigest (m_state.getDigest());  
+  if (m_log.get<sequenced> ().size () > 0)
     {
       m_log.get<sequenced> ().front ()->setNext (diffLog);
     }
-  m_log.insert (diffLog);
+  m_log.get<sequenced> ().push_back (diffLog);
 
   vector<string> pis = m_syncInterestTable.fetchAll ();
   if (pis.size () > 0)
     {
-  stringstream ss;
+      stringstream ss;
       ss << *diffLog;
-  for (vector<string>::iterator ii = pis.begin(); ii != pis.end(); ++ii)
-  {
-    m_ccnxHandle->publishData (*ii, ss.str(), m_syncResponseFreshness);
-  }
-}
+      for (vector<string>::iterator ii = pis.begin(); ii != pis.end(); ++ii)
+        {
+          m_ccnxHandle->publishData (*ii, ss.str(), m_syncResponseFreshness);
+        }
+    }
 }
 
 void
 SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
 {
-	//cout << "Add local names" <<endl;
+  //cout << "Add local names" <<endl;
   recursive_mutex::scoped_lock lock (m_stateMutex);
   NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
-  SeqNo seqN(session, seq);
+  
+  SeqNo seqN (session, seq);
   m_state.update(info, seqN);
 
   DiffStatePtr diff = make_shared<DiffState>();
   diff->update(info, seqN);
-
-  processPendingSyncInterests(diff);
+  processPendingSyncInterests (diff);
 }
 
 void
@@ -258,7 +258,7 @@ SyncLogic::remove(const string &prefix)
   DiffStatePtr diff = make_shared<DiffState>();
   diff->remove(info);
 
-  processPendingSyncInterests(diff);
+  processPendingSyncInterests (diff);
 }
 
 void
