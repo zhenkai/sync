@@ -92,13 +92,14 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
     }
 
   // Special case when state is not empty and we have received request with zero-root digest
-  if (digest->zero ())
+  if (digest->isZero ())
     {
       m_ccnxHandle->publishData (interestName + "/state",
                                  lexical_cast<string> (m_state),
                                  m_syncResponseFreshness);
       return;
     }
+
   
   DiffStateContainer::iterator stateInDiffLog = m_log.find (digest);
 

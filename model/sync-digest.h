@@ -114,7 +114,7 @@ public:
    * Zero-root hash is a valid hash that optimally represents an empty state
    */
   bool
-  zero () const;
+  isZero () const;
   
 private:
   Digest &

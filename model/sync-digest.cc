@@ -129,14 +129,13 @@ Digest::empty () const
 }
 
 bool
-Digest::zero () const
+Digest::isZero () const
 {
   if (m_buffer == 0)
     BOOST_THROW_EXCEPTION (Error::DigestCalculationError ()
                            << errmsg_info_str ("Digest has not been yet finalized"));
 
-  if (m_hashLength == 1 && m_buffer[0] == 0)
-    return true;  
+  return (m_hashLength == 1 && m_buffer[0] == 0);
 }
 
 
@@ -175,7 +174,7 @@ Digest::finalize ()
 std::size_t
 Digest::getHash () const
 {
-  if (zero ()) return 0;
+  if (isZero ()) return 0;
   
   if (sizeof (std::size_t) > m_hashLength)
     {
