@@ -23,7 +23,7 @@
 #ifndef SYNC_APP_DATA_PUBLISH_H
 #define SYNC_APP_DATA_PUBLISH_H
 
-// #include <boost/unordered_map.hpp>
+#include <boost/unordered_map.hpp>
 #include "sync-seq-no.h"
 #include "sync-ccnx-wrapper.h"
 #include <utility>
@@ -84,8 +84,8 @@ public:
   uint32_t publishData (const std::string &name, uint32_t session, const std::string &dataBuffer, int freshness);
 
 private:
-  typedef std::map<std::string, Seq> SequenceLog;
-  typedef std::map<std::pair<std::string, uint32_t>, std::string> RecentData;
+  typedef boost::unordered_map<std::string, Seq> SequenceLog;
+  typedef boost::unordered_map<std::pair<std::string, uint32_t>, std::string> RecentData;
   
   CcnxWrapperPtr m_ccnxHandle;
   SequenceLog m_sequenceLog;

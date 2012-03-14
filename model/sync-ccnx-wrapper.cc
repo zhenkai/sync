@@ -174,7 +174,6 @@ incomingInterest(ccn_closure *selfp,
   switch (kind)
     {
     case CCN_UPCALL_FINAL: // effective in unit tests
-      cout << "FINAL??" << endl;
       delete f;
       delete selfp;
       return CCN_UPCALL_RESULT_OK;

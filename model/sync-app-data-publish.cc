@@ -71,10 +71,10 @@ AppDataPublish::publishData (const string &name, uint32_t session, const string 
   s.seq = seq + 1;
   m_sequenceLog[name] = s;
 
-  // unordered_map<pair<string, uint32_t>, string>::iterator it = m_recentData.find(make_pair(name, session));
-  // if (it != m_recentData.end()) 
-  //   m_recentData.erase(it);
-  // m_recentData.insert(make_pair(make_pair(name, session), dataBuffer));
+  unordered_map<pair<string, uint32_t>, string>::iterator it = m_recentData.find(make_pair(name, session));
+   if (it != m_recentData.end()) 
+     m_recentData.erase(it);
+   m_recentData.insert(make_pair(make_pair(name, session), dataBuffer));
 
   return seq;
 }
