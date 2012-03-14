@@ -55,9 +55,9 @@ CcnxWrapper::~CcnxWrapper()
   
   m_thread.join ();
   ccn_disconnect (m_handle);
-  ccn_destroy (&m_handle);
   ccn_charbuf_destroy (&m_keyLoactor);
   ccn_keystore_destroy (&m_keyStore);
+  ccn_destroy (&m_handle);
 }
 
 /// @cond include_hidden
