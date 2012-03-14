@@ -45,24 +45,26 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   , m_randomGenerator (static_cast<unsigned int> (std::time (0)))
   , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (20,100))
 {
-  m_ccnxHandle->setInterestFilter (syncPrefix,
+  m_ccnxHandle->setInterestFilter (m_syncPrefix,
                                    bind (&SyncLogic::respondSyncInterest, this, _1));
 
-  m_scheduler.schedule (posix_time::seconds (4),
-                        bind (&SyncLogic::sendSyncInterest, this),
-                        REEXPRESSING_INTEREST);
+  sendSyncInterest ();
 }
 
 SyncLogic::~SyncLogic ()
 {
-}
+  // cout << "SyncLogic::~SyncLogic ()" << endl;
 
+  m_ccnxHandle.reset ();
+}
 
 void
 SyncLogic::respondSyncInterest (const string &interest)
 {
-	//cout << "Respond Sync Interest" << endl;
+  //cout << "Respond Sync Interest" << endl;
   string hash = interest.substr(interest.find_last_of("/") + 1);
+  // cout << "Received Sync Interest: " << hash << endl;
+  
   DigestPtr digest = make_shared<Digest> ();
   try
     {
@@ -81,7 +83,7 @@ SyncLogic::respondSyncInterest (const string &interest)
 void
 SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &interestName, bool timedProcessing/*=false*/)
 {
-  //cout << "SyncLogic::processSyncInterest " << timedProcessing << endl;
+  // cout << "SyncLogic::processSyncInterest " << timedProcessing << endl;
   recursive_mutex::scoped_lock lock (m_stateMutex);
 
   if (*m_state.getDigest() == *digest)
@@ -129,7 +131,7 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
 void
 SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 {
-  //cout << "Process Sync Data" <<endl;
+  // cout << "Process Sync Data" << endl;
   DiffStatePtr diffLog = make_shared<DiffState> ();
   
   try
@@ -232,20 +234,8 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 }
 
 void
-SyncLogic::processPendingSyncInterests (DiffStatePtr &diffLog) 
+SyncLogic::satisfyPendingSyncInterests (DiffStatePtr diffLog)
 {
-  //cout << "Process Pending Interests" <<endl;
-  recursive_mutex::scoped_lock lock (m_stateMutex);
-
-  diffLog->setDigest (m_state.getDigest());  
-  if (m_log.size () > 0)
-    {
-      m_log.get<sequenced> ().front ()->setNext (diffLog);
-    }
-  m_log.erase (m_state.getDigest()); // remove diff state with the same digest.  next pointers are still valid
-  /// @todo Optimization
-  m_log.insert (diffLog);
-
   vector<string> pis = m_syncInterestTable.fetchAll ();
   if (pis.size () > 0)
     {
@@ -259,31 +249,55 @@ SyncLogic::processPendingSyncInterests (DiffStatePtr &diffLog)
 }
 
 void
+SyncLogic::processPendingSyncInterests (DiffStatePtr diffLog) 
+{
+  //cout << "Process Pending Interests" <<endl;
+  diffLog->setDigest (m_state.getDigest());  
+  if (m_log.size () > 0)
+    {
+      m_log.get<sequenced> ().front ()->setNext (diffLog);
+    }
+  m_log.erase (m_state.getDigest()); // remove diff state with the same digest.  next pointers are still valid
+  /// @todo Optimization
+  m_log.insert (diffLog);
+}
+
+void
 SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
 {
-  //cout << "Add local names" <<endl;
-  recursive_mutex::scoped_lock lock (m_stateMutex);
-  NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
+  DiffStatePtr diff;
+  {
+    //cout << "Add local names" <<endl;
+    recursive_mutex::scoped_lock lock (m_stateMutex);
+    NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
   
-  SeqNo seqN (session, seq);
-  m_state.update(info, seqN);
+    SeqNo seqN (session, seq);
+    m_state.update(info, seqN);
 
-  DiffStatePtr diff = make_shared<DiffState>();
-  diff->update(info, seqN);
-  processPendingSyncInterests (diff);
+    diff = make_shared<DiffState>();
+    diff->update(info, seqN);
+    processPendingSyncInterests (diff);
+  }
+
+  satisfyPendingSyncInterests (diff);
 }
 
 void
 SyncLogic::remove(const string &prefix) 
 {
-  recursive_mutex::scoped_lock lock (m_stateMutex);
-  NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
-  m_state.remove(info);	
+  DiffStatePtr diff;
+  {
+    recursive_mutex::scoped_lock lock (m_stateMutex);
+    NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
+    m_state.remove(info);	
 
-  DiffStatePtr diff = make_shared<DiffState>();
-  diff->remove(info);
+    diff = make_shared<DiffState>();
+    diff->remove(info);
 
-  processPendingSyncInterests (diff);
+    processPendingSyncInterests (diff);
+  }
+
+  satisfyPendingSyncInterests (diff);
 }
 
 void

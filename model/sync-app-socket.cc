@@ -44,8 +44,8 @@ SyncAppSocket::~SyncAppSocket()
 
 bool SyncAppSocket::publish (const string &prefix, uint32_t session, const string &dataBuffer, int freshness)
 {
-  m_publisher.publishData (prefix, session, dataBuffer, freshness);
-  m_syncLogic.addLocalNames (prefix, session, m_publisher.getNextSeq (prefix, session));
+  uint32_t sequence = m_publisher.publishData (prefix, session, dataBuffer, freshness);
+  m_syncLogic.addLocalNames (prefix, session, sequence);
 }
 
 }

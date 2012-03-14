@@ -23,10 +23,11 @@
 #ifndef SYNC_APP_DATA_PUBLISH_H
 #define SYNC_APP_DATA_PUBLISH_H
 
-#include <boost/unordered_map.hpp>
+// #include <boost/unordered_map.hpp>
 #include "sync-seq-no.h"
 #include "sync-ccnx-wrapper.h"
 #include <utility>
+#include <map>
 
 namespace Sync {
 
@@ -78,14 +79,17 @@ public:
    * @param session session to which data is published
    * @param dataBuffer the data itself
    * @param freshness the freshness for the data object
-   * @return whether the publish succeeded
+   * @return published sequence number, will throw an exception if something wrong happened
    */
-  bool publishData (const std::string &name, uint32_t session, const std::string &dataBuffer, int freshness);
+  uint32_t publishData (const std::string &name, uint32_t session, const std::string &dataBuffer, int freshness);
 
 private:
-  boost::unordered_map<std::string, Seq> m_sequenceLog;
+  typedef std::map<std::string, Seq> SequenceLog;
+  typedef std::map<std::pair<std::string, uint32_t>, std::string> RecentData;
+  
   CcnxWrapperPtr m_ccnxHandle;
-  boost::unordered_map<std::pair<std::string, uint32_t>, std::string> m_recentData;
+  SequenceLog m_sequenceLog;
+  RecentData m_recentData;
 };
 
 } // Sync

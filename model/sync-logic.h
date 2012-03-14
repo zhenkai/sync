@@ -104,7 +104,10 @@ private:
   sendSyncInterest ();
 
   void 
-  processPendingSyncInterests(DiffStatePtr &diff);
+  processPendingSyncInterests (DiffStatePtr diff);
+
+  void
+  satisfyPendingSyncInterests (DiffStatePtr diff);
 
 private:
   FullState m_state;

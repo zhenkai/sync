@@ -75,7 +75,7 @@ public:
   sendInterest (const std::string &strInterest, const DataCallback &dataCallback);
 
   /**
-   * @brief set Interest filter (specify what interest you want to receive
+   * @brief set Interest filter (specify what interest you want to receive)
    *
    * @param prefix the prefix of Interest
    * @param interestCallback the callback function to deal with the returned data
@@ -83,6 +83,13 @@ public:
    */
   int
   setInterestFilter (const std::string &prefix, const InterestCallback &interestCallback);
+
+  /**
+   * @brief clear Interest filter
+   * @param prefix the prefix of Interest
+   */
+  void
+  clearInterestFilter (const std::string &prefix);
 
   /**
    * @brief publish data and put it to local ccn content store; need to grab

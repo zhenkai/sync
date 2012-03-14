@@ -71,7 +71,7 @@ public:
   void remove (const std::string &prefix) {m_syncLogic.remove(prefix);}
 
 private:
-	CcnxWrapperPtr m_appHandle;
+  CcnxWrapperPtr m_appHandle;
 
   AppDataFetch   m_fetcher;
   AppDataPublish m_publisher;

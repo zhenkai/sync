@@ -44,29 +44,22 @@ AppDataPublish::getRecentData (const string &prefix, uint32_t session)
 uint32_t
 AppDataPublish::getNextSeq (const string &prefix, uint32_t session)
 {
-  unordered_map<string, Seq>::iterator i = m_sequenceLog.find(prefix);
+  SequenceLog::iterator i = m_sequenceLog.find (prefix);
 
-  if (i != m_sequenceLog.end())
+  if (i != m_sequenceLog.end ())
     {
       Seq s = i->second;
       if (s.session == session)
         return s.seq;
     }
-	else
-    BOOST_THROW_EXCEPTION(GetSeqException() << errmsg_info_str("No corresponding seq"));
+  else
+    return 0;
 }
 
-bool
+uint32_t
 AppDataPublish::publishData (const string &name, uint32_t session, const string &dataBuffer, int freshness)
 {
-  uint32_t seq = 0;
-	try
-		{
-			seq =  getNextSeq(name, session);
-		}
-	catch (GetSeqException &e){
-    m_sequenceLog.erase(name);
-	}
+  uint32_t seq = getNextSeq (name, session);
 
   ostringstream contentNameWithSeqno;
   contentNameWithSeqno << name << "/" << session << "/" << seq;
@@ -78,12 +71,12 @@ AppDataPublish::publishData (const string &name, uint32_t session, const string 
   s.seq = seq + 1;
   m_sequenceLog[name] = s;
 
-  unordered_map<pair<string, uint32_t>, string>::iterator it = m_recentData.find(make_pair(name, session));
-  if (it != m_recentData.end()) 
-    m_recentData.erase(it);
-  m_recentData.insert(make_pair(make_pair(name, session), dataBuffer));
+  // unordered_map<pair<string, uint32_t>, string>::iterator it = m_recentData.find(make_pair(name, session));
+  // if (it != m_recentData.end()) 
+  //   m_recentData.erase(it);
+  // m_recentData.insert(make_pair(make_pair(name, session), dataBuffer));
 
-  return true;
+  return seq;
 }
 
-}
+} // Sync

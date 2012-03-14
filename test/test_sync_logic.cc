@@ -44,24 +44,46 @@ struct Handler
   {
   }
   
-  void onUpdate (const string &p/*prefix*/, const SeqNo &seq/*newSeq*/, const SeqNo &/*oldSeq*/)
+  void onUpdate (const string &p/*prefix*/, const SeqNo &seq/*newSeq*/, const SeqNo &oldSeq/*oldSeq*/)
   {
-    cout << instance << "\t" << p << ": " << seq << endl;
+    m_map[p] = seq.getSeq ();
+    
+    cout << instance << "\t";
+    if (!oldSeq.isValid ())
+      cout << "Inserted: " << p << " (" << seq << ")" << endl;
+    else
+      cout << "Updated: " << p << "  ( " << oldSeq << ".." << seq << ")" << endl;
   }
 
   void onRemove (const string &p/*prefix*/)
   {
-    cout << instance << "\t" << p << endl;
+    cout << instance << "\tRemoved: " << p << endl;
+    m_map.erase (p);
   }
+
+  map<string, uint32_t> m_map;
 };
 
 BOOST_AUTO_TEST_CASE (SyncLogicTest)
 {
-  Handler h1 ("1"), h2 ("2");
+  Handler h1 ("1");
 
   SyncLogic l1 ("/bcast", bind (&Handler::onUpdate, &h1, _1, _2, _3), bind (&Handler::onRemove, &h1, _1));
-  SyncLogic L2 ("/bcast", bind (&Handler::onUpdate, &h2, _1, _2, _3), bind (&Handler::onRemove, &h2, _1));
+  l1.addLocalNames ("/one", 1, 2);
 
-  sleep (10);
-  // l1.  
+  BOOST_CHECK_EQUAL (h1.m_map.size (), 0);
+  sleep (1);
+  BOOST_CHECK_EQUAL (h1.m_map.size (), 0);
+
+  Handler h2 ("2");
+  SyncLogic l2 ("/bcast", bind (&Handler::onUpdate, &h2, _1, _2, _3), bind (&Handler::onRemove, &h2, _1));
+  
+  sleep (1);
+  BOOST_CHECK_EQUAL (h1.m_map.size (), 0);
+  BOOST_CHECK_EQUAL (h2.m_map.size (), 1);
+  
+  // l1.remove ("/one");
+
+  // sleep (10);
+// l1.  
 }

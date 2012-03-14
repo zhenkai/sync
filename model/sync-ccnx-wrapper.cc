@@ -37,7 +37,7 @@ CcnxWrapper::CcnxWrapper()
   , m_keyLoactor (0)
   , m_running (true)
 {
-  m_handle = ccn_create();
+  m_handle = ccn_create ();
   if (ccn_connect(m_handle, NULL) < 0)
     BOOST_THROW_EXCEPTION (CcnxOperationException() << errmsg_info_str("connection to ccnd failed"));
   initKeyStore();
@@ -47,8 +47,13 @@ CcnxWrapper::CcnxWrapper()
 
 CcnxWrapper::~CcnxWrapper()
 {
-  m_running = false;
-  m_thread.join();
+  // std::cout << "CcnxWrapper::~CcnxWrapper()" << std::endl;
+  {
+    recursive_mutex::scoped_lock lock(m_mutex);
+    m_running = false;
+  }
+  
+  m_thread.join ();
   ccn_disconnect (m_handle);
   ccn_destroy (&m_handle);
   ccn_charbuf_destroy (&m_keyLoactor);
@@ -112,11 +117,15 @@ CcnxWrapper::ccnLoop ()
       if (res >= 0)
         {
           int ret = poll(pfds, 1, 100);
-          if (ret >= 0)
+          if (ret < 0)
             {
-              recursive_mutex::scoped_lock lock(m_mutex);
-              res = ccn_run(m_handle, 0);
+              BOOST_THROW_EXCEPTION (CcnxOperationException() << errmsg_info_str("ccnd socket failed (probably ccnd got stopped)"));
             }
+
+          recursive_mutex::scoped_lock lock(m_mutex);
+          if (!m_running) break;
+          
+          res = ccn_run(m_handle, 0);
         }
     }
 }
@@ -165,6 +174,7 @@ incomingInterest(ccn_closure *selfp,
   switch (kind)
     {
     case CCN_UPCALL_FINAL: // effective in unit tests
+      cout << "FINAL??" << endl;
       delete f;
       delete selfp;
       return CCN_UPCALL_RESULT_OK;
@@ -233,6 +243,7 @@ incomingData(ccn_closure *selfp,
 
 int CcnxWrapper::sendInterest (const string &strInterest, const DataCallback &dataCallback)
 {
+  // std::cout << "Send interests for " << strInterest << std::endl;
   ccn_charbuf *pname = ccn_charbuf_create();
   ccn_closure *dataClosure = new ccn_closure;
 
@@ -256,6 +267,22 @@ int CcnxWrapper::setInterestFilter (const string &prefix, const InterestCallback
   interestClosure->data = new InterestCallback (interestCallback); // should be removed when closure is removed
   interestClosure->p = &incomingInterest;
   int ret = ccn_set_interest_filter (m_handle, pname, interestClosure);
+  if (ret < 0)
+    {
+      BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("set interest filter failed") << errmsg_info_int (ret));
+    }
+
+  ccn_charbuf_destroy(&pname);
+}
+
+void
+CcnxWrapper::clearInterestFilter (const std::string &prefix)
+{
+  std::cout << "clearInterestFilter" << std::endl;
+  ccn_charbuf *pname = ccn_charbuf_create();
+
+  ccn_name_from_uri (pname, prefix.c_str());
+  int ret = ccn_set_interest_filter (m_handle, pname, 0);
   if (ret < 0)
     {
       BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("set interest filter failed") << errmsg_info_int (ret));
