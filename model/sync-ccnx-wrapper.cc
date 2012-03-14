@@ -38,10 +38,10 @@ CcnxWrapper::CcnxWrapper()
   , m_running (true)
 {
   m_handle = ccn_create ();
+  initKeyStore ();
+  createKeyLocator ();
   if (ccn_connect(m_handle, NULL) < 0)
     BOOST_THROW_EXCEPTION (CcnxOperationException() << errmsg_info_str("connection to ccnd failed"));
-  initKeyStore();
-  createKeyLocator();
   m_thread = thread (&CcnxWrapper::ccnLoop, this);
 }
 
@@ -55,9 +55,9 @@ CcnxWrapper::~CcnxWrapper()
   
   m_thread.join ();
   ccn_disconnect (m_handle);
+  ccn_destroy (&m_handle);
   ccn_charbuf_destroy (&m_keyLoactor);
   ccn_keystore_destroy (&m_keyStore);
-  ccn_destroy (&m_handle);
 }
 
 /// @cond include_hidden
@@ -107,26 +107,30 @@ void
 CcnxWrapper::ccnLoop ()
 {
   pollfd pfds[1];
-  int res = ccn_run(m_handle, 0);
 
-  pfds[0].fd = ccn_get_connection_fd(m_handle);
+  pfds[0].fd = ccn_get_connection_fd (m_handle);
   pfds[0].events = POLLIN;
 
   while (m_running)
     {
-      if (res >= 0)
-        {
-          int ret = poll(pfds, 1, 100);
-          if (ret < 0)
-            {
-              BOOST_THROW_EXCEPTION (CcnxOperationException() << errmsg_info_str("ccnd socket failed (probably ccnd got stopped)"));
-            }
+      int res = 0;
+      {
+        recursive_mutex::scoped_lock lock (m_mutex);
+        res = ccn_run (m_handle, 0);
+      }
 
-          recursive_mutex::scoped_lock lock(m_mutex);
-          if (!m_running) break;
-          
-          res = ccn_run(m_handle, 0);
+      if (!m_running) break;
+      
+      if (res < 0)
+        BOOST_THROW_EXCEPTION (CcnxOperationException()
+                               << errmsg_info_str("ccn_run returned error"));
+
+      int ret = poll(pfds, 1, 10);
+      if (ret < 0)
+        {
+          BOOST_THROW_EXCEPTION (CcnxOperationException() << errmsg_info_str("ccnd socket failed (probably ccnd got stopped)"));
         }
+
     }
 }
 
@@ -135,6 +139,10 @@ CcnxWrapper::ccnLoop ()
 int
 CcnxWrapper::publishData (const string &name, const string &dataBuffer, int freshness)
 {
+  recursive_mutex::scoped_lock lock(m_mutex);
+  if (!m_running)
+    return -1;
+  
   // cout << "Publish: " << name << endl;
   ccn_charbuf *pname = ccn_charbuf_create();
   ccn_charbuf *signed_info = ccn_charbuf_create();
@@ -154,13 +162,13 @@ CcnxWrapper::publishData (const string &name, const string &dataBuffer, int fres
 			   NULL, getPrivateKey()) < 0)
     BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("encode content failed"));
 
-  recursive_mutex::scoped_lock lock(m_mutex);
   if (ccn_put(m_handle, content->buf, content->length) < 0)
     BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("ccnput failed"));
 
   ccn_charbuf_destroy (&pname);
   ccn_charbuf_destroy (&signed_info);
   ccn_charbuf_destroy (&content);
+  return 0;
 }
 
 
@@ -242,6 +250,10 @@ incomingData(ccn_closure *selfp,
 
 int CcnxWrapper::sendInterest (const string &strInterest, const DataCallback &dataCallback)
 {
+  recursive_mutex::scoped_lock lock(m_mutex);
+  if (!m_running)
+    return -1;
+  
   // std::cout << "Send interests for " << strInterest << std::endl;
   ccn_charbuf *pname = ccn_charbuf_create();
   ccn_closure *dataClosure = new ccn_closure;
@@ -250,15 +262,19 @@ int CcnxWrapper::sendInterest (const string &strInterest, const DataCallback &da
   dataClosure->data = new DataCallback (dataCallback); // should be removed when closure is removed
 
   dataClosure->p = &incomingData;
-  recursive_mutex::scoped_lock lock(m_mutex);
   if (ccn_express_interest (m_handle, pname, dataClosure, NULL) < 0)
     BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("express interest failed"));
 
   ccn_charbuf_destroy (&pname);
+  return 0;
 }
 
 int CcnxWrapper::setInterestFilter (const string &prefix, const InterestCallback &interestCallback)
 {
+  recursive_mutex::scoped_lock lock(m_mutex);
+  if (!m_running)
+    return -1;
+
   ccn_charbuf *pname = ccn_charbuf_create();
   ccn_closure *interestClosure = new ccn_closure;
 
@@ -277,6 +293,10 @@ int CcnxWrapper::setInterestFilter (const string &prefix, const InterestCallback
 void
 CcnxWrapper::clearInterestFilter (const std::string &prefix)
 {
+  recursive_mutex::scoped_lock lock(m_mutex);
+  if (!m_running)
+    return;
+
   std::cout << "clearInterestFilter" << std::endl;
   ccn_charbuf *pname = ccn_charbuf_create();
 
