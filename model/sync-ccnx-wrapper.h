@@ -61,7 +61,12 @@ public:
    * keystore 2) init keylocator 3) start a thread to hold a loop of ccn_run
    *
    */
+#ifdef _DEBUG_WRAPPER_      
+  CcnxWrapper(char c='.');
+  char m_c;
+#else
   CcnxWrapper();
+#endif  
   ~CcnxWrapper();
 
   /**

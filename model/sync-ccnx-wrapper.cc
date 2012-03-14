@@ -31,12 +31,19 @@ using namespace boost;
 
 namespace Sync {
 
+#ifdef _DEBUG_WRAPPER_      
+CcnxWrapper::CcnxWrapper(char c)
+#else
 CcnxWrapper::CcnxWrapper()
+#endif
   : m_handle (0)
   , m_keyStore (0)
   , m_keyLoactor (0)
   , m_running (true)
 {
+#ifdef _DEBUG_WRAPPER_      
+  m_c = c;
+#endif
   m_handle = ccn_create ();
   initKeyStore ();
   createKeyLocator ();
@@ -106,17 +113,17 @@ CcnxWrapper::initKeyStore ()
 void
 CcnxWrapper::ccnLoop ()
 {
-  pollfd pfds[1];
-
-  pfds[0].fd = ccn_get_connection_fd (m_handle);
-  pfds[0].events = POLLIN;
 
   while (m_running)
     {
+#ifdef _DEBUG_WRAPPER_      
+      std::cout << m_c << flush;
+#endif
       int res = 0;
       {
         recursive_mutex::scoped_lock lock (m_mutex);
         res = ccn_run (m_handle, 0);
+
       }
 
       if (!m_running) break;
@@ -125,12 +132,22 @@ CcnxWrapper::ccnLoop ()
         BOOST_THROW_EXCEPTION (CcnxOperationException()
                                << errmsg_info_str("ccn_run returned error"));
 
-      int ret = poll(pfds, 1, 10);
+
+      pollfd pfds[1];
+      {
+        recursive_mutex::scoped_lock lock (m_mutex);
+        
+        pfds[0].fd = ccn_get_connection_fd (m_handle);
+        pfds[0].events = POLLIN;
+        if (ccn_output_is_pending (m_handle))
+          pfds[0].events |= POLLOUT;
+      }
+      
+      int ret = poll (pfds, 1, 1);
       if (ret < 0)
         {
           BOOST_THROW_EXCEPTION (CcnxOperationException() << errmsg_info_str("ccnd socket failed (probably ccnd got stopped)"));
         }
-
     }
 }
 

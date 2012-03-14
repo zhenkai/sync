@@ -35,52 +35,50 @@ using namespace boost;
 string echoStr = "";
 
 void echo(string str) {
-	echoStr = str;
+  echoStr = str;
 }
 
 struct TestStruct {
-	string s_str1, s_str2;
-	void set(string str1, string str2) {
-		s_str1 = str1;
-		s_str2 = str2;
-	}
+  string s_str1, s_str2;
+  void set(string str1, string str2) {
+    s_str1 = str1;
+    s_str2 = str2;
+  }
 };
 
 BOOST_AUTO_TEST_CASE (CcnxWrapperTest)
 {
-
-	CcnxWrapper ha;
-	CcnxWrapper hb;
+  CcnxWrapper ha;
+  CcnxWrapper hb;
 	
-	TestStruct foo;
+  TestStruct foo;
 	
-	boost::function<void (string)> globalFunc = echo;
-	boost::function<void (string, string)> memberFunc =
-	bind(&TestStruct::set, &foo, _1, _2);
+  boost::function<void (string)> globalFunc = echo;
+  boost::function<void (string, string)> memberFunc =
+    bind(&TestStruct::set, &foo, _1, _2);
 
-	string prefix = "/ucla.edu";
-	ha.setInterestFilter(prefix, globalFunc);
+  string prefix = "/ucla.edu";
+  ha.setInterestFilter(prefix, globalFunc);
+  this_thread::sleep (posix_time::milliseconds (10));
 
-	string interest = "/ucla.edu/0";
-	hb.sendInterest(interest, memberFunc);
+  string interest = "/ucla.edu/0";
+  hb.sendInterest(interest, memberFunc);
 
-	// give time for ccnd to react
-	sleep(1);
+  // give time for ccnd to react
+  // sleep(1);
+  this_thread::sleep (posix_time::milliseconds (5));
+  BOOST_CHECK_EQUAL(echoStr, interest);
 
-	BOOST_CHECK_EQUAL(echoStr, interest);
+  string name = "/ucla.edu/0";
+  string data = "random bits: !#$!@#$!";
+  ha.publishData(name, data, 5);
 
+  hb.sendInterest(interest, memberFunc);
 
-	string name = "/ucla.edu/0";
-	string data = "random bits: !#$!@#$!";
-	ha.publishData(name, data, 5);
-
-	hb.sendInterest(interest, memberFunc);
-
-	// give time for ccnd to react
-	sleep(1);
-	BOOST_CHECK_EQUAL(foo.s_str1, name);
-	BOOST_CHECK_EQUAL(foo.s_str2, data);
-
+  // give time for ccnd to react
+  this_thread::sleep (posix_time::milliseconds (5));
+  BOOST_CHECK_EQUAL(foo.s_str1, name);
+  BOOST_CHECK_EQUAL(foo.s_str2, data);
 }
 
 
