@@ -284,7 +284,7 @@ SyncLogic::processPendingSyncInterests (DiffStatePtr diffLog)
     }
   m_log.erase (m_state.getDigest()); // remove diff state with the same digest.  next pointers are still valid
   /// @todo Optimization
-  m_log.insert (diffLog);
+  m_log.get<sequenced> ().push_front (diffLog);
   _LOG_DEBUG (*diffLog->getDigest () << " " << m_log.size ());
 }
 

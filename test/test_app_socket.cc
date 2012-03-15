@@ -38,12 +38,13 @@ using namespace Sync;
 using namespace std;
 using namespace boost;
 
-INIT_LOGGER ("Test::AppSocket");
+INIT_LOGGER ("Test.AppSocket");
 
 class TestSocketApp {
 public:
   map<string, string> data;
   void set(string str1, string str2) {
+    _LOG_FUNCTION (this << ", " << str1);
     data.insert(make_pair(str1, str2));
     // cout << str1 << ", " << str2 << endl;
   }
@@ -102,13 +103,14 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
   s1.publish (p1, 0, data1, 10);
   _LOG_DEBUG ("s1 publish");
   s1.publish (p1, 0, data2, 10);
-  this_thread::sleep (posix_time::milliseconds (1000));
-
+  this_thread::sleep (posix_time::milliseconds (100));
+  
+  _LOG_DEBUG ("testing");
   // // // from code logic, we won't be fetching our own data
-  // a1.set(p1 + "/0/1", data1);
-  // a1.set(p1 + "/0/2", data2);
-  // BOOST_CHECK_EQUAL(a1.toString(), a2.toString());
-  // // BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
+  a1.set(p1 + "/0/1", data1);
+  a1.set(p1 + "/0/2", data2);
+  BOOST_CHECK_EQUAL(a1.toString(), a2.toString());
+  BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
 
   // // another single source
   // // string data3 = "You surf the Internet, I surf the real world";

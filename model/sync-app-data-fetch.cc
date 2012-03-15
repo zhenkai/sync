@@ -21,6 +21,7 @@
  */
 
 #include "sync-app-data-fetch.h"
+#include "sync-log.h"
 
 using namespace std;
 using namespace boost;
@@ -28,9 +29,13 @@ using namespace boost;
 namespace Sync
 {
 
+INIT_LOGGER ("AppDataFetch");
+
 void
 AppDataFetch::onUpdate (const std::string &prefix, const SeqNo &newSeq, const SeqNo &oldSeq)
 {
+  _LOG_FUNCTION (this << ", " << prefix << ", " << newSeq << ", " << oldSeq);
+  
   // sequence number logic here
   uint32_t start = 0;
   if (oldSeq.isValid ())
@@ -54,6 +59,8 @@ AppDataFetch::onUpdate (const std::string &prefix, const SeqNo &newSeq, const Se
 void
 AppDataFetch::onRemove (const std::string &prefix)
 {
+  _LOG_FUNCTION (this << ", " << prefix);
+  
   // I guess this should be somewhere in app
 }
 
