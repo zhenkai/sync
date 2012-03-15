@@ -48,16 +48,16 @@ struct Handler
   {
     m_map[p] = seq.getSeq ();
     
-    cout << instance << "\t";
-    if (!oldSeq.isValid ())
-      cout << "Inserted: " << p << " (" << seq << ")" << endl;
-    else
-      cout << "Updated: " << p << "  ( " << oldSeq << ".." << seq << ")" << endl;
+    // cout << instance << "\t";
+    // if (!oldSeq.isValid ())
+    //   cout << "Inserted: " << p << " (" << seq << ")" << endl;
+    // else
+    //   cout << "Updated: " << p << "  ( " << oldSeq << ".." << seq << ")" << endl;
   }
 
   void onRemove (const string &p/*prefix*/)
   {
-    cout << instance << "\tRemoved: " << p << endl;
+    // cout << instance << "\tRemoved: " << p << endl;
     m_map.erase (p);
   }
 

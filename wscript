@@ -5,6 +5,7 @@ APPNAME='sync'
 
 def options(opt):
     opt.add_option('--no-debug',action='store_true',default=False,dest='no_debug',help='''Make an optimized build of the library (remove debugging code)''')
+    opt.add_option('--log4cxx',action='store_true',default=False,dest='log4cxx',help='''Compile with log4cxx support''')
     opt.load('compiler_c')
     opt.load('compiler_cxx')
     opt.load('boost')
@@ -37,20 +38,26 @@ def configure(conf):
     conf.define ('STANDALONE', 1)
     if not conf.options.no_debug:
         conf.define ('_DEBUG', 1)
-	
+
+    if conf.options.log4cxx:
+        conf.check_cfg(package='liblog4cxx', args=['--cflags', '--libs'], uselib_store='LOG4CXX', mandatory=True)
+                   
 def build (bld):
-    bld.shlib (target=APPNAME, 
-               features=['cxx', 'cxxshlib'],
-               source = bld.path.ant_glob(['model/sync-*.cc',
-                                           'helper/sync-*.cc']),
-               uselib = 'BOOST BOOST_IOSTREAMS BOOST_THREAD SSL TINYXML CCNX'
-               )
+    libsync = bld.shlib (target=APPNAME, 
+                         features=['cxx', 'cxxshlib'],
+                         source = bld.path.ant_glob(['model/sync-*.cc',
+                                                     'helper/sync-*.cc']),
+                         use = 'BOOST BOOST_IOSTREAMS BOOST_THREAD SSL TINYXML CCNX')
 
     # Unit tests
-    bld.program (target="unit-tests",
-                 source = bld.path.ant_glob(['test/**/*.cc']),
-                 features=['cxx', 'cxxprogram'],
-                 use = 'BOOST_TEST sync')
+    unittests = bld.program (target="unit-tests",
+                             source = bld.path.ant_glob(['test/**/*.cc']),
+                             features=['cxx', 'cxxprogram'],
+                             use = 'BOOST_TEST sync')
+
+    if bld.get_define ("HAVE_LOG4CXX"):
+        libsync.use += ' LOG4CXX'
+        unittests.use += ' LOG4CXX'
 
 # doxygen docs
 from waflib.Build import BuildContext

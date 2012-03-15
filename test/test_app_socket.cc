@@ -25,6 +25,9 @@
 using boost::test_tools::output_test_stream;
 
 #include <boost/make_shared.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+#include "../model/sync-log.h"
 
 #include "../model/sync-app-socket.h"
 extern "C" {
@@ -34,6 +37,8 @@ extern "C" {
 using namespace Sync;
 using namespace std;
 using namespace boost;
+
+INIT_LOGGER ("Test::AppSocket");
 
 class TestSocketApp {
 public:
@@ -62,58 +67,67 @@ public:
 
 BOOST_AUTO_TEST_CASE (AppSocketTest)
 {
-
+  INIT_LOGGERS ();
+  
   TestSocketApp a1, a2, a3;
 	
   string syncPrefix("/let/us/sync");
   string p1("/irl.cs.ucla.edu"), p2("/yakshi.org"), p3("/google.com");
 
+  _LOG_DEBUG ("s1");
   SyncAppSocket s1 (syncPrefix, bind(&TestSocketApp::set, &a1, _1, _2));
-  this_thread::sleep (posix_time::milliseconds (500));
+  this_thread::sleep (posix_time::milliseconds (50));
+  _LOG_DEBUG ("s2");
   SyncAppSocket s2 (syncPrefix, bind(&TestSocketApp::set, &a2, _1, _2));
-  // SyncAppSocket s3 (syncPrefix, bind(&TestSocketApp::set, &a3, _1, _2));
+  this_thread::sleep (posix_time::milliseconds (50));
+  SyncAppSocket s3 (syncPrefix, bind(&TestSocketApp::set, &a3, _1, _2));
+  this_thread::sleep (posix_time::milliseconds (50));
 
   // single source
   string data0 = "Very funny Scotty, now beam down my clothes";
+  _LOG_DEBUG ("s1 publish");
   s1.publish (p1, 0, data0, 10); 
-  this_thread::sleep (posix_time::milliseconds (1));
+  this_thread::sleep (posix_time::milliseconds (50));
 
   // from code logic, we won't be fetching our own data
   a1.set(p1 + "/0/0", data0);
   BOOST_CHECK_EQUAL(a1.toString(), a2.toString());
-  // BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
+  BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
 
   // // single source, multiple data at once
-  // string data1 = "Yes, give me that ketchup";
-  // string data2 = "Don't look conspicuous, it draws fire";
+  string data1 = "Yes, give me that ketchup";
+  string data2 = "Don't look conspicuous, it draws fire";
 
-  // s1.publish (p1, 0, data1, 10);
-  // s1.publish(p1, 0, data2, 10); 
-  // sleep (1);
+  _LOG_DEBUG ("s1 publish");
+  s1.publish (p1, 0, data1, 10);
+  _LOG_DEBUG ("s1 publish");
+  s1.publish (p1, 0, data2, 10);
+  this_thread::sleep (posix_time::milliseconds (1000));
 
-  // // from code logic, we won't be fetching our own data
+  // // // from code logic, we won't be fetching our own data
   // a1.set(p1 + "/0/1", data1);
   // a1.set(p1 + "/0/2", data2);
   // BOOST_CHECK_EQUAL(a1.toString(), a2.toString());
-  // BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
+  // // BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
 
   // // another single source
-  // string data3 = "You surf the Internet, I surf the real world";
+  // // string data3 = "You surf the Internet, I surf the real world";
   // string data4 = "I got a fortune cookie once that said 'You like Chinese food'";
   // string data5 = "Real men wear pink. Why? Because their wives make them";
-  // s3.publish(p3, 0, data3, 10); 
-  // usleep(20000);
+  // // s3.publish(p3, 0, data3, 10); 
+  // // this_thread::sleep (posix_time::milliseconds (1000));
+  
   // // another single source, multiple data at once
   // s2.publish(p2, 0, data4, 10); 
   // s2.publish(p2, 0, data5, 10);
-  // usleep(20000);
+  // this_thread::sleep (posix_time::milliseconds (1000));
 
   // // from code logic, we won't be fetching our own data
-  // a3.set(p3 + "/0/0", data3);
+  // // a3.set(p3 + "/0/0", data3);
   // a2.set(p2 + "/0/0", data4);
   // a2.set(p2 + "/0/1", data5);
   // BOOST_CHECK_EQUAL(a1.toString(), a2.toString());
-  // BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
+  // // BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
 
   // // not sure weither this is simultanous data generation from multiple sources
   // string data6 = "Shakespeare says: 'Prose before hos.'";

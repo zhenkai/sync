@@ -21,10 +21,12 @@
  */
 
 #include "sync-scheduler.h"
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include "sync-log.h"
 
 using namespace boost;
 using namespace std;
+
+INIT_LOGGER ("Scheduler");
 
 namespace Sync {
 
@@ -45,6 +47,7 @@ Scheduler::~Scheduler ()
 void
 Scheduler::threadLoop ()
 {
+  _LOG_FUNCTION (this);
   while (m_threadRunning)
     {
       try

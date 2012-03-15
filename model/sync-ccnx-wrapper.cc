@@ -21,13 +21,18 @@
  */
 
 #include "sync-ccnx-wrapper.h"
+#include "sync-log.h"
 #include <poll.h>
 #include <boost/throw_exception.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 typedef boost::error_info<struct tag_errmsg, std::string> errmsg_info_str;
 typedef boost::error_info<struct tag_errmsg, int> errmsg_info_int;
 
 using namespace std;
 using namespace boost;
+
+INIT_LOGGER ("CcnxWrapper");
 
 namespace Sync {
 
@@ -113,6 +118,7 @@ CcnxWrapper::initKeyStore ()
 void
 CcnxWrapper::ccnLoop ()
 {
+  _LOG_FUNCTION (this);
 
   while (m_running)
     {

@@ -23,6 +23,8 @@
 #include "sync-logic.h"
 #include "sync-diff-leaf.h"
 #include "sync-full-leaf.h"
+#include "sync-log.h"
+
 #include <boost/make_shared.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
@@ -31,6 +33,8 @@
 
 using namespace std;
 using namespace boost;
+
+INIT_LOGGER ("SyncLogic");
 
 namespace Sync
 {
@@ -43,16 +47,21 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   , m_onRemove (onRemove)
   , m_ccnxHandle(new CcnxWrapper())
   , m_randomGenerator (static_cast<unsigned int> (std::time (0)))
-  , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (20,100))
+  , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (10,50))
 {
+  _LOG_FUNCTION (syncPrefix);
+  
   m_ccnxHandle->setInterestFilter (m_syncPrefix,
                                    bind (&SyncLogic::respondSyncInterest, this, _1));
 
-  sendSyncInterest ();
+  m_scheduler.schedule (posix_time::seconds (0),
+                        bind (&SyncLogic::sendSyncInterest, this),
+                        REEXPRESSING_INTEREST);
 }
 
 SyncLogic::~SyncLogic ()
 {
+  _LOG_FUNCTION (this);
   // cout << "SyncLogic::~SyncLogic ()" << endl;
 
   m_ccnxHandle.reset ();
@@ -61,6 +70,7 @@ SyncLogic::~SyncLogic ()
 void
 SyncLogic::respondSyncInterest (const string &interest)
 {
+  _LOG_TRACE ("<< I " << interest);
   //cout << "Respond Sync Interest" << endl;
   string hash = interest.substr(interest.find_last_of("/") + 1);
   // cout << "Received Sync Interest: " << hash << endl;
@@ -77,36 +87,47 @@ SyncLogic::respondSyncInterest (const string &interest)
       return;
     }
 
-  processSyncInterest (digest, interest);
+  processSyncInterest (digest, interest, false);
 }
 
 void
 SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &interestName, bool timedProcessing/*=false*/)
 {
-  // cout << "SyncLogic::processSyncInterest " << timedProcessing << endl;
   recursive_mutex::scoped_lock lock (m_stateMutex);
 
-  if (*m_state.getDigest() == *digest)
-    {
-      // cout << interestName << "\n";
-      m_syncInterestTable.insert (interestName);
-      return;
-    }
-
   // Special case when state is not empty and we have received request with zero-root digest
-  if (digest->isZero ())
+  if (digest->isZero () && !m_state.getDigest()->isZero ())
     {
+      _LOG_TRACE (">> D " << interestName << "/state" << " (zero)");
+
       m_ccnxHandle->publishData (interestName + "/state",
                                  lexical_cast<string> (m_state),
                                  m_syncResponseFreshness);
       return;
     }
 
+  if (*m_state.getDigest() == *digest)
+    {
+      // cout << interestName << "\n";
+      if (digest->isZero ())
+        {
+          _LOG_TRACE ("Digest is zero, adding /state to PIT");
+          m_syncInterestTable.insert (interestName + "/state");
+        }
+      else
+        {
+          _LOG_TRACE ("Same state. Adding to PIT");
+          m_syncInterestTable.insert (interestName);
+        }
+      return;
+    }
   
   DiffStateContainer::iterator stateInDiffLog = m_log.find (digest);
 
   if (stateInDiffLog != m_log.end ())
   {
+    _LOG_TRACE (">> D " << interestName);
+    
     m_ccnxHandle->publishData (interestName,
                                lexical_cast<string> (*(*stateInDiffLog)->diff ()),
                                m_syncResponseFreshness);
@@ -115,6 +136,7 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
 
   if (!timedProcessing)
     {
+      _LOG_DEBUG ("hmm");
       m_scheduler.schedule (posix_time::milliseconds (m_rangeUniformRandom ()) /*from 20 to 100ms*/,
                             bind (&SyncLogic::processSyncInterest, this, digest, interestName, true),
                             DELAYED_INTEREST_PROCESSING);
@@ -122,6 +144,8 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
     }
   else
     {
+      _LOG_TRACE (">> D " << interestName << "/state" << " (timed processing)");
+      
       m_ccnxHandle->publishData (interestName + "/state",
                                  lexical_cast<string> (m_state),
                                  m_syncResponseFreshness);
@@ -131,7 +155,7 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
 void
 SyncLogic::processSyncData (const string &name, const string &dataBuffer)
 {
-  // cout << "Process Sync Data" << endl;
+  _LOG_TRACE ("<< D " << name);
   DiffStatePtr diffLog = make_shared<DiffState> ();
   
   try
@@ -243,6 +267,7 @@ SyncLogic::satisfyPendingSyncInterests (DiffStatePtr diffLog)
       ss << *diffLog;
       for (vector<string>::iterator ii = pis.begin(); ii != pis.end(); ++ii)
         {
+          _LOG_TRACE (">> D " << *ii);
           m_ccnxHandle->publishData (*ii, ss.str(), m_syncResponseFreshness);
         }
     }
@@ -260,6 +285,7 @@ SyncLogic::processPendingSyncInterests (DiffStatePtr diffLog)
   m_log.erase (m_state.getDigest()); // remove diff state with the same digest.  next pointers are still valid
   /// @todo Optimization
   m_log.insert (diffLog);
+  _LOG_DEBUG (*diffLog->getDigest () << " " << m_log.size ());
 }
 
 void
@@ -303,11 +329,13 @@ SyncLogic::remove(const string &prefix)
 void
 SyncLogic::sendSyncInterest ()
 {
-	//cout << "Sending Sync Interest" << endl;
+  // cout << "Sending Sync Interest" << endl;
   recursive_mutex::scoped_lock lock (m_stateMutex);
 
   ostringstream os;
   os << m_syncPrefix << "/" << *m_state.getDigest();
+
+  _LOG_TRACE (">> I " << os.str ());
 
   m_ccnxHandle->sendInterest (os.str (),
                               bind (&SyncLogic::processSyncData, this, _1, _2));
