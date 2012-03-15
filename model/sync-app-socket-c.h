@@ -23,15 +23,17 @@
 #ifndef SYNC_APP_SOCKET_C_H
 #define SYNC_APP_SOCKET_C_H
 
-#include "sync-app-socket.h"
-
+#ifdef __cplusplus
 extern "C" {
-  typedef struct SyncAppSocketStruct;
+#endif
+  typedef struct SyncAppSocketStruct SyncAppSocketStruct;
 
   SyncAppSocketStruct *create_sync_app_socket(const char *prefix, void (*callback)(const char *, const char *));
   void delete_sync_app_socket(SyncAppSocketStruct **sock);
-  bool sync_app_socket_publish(SyncAppSocketStruct *sock, const char *prefix, uint32_t session, const char *buf, int freshness);
+  int sync_app_socket_publish(SyncAppSocketStruct *sock, const char *prefix, int session, const char *buf, int freshness);
   void sync_app_socket_remove(SyncAppSocketStruct *sock, const char *prefix);
+#ifdef __cplusplus
 }
+#endif
 
 #endif // SYNC_APP_SOCKET_C_H

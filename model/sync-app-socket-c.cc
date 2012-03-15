@@ -20,7 +20,7 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#include "sync-app-socket-c.h"
+#include "sync-app-socket.h"
 using namespace std;
 using namespace Sync;
 
@@ -32,6 +32,9 @@ public:
   }
 };
 
+struct SyncAppSocketStruct;
+
+extern "C"
 SyncAppSocketStruct *
 create_sync_app_socket(const char *prefix, void (*callback)(const char *, const char *)) 
 {
@@ -42,7 +45,7 @@ create_sync_app_socket(const char *prefix, void (*callback)(const char *, const 
   return (SyncAppSocketStruct *) sock;
 }
 
-
+extern "C"
 void
 delete_sync_app_socket(SyncAppSocketStruct **sock) {
   SyncAppSocket *temp = *((SyncAppSocket **)sock);
@@ -51,14 +54,16 @@ delete_sync_app_socket(SyncAppSocketStruct **sock) {
 }
 
 // assume char *buf ends with '\0', or otherwise it's going to crash;
-// should fix this "feature" 
-bool
-sync_app_socket_publish(SyncAppSocketStruct *sock, const char *prefix, uint32_t session, const char *buf, int freshness) 
+// should fix this "feature"
+extern "C" 
+int
+sync_app_socket_publish(SyncAppSocketStruct *sock, const char *prefix, int session, const char *buf, int freshness) 
 {
   SyncAppSocket *temp = (SyncAppSocket *)sock;
   return temp->publish(prefix, session, buf, freshness);
 }
 
+extern "C"
 void
 sync_app_socket_remove(SyncAppSocketStruct *sock, const char *prefix) 
 {
