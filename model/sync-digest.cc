@@ -185,7 +185,7 @@ Digest::getHash () const
   
   // just getting first sizeof(std::size_t) bytes
   // not ideal, but should work pretty well
-  return reinterpret_cast<std::size_t> (m_buffer);
+  return *(reinterpret_cast<std::size_t*> (m_buffer));
 }
 
 bool
