@@ -34,7 +34,7 @@
 using namespace std;
 using namespace boost;
 
-INIT_LOGGER ("SyncLogic");
+// INIT_LOGGER ("SyncLogic");
 
 namespace Sync
 {
@@ -47,9 +47,16 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   , m_onRemove (onRemove)
   , m_ccnxHandle(new CcnxWrapper())
   , m_randomGenerator (static_cast<unsigned int> (std::time (0)))
-  , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (10,50))
+  , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (20,80))
 {
-  _LOG_FUNCTION (syncPrefix);
+#ifdef _DEBUG
+#ifdef HAVE_LOG4CXX
+  // _LOG_FUNCTION (syncPrefix);
+  static int id = 0;
+  staticModuleLogger = log4cxx::Logger::getLogger ("SyncLogic." + lexical_cast<string> (id));
+  id ++;
+#endif
+#endif
   
   m_ccnxHandle->setInterestFilter (m_syncPrefix,
                                    bind (&SyncLogic::respondSyncInterest, this, _1));
@@ -61,7 +68,7 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
 
 SyncLogic::~SyncLogic ()
 {
-  _LOG_FUNCTION (this);
+  // _LOG_FUNCTION (this);
   // cout << "SyncLogic::~SyncLogic ()" << endl;
 
   m_ccnxHandle.reset ();
@@ -100,9 +107,16 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
     {
       _LOG_TRACE (">> D " << interestName << "/state" << " (zero)");
 
+      m_syncInterestTable.remove (interestName + "/state");
       m_ccnxHandle->publishData (interestName + "/state",
                                  lexical_cast<string> (m_state),
                                  m_syncResponseFreshness);
+      if (m_outstandingInterest == interestName)
+        {
+          m_scheduler.schedule (posix_time::seconds (0),
+                                bind (&SyncLogic::sendSyncInterest, this),
+                                REEXPRESSING_INTEREST);
+        }
       return;
     }
 
@@ -111,12 +125,12 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
       // cout << interestName << "\n";
       if (digest->isZero ())
         {
-          _LOG_TRACE ("Digest is zero, adding /state to PIT");
+          _LOG_TRACE ("processSyncInterest (): Digest is zero, adding /state to PIT");
           m_syncInterestTable.insert (interestName + "/state");
         }
       else
         {
-          _LOG_TRACE ("Same state. Adding to PIT");
+          _LOG_TRACE ("processSyncInterest (): Same state. Adding to PIT");
           m_syncInterestTable.insert (interestName);
         }
       return;
@@ -127,16 +141,22 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
   if (stateInDiffLog != m_log.end ())
   {
     _LOG_TRACE (">> D " << interestName);
-    
+
+    m_syncInterestTable.remove (interestName);
     m_ccnxHandle->publishData (interestName,
                                lexical_cast<string> (*(*stateInDiffLog)->diff ()),
                                m_syncResponseFreshness);
+    if (m_outstandingInterest == interestName)
+      {
+        m_scheduler.schedule (posix_time::seconds (0),
+                              bind (&SyncLogic::sendSyncInterest, this),
+                              REEXPRESSING_INTEREST);
+      }
     return;
   }
 
   if (!timedProcessing)
     {
-      _LOG_DEBUG ("hmm");
       m_scheduler.schedule (posix_time::milliseconds (m_rangeUniformRandom ()) /*from 20 to 100ms*/,
                             bind (&SyncLogic::processSyncInterest, this, digest, interestName, true),
                             DELAYED_INTEREST_PROCESSING);
@@ -145,10 +165,18 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
   else
     {
       _LOG_TRACE (">> D " << interestName << "/state" << " (timed processing)");
-      
+
+      m_syncInterestTable.remove (interestName + "/state");
       m_ccnxHandle->publishData (interestName + "/state",
                                  lexical_cast<string> (m_state),
                                  m_syncResponseFreshness);
+
+      if (m_outstandingInterest == interestName)
+        {
+          m_scheduler.schedule (posix_time::seconds (0),
+                                bind (&SyncLogic::sendSyncInterest, this),
+                                REEXPRESSING_INTEREST);
+        }
     }
 }
 
@@ -244,14 +272,17 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
   // if state has changed, then it is safe to express a new interest
   if (diffLog->getLeaves ().size () > 0)
     {
-      sendSyncInterest ();
+      m_scheduler.schedule (posix_time::seconds (0),
+                            bind (&SyncLogic::sendSyncInterest, this),
+                            REEXPRESSING_INTEREST);
     }
   else
     {
       // should not reexpress the same interest. Need at least wait for data lifetime
       // Otherwise we will get immediate reply from the local daemon and there will be 100% utilization
       m_scheduler.cancel (REEXPRESSING_INTEREST);
-      m_scheduler.schedule (posix_time::seconds (m_syncResponseFreshness),
+      // m_scheduler.schedule (posix_time::seconds (0),
+      m_scheduler.schedule (posix_time::seconds (m_syncResponseFreshness) + posix_time::milliseconds (1),
                             bind (&SyncLogic::sendSyncInterest, this),
                             REEXPRESSING_INTEREST);
     }
@@ -265,10 +296,27 @@ SyncLogic::satisfyPendingSyncInterests (DiffStatePtr diffLog)
     {
       stringstream ss;
       ss << *diffLog;
+      bool satisfiedOwnInterest = false;
+      
       for (vector<string>::iterator ii = pis.begin(); ii != pis.end(); ++ii)
         {
           _LOG_TRACE (">> D " << *ii);
           m_ccnxHandle->publishData (*ii, ss.str(), m_syncResponseFreshness);
+
+          {
+            recursive_mutex::scoped_lock lock (m_stateMutex);
+            // _LOG_DEBUG (*ii << " == " << m_outstandingInterest << " = " << (*ii == m_outstandingInterest));
+            satisfiedOwnInterest = satisfiedOwnInterest || (*ii == m_outstandingInterest) || (*ii == (m_outstandingInterest + "/state"));
+          }
+        }
+
+      if (satisfiedOwnInterest)
+        {
+          _LOG_DEBUG ("Have satisfied our own interest. Scheduling interest reexpression");
+          // we need to reexpress interest only if we satisfied our own interest
+          m_scheduler.schedule (posix_time::milliseconds (0),
+                                bind (&SyncLogic::sendSyncInterest, this),
+                                REEXPRESSING_INTEREST);
         }
     }
 }
@@ -285,7 +333,7 @@ SyncLogic::processPendingSyncInterests (DiffStatePtr diffLog)
   m_log.erase (m_state.getDigest()); // remove diff state with the same digest.  next pointers are still valid
   /// @todo Optimization
   m_log.get<sequenced> ().push_front (diffLog);
-  _LOG_DEBUG (*diffLog->getDigest () << " " << m_log.size ());
+  // _LOG_DEBUG (*diffLog->getDigest () << " " << m_log.size ());
 }
 
 void
@@ -296,16 +344,19 @@ SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
     //cout << "Add local names" <<endl;
     recursive_mutex::scoped_lock lock (m_stateMutex);
     NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
-  
+
     SeqNo seqN (session, seq);
     m_state.update(info, seqN);
 
+    _LOG_DEBUG ("addLocalNames (): new state " << *m_state.getDigest ());
+    
     diff = make_shared<DiffState>();
     diff->update(info, seqN);
     processPendingSyncInterests (diff);
   }
 
-  satisfyPendingSyncInterests (diff);
+  // _LOG_DEBUG ("PIT size: " << m_syncInterestTable.size ());
+  satisfyPendingSyncInterests (diff);  
 }
 
 void
@@ -323,20 +374,25 @@ SyncLogic::remove(const string &prefix)
     processPendingSyncInterests (diff);
   }
 
-  satisfyPendingSyncInterests (diff);
+  satisfyPendingSyncInterests (diff);  
 }
 
 void
 SyncLogic::sendSyncInterest ()
 {
-  // cout << "Sending Sync Interest" << endl;
-  recursive_mutex::scoped_lock lock (m_stateMutex);
-
   ostringstream os;
-  os << m_syncPrefix << "/" << *m_state.getDigest();
 
-  _LOG_TRACE (">> I " << os.str ());
+  {
+    // cout << "Sending Sync Interest" << endl;
+    recursive_mutex::scoped_lock lock (m_stateMutex);
 
+    os << m_syncPrefix << "/" << *m_state.getDigest();
+
+    _LOG_TRACE (">> I " << os.str ());
+
+    m_outstandingInterest = os.str ();
+  }
+  
   m_ccnxHandle->sendInterest (os.str (),
                               bind (&SyncLogic::processSyncData, this, _1, _2));
 

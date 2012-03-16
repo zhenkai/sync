@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
   string data0 = "Very funny Scotty, now beam down my clothes";
   _LOG_DEBUG ("s1 publish");
   s1.publish (p1, 0, data0, 10); 
-  this_thread::sleep (posix_time::milliseconds (50));
+  this_thread::sleep (posix_time::milliseconds (250));
 
   // from code logic, we won't be fetching our own data
   a1.set(p1 + "/0/0", data0);
@@ -103,9 +103,8 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
   s1.publish (p1, 0, data1, 10);
   _LOG_DEBUG ("s1 publish");
   s1.publish (p1, 0, data2, 10);
-  this_thread::sleep (posix_time::milliseconds (100));
+  this_thread::sleep (posix_time::milliseconds (250));
   
-  _LOG_DEBUG ("testing");
   // // // from code logic, we won't be fetching our own data
   a1.set(p1 + "/0/1", data1);
   a1.set(p1 + "/0/2", data2);
@@ -113,36 +112,35 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
   BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
 
   // // another single source
-  // // string data3 = "You surf the Internet, I surf the real world";
-  // string data4 = "I got a fortune cookie once that said 'You like Chinese food'";
-  // string data5 = "Real men wear pink. Why? Because their wives make them";
-  // // s3.publish(p3, 0, data3, 10); 
-  // // this_thread::sleep (posix_time::milliseconds (1000));
+  string data3 = "You surf the Internet, I surf the real world";
+  string data4 = "I got a fortune cookie once that said 'You like Chinese food'";
+  string data5 = "Real men wear pink. Why? Because their wives make them";
+  _LOG_DEBUG ("s3 publish");
+  s3.publish(p3, 0, data3, 10); 
+  this_thread::sleep (posix_time::milliseconds (200));
   
-  // // another single source, multiple data at once
-  // s2.publish(p2, 0, data4, 10); 
-  // s2.publish(p2, 0, data5, 10);
-  // this_thread::sleep (posix_time::milliseconds (1000));
+  // another single source, multiple data at once
+  s2.publish(p2, 0, data4, 10); 
+  s2.publish(p2, 0, data5, 10);
+  this_thread::sleep (posix_time::milliseconds (200));
 
-  // // from code logic, we won't be fetching our own data
-  // // a3.set(p3 + "/0/0", data3);
-  // a2.set(p2 + "/0/0", data4);
-  // a2.set(p2 + "/0/1", data5);
-  // BOOST_CHECK_EQUAL(a1.toString(), a2.toString());
-  // // BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
+  // from code logic, we won't be fetching our own data
+  a3.set(p3 + "/0/0", data3);
+  a2.set(p2 + "/0/0", data4);
+  a2.set(p2 + "/0/1", data5);
+  BOOST_CHECK_EQUAL(a1.toString(), a2.toString());
+  BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
 
-  // // not sure weither this is simultanous data generation from multiple sources
-  // string data6 = "Shakespeare says: 'Prose before hos.'";
-  // string data7 = "Pick good people, talent never wears out";
-  // s1.publish(p1, 0, data6, 10); 
-  // s2.publish(p2, 0, data7, 10); 
-  // usleep(10000);
+  // not sure weither this is simultanous data generation from multiple sources
+  string data6 = "Shakespeare says: 'Prose before hos.'";
+  string data7 = "Pick good people, talent never wears out";
+  s1.publish(p1, 0, data6, 10); 
+  s2.publish(p2, 0, data7, 10); 
+  this_thread::sleep (posix_time::milliseconds (10000));
 
-  // // from code logic, we won't be fetching our own data
-  // a1.set(p1 + "/0/3", data6);
-  // a2.set(p2 + "/0/2", data7);
-  // BOOST_CHECK_EQUAL(a1.toString(), a2.toString());
-  // BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
+  // from code logic, we won't be fetching our own data
+  a1.set(p1 + "/0/3", data6);
+  a2.set(p2 + "/0/2", data7);
+  BOOST_CHECK_EQUAL(a1.toString(), a2.toString());
+  BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
 }
-
-

@@ -66,13 +66,13 @@ Scheduler::threadLoop ()
 	    nextTime = m_events.begin ()->time;
           }
 
-	  if (nextTime - get_system_time () > posix_time::time_duration (0,0,0,0))
+	  if (nextTime > get_system_time ())
 	    {
 	      this_thread::sleep (nextTime - get_system_time ());
 
 	      // sleeping
 
-	      if (nextTime - get_system_time () > posix_time::time_duration (0,0,0,0))
+	      if (nextTime > get_system_time ())
                 {
                   // cout << "expected here" << endl;
                   continue; // something changes, try again

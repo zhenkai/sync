@@ -29,6 +29,7 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include <ctime>
+#include "sync-scheduler.h"
 
 namespace Sync {
 
@@ -48,7 +49,14 @@ public:
    * @brief Insert an interest, if interest already exists, update the
    * timestamp
    */
-  bool insert (std::string interest);
+  bool
+  insert (const std::string &interest);
+
+  /**
+   * @brief Remove interest (e.g., when it was satisfied)
+   */
+  bool
+  remove (const std::string &interest);
 
   /**
    * @brief fetch all Interests and clear the table
@@ -56,24 +64,24 @@ public:
   std::vector<std::string>
   fetchAll ();
 
+  uint32_t
+  size () const;
+
 private:
   /**
    * @brief periodically called to expire Interest
    */
-  void expireInterests ();
-
-  void periodicCheck ();
+  void
+  expireInterests ();
 
 private:
   typedef boost::unordered_map<std::string, time_t> TableContainer;
   
   static const int m_checkPeriod = 4;
   TableContainer m_table; // pit entries
-  
-  boost::thread m_thread; // thread to check every 4 sec
-  volatile bool m_running;
-  boost::recursive_mutex m_mutex;
 
+  Scheduler m_scheduler;
+  mutable boost::recursive_mutex m_mutex;
 };
 
 } // Sync

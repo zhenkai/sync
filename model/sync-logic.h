@@ -37,6 +37,12 @@
 
 #include "sync-diff-state-container.h"
 
+#ifdef _DEBUG
+#ifdef HAVE_LOG4CXX
+#include <log4cxx/logger.h>
+#endif
+#endif
+
 namespace Sync {
 
 /**
@@ -114,6 +120,7 @@ private:
   DiffStateContainer m_log;
   boost::recursive_mutex m_stateMutex;
 
+  std::string m_outstandingInterest;
   SyncInterestTable m_syncInterestTable;
 
   std::string m_syncPrefix;
@@ -133,6 +140,12 @@ private:
       DELAYED_INTEREST_PROCESSING = 1,
       REEXPRESSING_INTEREST = 2
     };
+
+#ifdef _DEBUG
+#ifdef HAVE_LOG4CXX
+  log4cxx::LoggerPtr staticModuleLogger;
+#endif
+#endif  
 };
 
 
