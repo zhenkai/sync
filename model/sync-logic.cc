@@ -140,11 +140,22 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
 
   if (stateInDiffLog != m_log.end ())
   {
-    _LOG_TRACE (">> D " << interestName);
+    DiffStateConstPtr stateDiff = (*stateInDiffLog)->diff ();
+    // string state = lexical_cast<string> (*stateDiff);
+    // erase_all (state, "\n");
+    // _LOG_TRACE (">> D " << interestName << ", state: " << state);
+    // _LOG_DEBUG ("Log size: " << m_log.size ());
+
+    // BOOST_FOREACH (DiffStateConstPtr ds, m_log.get<sequenced> ())
+    //   {
+    //     string state = lexical_cast<string> (*ds);
+    //     erase_all (state, "\n");
+    //     _LOG_DEBUG ("   " << state << ", " << *ds->getDigest ());
+    //   }
 
     m_syncInterestTable.remove (interestName);
     m_ccnxHandle->publishData (interestName,
-                               lexical_cast<string> (*(*stateInDiffLog)->diff ()),
+                               lexical_cast<string> (*stateDiff),
                                m_syncResponseFreshness);
     if (m_outstandingInterest == interestName)
       {
@@ -254,14 +265,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
             }
         }
 
-      diffLog->setDigest(m_state.getDigest());
-      if (m_log.size () > 0)
-        {
-          m_log.get<sequenced> ().front ()->setNext (diffLog);
-        }
-      m_log.erase (m_state.getDigest());
-      /// @todo Optimization
-      m_log.insert (diffLog);
+      insertToDiffLog (diffLog);
     }
   catch (Error::SyncXmlDecodingFailure &e)
     {
@@ -322,7 +326,7 @@ SyncLogic::satisfyPendingSyncInterests (DiffStatePtr diffLog)
 }
 
 void
-SyncLogic::processPendingSyncInterests (DiffStatePtr diffLog) 
+SyncLogic::insertToDiffLog (DiffStatePtr diffLog) 
 {
   //cout << "Process Pending Interests" <<endl;
   diffLog->setDigest (m_state.getDigest());  
@@ -352,7 +356,7 @@ SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
     
     diff = make_shared<DiffState>();
     diff->update(info, seqN);
-    processPendingSyncInterests (diff);
+    insertToDiffLog (diff);
   }
 
   // _LOG_DEBUG ("PIT size: " << m_syncInterestTable.size ());
@@ -371,7 +375,7 @@ SyncLogic::remove(const string &prefix)
     diff = make_shared<DiffState>();
     diff->remove(info);
 
-    processPendingSyncInterests (diff);
+    insertToDiffLog (diff);
   }
 
   satisfyPendingSyncInterests (diff);  

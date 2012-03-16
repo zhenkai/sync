@@ -110,7 +110,7 @@ private:
   sendSyncInterest ();
 
   void 
-  processPendingSyncInterests (DiffStatePtr diff);
+  insertToDiffLog (DiffStatePtr diff);
 
   void
   satisfyPendingSyncInterests (DiffStatePtr diff);

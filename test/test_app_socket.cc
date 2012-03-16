@@ -44,7 +44,7 @@ class TestSocketApp {
 public:
   map<string, string> data;
   void set(string str1, string str2) {
-    _LOG_FUNCTION (this << ", " << str1);
+    // _LOG_FUNCTION (this << ", " << str1);
     data.insert(make_pair(str1, str2));
     // cout << str1 << ", " << str2 << endl;
   }
@@ -88,14 +88,14 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
   string data0 = "Very funny Scotty, now beam down my clothes";
   _LOG_DEBUG ("s1 publish");
   s1.publish (p1, 0, data0, 10); 
-  this_thread::sleep (posix_time::milliseconds (250));
+  this_thread::sleep (posix_time::milliseconds (120));
 
   // from code logic, we won't be fetching our own data
   a1.set(p1 + "/0/0", data0);
   BOOST_CHECK_EQUAL(a1.toString(), a2.toString());
   BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
 
-  // // single source, multiple data at once
+  // single source, multiple data at once
   string data1 = "Yes, give me that ketchup";
   string data2 = "Don't look conspicuous, it draws fire";
 
@@ -105,13 +105,13 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
   s1.publish (p1, 0, data2, 10);
   this_thread::sleep (posix_time::milliseconds (250));
   
-  // // // from code logic, we won't be fetching our own data
+  // from code logic, we won't be fetching our own data
   a1.set(p1 + "/0/1", data1);
   a1.set(p1 + "/0/2", data2);
   BOOST_CHECK_EQUAL(a1.toString(), a2.toString());
   BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
 
-  // // another single source
+  // another single source
   string data3 = "You surf the Internet, I surf the real world";
   string data4 = "I got a fortune cookie once that said 'You like Chinese food'";
   string data5 = "Real men wear pink. Why? Because their wives make them";
@@ -132,15 +132,21 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
   BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
 
   // not sure weither this is simultanous data generation from multiple sources
+  _LOG_DEBUG ("Simultaneous publishing");
   string data6 = "Shakespeare says: 'Prose before hos.'";
   string data7 = "Pick good people, talent never wears out";
   s1.publish(p1, 0, data6, 10); 
+  // this_thread::sleep (posix_time::milliseconds (1000));
   s2.publish(p2, 0, data7, 10); 
-  this_thread::sleep (posix_time::milliseconds (10000));
+  this_thread::sleep (posix_time::milliseconds (1500));
 
   // from code logic, we won't be fetching our own data
   a1.set(p1 + "/0/3", data6);
   a2.set(p2 + "/0/2", data7);
+  // a1.set(p1 + "/0/1", data6);
+  // a2.set(p2 + "/0/0", data7);
   BOOST_CHECK_EQUAL(a1.toString(), a2.toString());
   BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
+
+  _LOG_DEBUG ("Finish");
 }
