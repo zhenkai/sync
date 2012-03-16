@@ -28,41 +28,48 @@ using boost::test_tools::output_test_stream;
 #include <boost/make_shared.hpp>
 
 #include "../model/sync-interest-table.h"
+#include "../model/sync-log.h"
 
 using namespace Sync;
 using namespace std;
 using namespace boost;
 
 string sitToString(SyncInterestTable *sit) {
-	vector<string> ent = sit->fetchAll();
-	sort(ent.begin(), ent.end());
-	string str = "";
-	while(!ent.empty()){
-		str += ent.back();
-		ent.pop_back();
-	}
-	return str;
+  vector<string> ent = sit->fetchAll();
+  sort(ent.begin(), ent.end());
+  string str = "";
+  while(!ent.empty()){
+    str += ent.back();
+    ent.pop_back();
+  }
+  return str;
 }
 
 BOOST_AUTO_TEST_CASE (SyncInterestTableTest)
 {
-	SyncInterestTable sit;
-	sit.insert("/ucla.edu/0");
-	sit.insert("/ucla.edu/1");
-	string str = sitToString(&sit);
-	BOOST_CHECK_EQUAL(str, "/ucla.edu/1/ucla.edu/0");
+  INIT_LOGGERS ();
+  INIT_LOGGER ("Test.Pit");
 
-	str = sitToString(&sit);
-	BOOST_CHECK_EQUAL(str, "");
+  SyncInterestTable sit;
+  sit.insert("/ucla.edu/0");
+  sit.insert("/ucla.edu/1");
+  string str = sitToString(&sit);
+  BOOST_CHECK_EQUAL(str, "/ucla.edu/1/ucla.edu/0");
 
-	sit.insert("/ucla.edu/0");
-	sit.insert("/ucla.edu/1");
-	sleep(2);
-	sit.insert("/ucla.edu/0");
-	sit.insert("/ucla.edu/2");
-	sleep(3);
-	str = sitToString(&sit);
-	BOOST_CHECK_EQUAL(str, "/ucla.edu/2/ucla.edu/0");
+  str = sitToString(&sit);
+  BOOST_CHECK_EQUAL(str, "");
+
+  _LOG_DEBUG ("Adding 0 and 1");
+  sit.insert("/ucla.edu/0");
+  sit.insert("/ucla.edu/1");
+  sleep(2);
+  _LOG_DEBUG ("Adding 0 and 2");
+  sit.insert("/ucla.edu/0");
+  sit.insert("/ucla.edu/2");
+  sleep(3);
+  _LOG_DEBUG ("Checking");
+  str = sitToString(&sit);
+  BOOST_CHECK_EQUAL(str, "/ucla.edu/2/ucla.edu/0");
 }
 
 

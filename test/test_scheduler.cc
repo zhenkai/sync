@@ -145,6 +145,7 @@ BOOST_AUTO_TEST_CASE (SyncLogicSchedulerTest)
 {  
   SyncLogic *logic = 0;
   BOOST_CHECK_NO_THROW (logic = new SyncLogic ("/prefix", funcUpdate, funcRemove));
+  this_thread::sleep (posix_time::milliseconds (100));
 
   Scheduler &scheduler = logic->getScheduler ();
   BOOST_CHECK_EQUAL (scheduler.getEventsSize (), 1);

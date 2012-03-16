@@ -32,7 +32,7 @@ namespace Sync
 
 SyncInterestTable::SyncInterestTable ()
 {
-  m_scheduler.schedule (posix_time::seconds (m_checkPeriod),
+  m_scheduler.schedule (posix_time::seconds (4),
                         bind (&SyncInterestTable::expireInterests, this),
                         0);
 }
@@ -44,6 +44,7 @@ SyncInterestTable::~SyncInterestTable ()
 vector<string>
 SyncInterestTable::fetchAll ()
 {
+  expireInterests ();
   recursive_mutex::scoped_lock lock (m_mutex);
   
   vector<string> entries;
@@ -100,9 +101,10 @@ void SyncInterestTable::expireInterests ()
   while (it != m_table.end())
     {
     time_t timestamp = it->second;
+    _LOG_DEBUG ("expireInterests (): " << timestamp << ", " << currentTime);
     if (currentTime - timestamp > m_checkPeriod)
       {
-        it = m_table.erase(it);
+        it = m_table.erase (it);
         count ++;
       }
     else
@@ -111,7 +113,7 @@ void SyncInterestTable::expireInterests ()
 
   _LOG_DEBUG ("expireInterests (): expired " << count);
   
-  m_scheduler.schedule (posix_time::seconds (m_checkPeriod),
+  m_scheduler.schedule (posix_time::seconds (4),
                         bind (&SyncInterestTable::expireInterests, this),
                         0);
 }
