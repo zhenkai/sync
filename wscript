@@ -14,6 +14,7 @@ def options(opt):
 
 def configure(conf):
     conf.load("compiler_cxx")
+    conf.env.append_value('CXXFLAGS', ['-O0', '-g3'])
 
     if not conf.check_cfg(package='openssl', args=['--cflags', '--libs'], uselib_store='SSL', mandatory=False):
       libcrypto = conf.check_cc(lib='crypto',

@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE (CcnxWrapperTest)
   hb.sendInterest(interest, memberFunc);
 
   // give time for ccnd to react
-  // sleep(1);
+  sleep(1);
   this_thread::sleep (posix_time::milliseconds (5));
   BOOST_CHECK_EQUAL(echoStr, interest);
 

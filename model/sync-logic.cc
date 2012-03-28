@@ -221,7 +221,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
               if (inserted || updated)
                 {
                   diffLog->update (info, seq);
-                  m_onUpdate (info->toString (), seq.getSeq(), oldSeq);
+                  m_onUpdate (info->toString (), seq, oldSeq);
                 }
             }
         }
@@ -247,7 +247,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
                   if (inserted || updated)
                     {
                       diffLog->update (info, seq);
-                      m_onUpdate (info->toString (), seq.getSeq(), oldSeq);
+                      m_onUpdate (info->toString (), seq, oldSeq);
                     }
                 }
               else if (diffLeaf->getOperation() == REMOVE)

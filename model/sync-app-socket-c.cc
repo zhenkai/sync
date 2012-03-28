@@ -25,8 +25,11 @@ using namespace std;
 using namespace Sync;
 
 class CallbackHolder{
-public:
+private:
   void (*m_callback)(const char *, const char *);
+
+public:
+  CallbackHolder(void (*callback)(const char*, const char*)):m_callback(callback){};
   void callbackWrapper(string name, string data) {
     m_callback(name.c_str(), data.c_str());
   }
@@ -38,8 +41,7 @@ extern "C"
 SyncAppSocketStruct *
 create_sync_app_socket(const char *prefix, void (*callback)(const char *, const char *)) 
 {
-  CallbackHolder holder;
-  holder.m_callback = callback;
+  CallbackHolder holder(callback);
   boost::function<void (string, string)> cb = bind(&CallbackHolder::callbackWrapper, &holder, _1, _2);
   SyncAppSocket *sock = new SyncAppSocket(prefix, cb);
   return (SyncAppSocketStruct *) sock;
