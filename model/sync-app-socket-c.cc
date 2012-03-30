@@ -41,8 +41,8 @@ extern "C"
 SyncAppSocketStruct *
 create_sync_app_socket(const char *prefix, void (*callback)(const char *, const char *)) 
 {
-  CallbackHolder holder(callback);
-  boost::function<void (string, string)> cb = bind(&CallbackHolder::callbackWrapper, &holder, _1, _2);
+  CallbackHolder *holder = new CallbackHolder(callback);
+  boost::function<void (string, string)> cb = bind(&CallbackHolder::callbackWrapper, holder, _1, _2);
   SyncAppSocket *sock = new SyncAppSocket(prefix, cb);
   return (SyncAppSocketStruct *) sock;
 }
