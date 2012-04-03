@@ -52,8 +52,7 @@ AppDataPublish::getNextSeq (const string &prefix, uint32_t session)
       if (s.session == session)
         return s.seq;
     }
-  else
-    return 0;
+  return 0;
 }
 
 uint32_t

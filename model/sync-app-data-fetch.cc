@@ -38,7 +38,7 @@ AppDataFetch::onUpdate (const std::string &prefix, const SeqNo &newSeq, const Se
   
   // sequence number logic here
   uint32_t start = 0;
-  if (oldSeq.isValid ())
+  if (oldSeq.isValid () && oldSeq.getSession() == newSeq.getSession())
     {
       start = oldSeq.getSeq () + 1;
     }
