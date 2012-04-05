@@ -26,7 +26,7 @@ using boost::test_tools::output_test_stream;
 
 #include <boost/make_shared.hpp>
 
-#include "../model/sync-ccnx-wrapper.h"
+#include "sync-ccnx-wrapper.h"
 
 using namespace Sync;
 using namespace std;

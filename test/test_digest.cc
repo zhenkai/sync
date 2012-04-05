@@ -25,7 +25,7 @@
 #include <boost/test/output_test_stream.hpp> 
 using boost::test_tools::output_test_stream;
 
-#include "../model/sync-digest.h"
+#include "sync-digest.h"
 #include <iostream>
 #include <sstream>
 

@@ -40,18 +40,22 @@ def configure(conf):
         conf.check_boost(lib='system iostreams test thread')
         conf.define ('STANDALONE', 1)
 
+        conf.load ('ccnx')
+        conf.check_ccnx (path=conf.options.ccnx_dir)
+
+        if conf.options.log4cxx:
+            conf.check_cfg(package='liblog4cxx', args=['--cflags', '--libs'], uselib_store='LOG4CXX', mandatory=True)
+
     if not conf.options.no_debug:
         conf.define ('_DEBUG', 1)
 
-    
     try:
         conf.load('doxygen')
     except:
         pass
 
-    conf.load('ccnx tinyxml')
-    conf.check_ccnx (path=conf.options.ccnx_dir)
-    conf.check_tinyxml (path=conf.options.ccnx_dir)
+    conf.load('tinyxml')
+    conf.check_tinyxml ()
 
     # else:
         # if 'CXXFLAGS' in conf.env:
@@ -66,35 +70,78 @@ def configure(conf):
         # conf.env['CFLAGS'] = tmp + ['-g']
         # _report_optional_feature(conf, "debug", "Debug Symbols", True, '')
 
-    if conf.options.log4cxx:
-        conf.check_cfg(package='liblog4cxx', args=['--cflags', '--libs'], uselib_store='LOG4CXX', mandatory=True)
                    
 def build (bld):
     if bld.get_define ("NS3_MODULE"):
         sync_ns3 = bld.shlib (
             target = "sync-ns3",
             features=['cxx', 'cxxshlib'],
+            source =  [
+                # 'ns3/sync-ccnx-wrapper.cc',
+                'ns3/sync-ns3-name-info.cc',
+                
+                'model/sync-app-data-fetch.cc',
+                'model/sync-app-data-publish.cc',
+                'model/sync-app-socket-c.cc',
+                'model/sync-app-socket.cc',
+                'model/sync-diff-leaf.cc',
+                'model/sync-diff-state.cc',
+                'model/sync-digest.cc',
+                'model/sync-full-leaf.cc',
+                'model/sync-full-state.cc',
+                'model/sync-interest-table.cc',
+                'model/sync-leaf.cc',
+                'model/sync-logic.cc',
+                'model/sync-name-info.cc',
+                'model/sync-seq-no.cc',
+                'model/sync-state.cc',
+                'model/sync-std-name-info.cc',
+                ],
             use = 'BOOST BOOST_IOSTREAMS SSL TINYXML CCNX ' + ' '.join (['ns3_'+dep for dep in ['core', 'network', 'internet', 'NDNabstraction']]).upper (),
-            source = bld.path.ant_glob(['model/sync-*.cc',
-                                        'helper/sync-*.cc']),
+            includes = ['model', 'ns3', 'helper'],
             )
-        
         
         # from waflib import Utils,Logs,Errors
         # Logs.pprint ('CYAN', program.use)
         
     else:
-        libsync = bld.shlib (target=APPNAME, 
-                             features=['cxx', 'cxxshlib'],
-                             source = bld.path.ant_glob(['model/sync-*.cc',
-                                                         'helper/sync-*.cc']),
-                             use = 'BOOST BOOST_IOSTREAMS BOOST_THREAD SSL TINYXML CCNX')
-
+        libsync = bld.shlib (
+            target=APPNAME, 
+            features=['cxx', 'cxxshlib'],
+            source =  [
+                'ccnx/sync-ccnx-wrapper.cc',
+                'ccnx/sync-scheduler.cc',
+                'ccnx/sync-log.cc',
+                
+                'model/sync-app-data-fetch.cc',
+                'model/sync-app-data-publish.cc',
+                'model/sync-app-socket-c.cc',
+                'model/sync-app-socket.cc',
+                'model/sync-diff-leaf.cc',
+                'model/sync-diff-state.cc',
+                'model/sync-digest.cc',
+                'model/sync-full-leaf.cc',
+                'model/sync-full-state.cc',
+                'model/sync-interest-table.cc',
+                'model/sync-leaf.cc',
+                'model/sync-logic.cc',
+                'model/sync-name-info.cc',
+                'model/sync-seq-no.cc',
+                'model/sync-state.cc',
+                'model/sync-std-name-info.cc',
+                ],
+            use = 'BOOST BOOST_IOSTREAMS BOOST_THREAD SSL TINYXML CCNX',
+            includes = ['model', 'ccnx', 'helper'],
+            )
+        
         # Unit tests
-        unittests = bld.program (target="unit-tests",
-                             source = bld.path.ant_glob(['test/**/*.cc']),
-                             features=['cxx', 'cxxprogram'],
-                             use = 'BOOST_TEST sync')
+        unittests = bld.program (
+            target="unit-tests",
+            source = bld.path.ant_glob(['test/**/*.cc']),
+            features=['cxx', 'cxxprogram'],
+            use = 'BOOST_TEST sync',
+            includes = ['model', 'ccnx', 'helper'],
+            )
 
         if bld.get_define ("HAVE_LOG4CXX"):
             libsync.use += ' LOG4CXX'

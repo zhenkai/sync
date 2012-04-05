@@ -26,9 +26,9 @@ using boost::test_tools::output_test_stream;
 
 #include <boost/make_shared.hpp>
 
-#include "../model/sync-full-leaf.h"
-#include "../model/sync-diff-leaf.h"
-#include "../model/sync-std-name-info.h"
+#include "sync-full-leaf.h"
+#include "sync-diff-leaf.h"
+#include "sync-std-name-info.h"
 
 using namespace Sync;
 using namespace std;
