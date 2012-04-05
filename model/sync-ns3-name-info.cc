@@ -35,24 +35,34 @@ using namespace boost;
 
 namespace Sync {
 
-
 NameInfoConstPtr
 Ns3NameInfo::FindOrCreate (ns3::Ptr<const ns3::CcnxNameComponents> name)
 {
+  mutex::scoped_lock namesLock (m_namesMutex);
+  
+  NameInfoConstPtr ret;
   string key = lexical_cast<string> (*name);
-
+  
   NameMap::iterator item = m_names.find (key);
-  if (item == m_names.end ())
+  if (item != m_names.end ())
     {
-      NameInfoPtr value = NameInfoPtr (new Ns3NameInfo (name));
+      ret = item->second.lock ();
+      BOOST_ASSERT (ret != 0);
+    }
+  else
+    {
+      ret = NameInfoPtr (new Ns3NameInfo (name));
+      weak_ptr<const NameInfo> value (ret);
       pair<NameMap::iterator,bool> inserted =
         m_names.insert (make_pair (key, value));
+      
       BOOST_ASSERT (inserted.second); // previous call has to insert value
       item = inserted.first;
     }
 
-  return item->second;
+  return ret;
 }
+
 
 Ns3NameInfo::Ns3NameInfo (ns3::Ptr<const ns3::CcnxNameComponents> name)
   : m_name (name)
@@ -74,6 +84,19 @@ Ns3NameInfo::operator == (const NameInfo &info) const
   try
     {
       return *m_name == *dynamic_cast<const Ns3NameInfo&> (info).m_name;
+    }
+  catch (...)
+    {
+      return false;
+    }
+}
+
+bool
+Ns3NameInfo::operator < (const NameInfo &info) const
+{
+  try
+    {
+      return *m_name < *dynamic_cast<const Ns3NameInfo&> (info).m_name;
     }
   catch (...)
     {
