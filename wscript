@@ -15,7 +15,6 @@ def options(opt):
 
 def configure(conf):
     conf.load("compiler_cxx")
-    conf.env.append_value('CXXFLAGS', ['-O0', '-g3'])
 
     if not conf.check_cfg(package='openssl', args=['--cflags', '--libs'], uselib_store='SSL', mandatory=False):
       libcrypto = conf.check_cc(lib='crypto',
@@ -48,6 +47,9 @@ def configure(conf):
 
     if not conf.options.no_debug:
         conf.define ('_DEBUG', 1)
+        conf.env.append_value('CXXFLAGS', ['-O0', '-g3'])
+    else:
+        conf.env.append_value('CXXFLAGS', ['-O3'])
 
     try:
         conf.load('doxygen')
