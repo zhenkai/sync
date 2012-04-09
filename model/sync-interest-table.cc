@@ -32,7 +32,7 @@ namespace Sync
 
 SyncInterestTable::SyncInterestTable ()
 {
-  m_scheduler.schedule (posix_time::seconds (4),
+  m_scheduler.schedule (TIME_SECONDS (4),
                         bind (&SyncInterestTable::expireInterests, this),
                         0);
 }
@@ -113,7 +113,7 @@ void SyncInterestTable::expireInterests ()
 
   _LOG_DEBUG ("expireInterests (): expired " << count);
   
-  m_scheduler.schedule (posix_time::seconds (4),
+  m_scheduler.schedule (TIME_SECONDS (4),
                         bind (&SyncInterestTable::expireInterests, this),
                         0);
 }

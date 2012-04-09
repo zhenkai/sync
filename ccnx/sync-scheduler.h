@@ -28,6 +28,9 @@
 
 #include "sync-logic-event-container.h"
 
+#define TIME_SECONDS(number) boost::posix_time::seconds (number)
+typedef boost::posix_time::time_duration TimeDuration;
+
 namespace Sync {
 
 /**
@@ -55,7 +58,7 @@ public:
    * @param label Label for the event
    */
   void
-  schedule (const boost::posix_time::time_duration &reltime, Event event, uint32_t label); 
+  schedule (const TimeDuration &reltime, Event event, uint32_t label); 
 
   /**
    * @brief Cancel all events for the label

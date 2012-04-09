@@ -43,6 +43,10 @@
 #endif
 #endif
 
+#ifdef NS3_MODULE
+#include <ns3/application.h>
+#endif
+
 namespace Sync {
 
 /**
@@ -51,6 +55,9 @@ namespace Sync {
  * interests and data)
  */
 class SyncLogic
+#ifdef NS3_MODULE
+  : public ns3::Application
+#endif
 {
 public:
   typedef boost::function< void ( const std::string &/*prefix*/, const SeqNo &/*newSeq*/, const SeqNo &/*oldSeq*/ ) > LogicUpdateCallback;
@@ -97,6 +104,12 @@ public:
 #ifdef _DEBUG
   Scheduler &
   getScheduler () { return m_scheduler; }
+#endif
+
+protected:
+#ifdef NS3_MODULE
+  virtual void StartApplication ();
+  virtual void StopApplication ();
 #endif
   
 private:

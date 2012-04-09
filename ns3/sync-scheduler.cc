@@ -27,6 +27,7 @@
 
 using namespace boost;
 using namespace std;
+using namespace ns3;
 
 INIT_LOGGER ("Scheduler");
 
@@ -41,22 +42,46 @@ Scheduler::~Scheduler ()
 }
 
 void
-Scheduler::schedule (const boost::posix_time::time_duration &reltime, Event event, uint32_t label)
+Scheduler::eventWrapper (Event event)
 {
-  ns3::Seconds (reltime.total_seconds()) + ns3::MilliSeconds (reltime.milliseconds ()) + ns3::MicroSeconds (reltime.microseconds ());
+  event ();
+}
+
+void
+Scheduler::schedule (const TimeDuration &reltime, Event event, uint32_t label)
+{
+  list< EventId > &eventsForLabel = m_labeledEvents [label];
+  list< EventId >::iterator i = eventsForLabel.begin ();
+  while (i != eventsForLabel.end ())
+    {
+      if (i->IsExpired ())
+        {
+          list< EventId >::iterator next = i;
+          next ++;
+          eventsForLabel.erase (i);
+          i = next;
+        }
+      else
+        i ++;
+    }
+
+  ns3::EventId eventId = ns3::Simulator::Schedule (reltime, Scheduler::eventWrapper, event);
+  eventsForLabel.push_back (eventId);
 }
 
 void
 Scheduler::cancel (uint32_t label)
 {
-  // {
-  //   // cout << "Canceling label " << label << " size: " << m_events.size () << endl;
-  //   lock_guard<mutex> lock (m_eventsMutex);
-  //   m_events.get<byLabel> ().erase (label);
-  //   // cout << "Canceled label " << label << " size: " << m_events.size () << endl;
-  // }
-  // m_eventsCondition.notify_one ();
-  // m_thread.interrupt (); // interrupt sleep, if currently sleeping
+  list< EventId > &eventsForLabel = m_labeledEvents [label];
+
+  for (list< EventId >::iterator i = eventsForLabel.begin ();
+       i != eventsForLabel.end ();
+       i++)
+    {
+      i->Cancel ();
+    }
+
+  eventsForLabel.clear ();
 }
 
 

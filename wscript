@@ -65,7 +65,7 @@ def build (bld):
             target = "sync-ns3",
             features=['cxx', 'cxxshlib'],
             source =  [
-                # 'ns3/sync-ccnx-wrapper.cc',
+                'ns3/sync-ccnx-wrapper.cc',
                 'ns3/sync-ns3-name-info.cc',
                 'ns3/sync-scheduler.cc',
                 
@@ -105,7 +105,7 @@ def build (bld):
                 'ccnx/sync-app-data-publish.cc',
                 'ccnx/sync-app-socket-c.cc',
                 'ccnx/sync-app-socket.cc',
-
+                
                 'model/sync-diff-leaf.cc',
                 'model/sync-diff-state.cc',
                 'model/sync-digest.cc',

@@ -108,7 +108,7 @@ Scheduler::threadLoop ()
 }
 
 void
-Scheduler::schedule (const boost::posix_time::time_duration &reltime, Event event, uint32_t label)
+Scheduler::schedule (const TimeDuration &reltime, Event event, uint32_t label)
 {
   {
     lock_guard<mutex> lock (m_eventsMutex);

@@ -23,8 +23,16 @@
 #ifndef SYNC_SCHEDULER_H
 #define SYNC_SCHEDULER_H
 
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <ns3/nstime.h>
+#include <ns3/event-id.h>
+#include <list>
+#include <map>
+
 #include "sync-event.h"
+
+#define TIME_SECONDS(number) ns3::Seconds(number)
+#define TIME_MILLISECONDS(number) ns3::MilliSeconds(number)
+typedef ns3::Time TimeDuration;
 
 namespace Sync {
 
@@ -62,7 +70,7 @@ public:
    * @param label Label for the event
    */
   void
-  schedule (const boost::posix_time::time_duration &reltime, Event event, uint32_t label); 
+  schedule (const TimeDuration &reltime, Event event, uint32_t label); 
 
   /**
    * @brief Cancel all events for the label
@@ -70,6 +78,13 @@ public:
    */
   void
   cancel (uint32_t label);
+
+private:
+  static void
+  eventWrapper (Event event);
+
+private:
+  std::map< uint32_t, std::list< ns3::EventId > > m_labeledEvents;
 };
   
 }

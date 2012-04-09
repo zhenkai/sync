@@ -23,6 +23,24 @@
 #ifndef SYNC_LOG_H
 #define SYNC_LOG_H
 
+#ifdef NS3_MODULE
+
+#include <ns3/log.h>
+
+#define INIT_LOGGER(name) NS_LOG_COMPONENT_DEFINE(name);
+
+#define _LOG_INFO(x) NS_LOG_INFO(x)
+
+#define _LOG_DEBUG(x) NS_LOG_DEBUG(x)
+
+#define _LOG_TRACE(x) NS_LOG_LOGIC(x)
+
+#define _LOG_FUNCTION(x) NS_LOG_FUNCTION(x)
+
+#define _LOG_FUNCTION_NOARGS NS_LOG_FUNCTION_NOARGS
+
+#else
+
 #ifdef HAVE_LOG4CXX
 
 #include <log4cxx/logger.h>
@@ -30,7 +48,10 @@
 #define INIT_LOGGER(name) \
   static log4cxx::LoggerPtr staticModuleLogger = log4cxx::Logger::getLogger (name);
 
-#define _LOG_DEBUG(x) \
+#define _LOG_INFO(x) \
+  LOG4CXX_INFO(staticModuleLogger, x);
+
+#define _LOG_DEBUG(x)                           \
   LOG4CXX_DEBUG(staticModuleLogger, x);
 
 #define _LOG_TRACE(x) \
@@ -51,6 +72,7 @@ INIT_LOGGERS ();
 #define _LOG_FUNCTION(x)
 #define _LOG_FUNCTION_NOARGS
 #define _LOG_TRACE(x)
+#define _LOG_INFO(x)
 #define INIT_LOGGERS(x)
 
 #ifdef _DEBUG
@@ -67,5 +89,7 @@ INIT_LOGGERS ();
 #endif
 
 #endif // HAVE_LOG4CXX
+
+#endif // NS3_MODULE
 
 #endif // SYNC_LOG_H
