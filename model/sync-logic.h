@@ -45,6 +45,7 @@
 
 #ifdef NS3_MODULE
 #include <ns3/application.h>
+#include <ns3/random-variable.h>
 #endif
 
 namespace Sync {
@@ -143,8 +144,12 @@ private:
 
   Scheduler m_scheduler;
 
+#ifndef NS3_MODULE
   boost::mt19937 m_randomGenerator;
   boost::variate_generator<boost::mt19937&, boost::uniform_int<> > m_rangeUniformRandom;
+#else
+  ns3::UniformVariable m_rangeUniformRandom;
+#endif
   
   static const int m_syncResponseFreshness = 2;
 

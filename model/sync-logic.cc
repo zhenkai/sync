@@ -48,8 +48,12 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   , m_onUpdate (onUpdate)
   , m_onRemove (onRemove)
   , m_ccnxHandle(new CcnxWrapper())
+#ifndef NS3_MODULE
   , m_randomGenerator (static_cast<unsigned int> (std::time (0)))
   , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (20,80))
+#else
+  , m_rangeUniformRandom (20,80)
+#endif
 {
 #ifdef _STANDALONE
 #ifdef _DEBUG
@@ -187,6 +191,7 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
     //   }
 
     m_syncInterestTable.remove (interestName);
+    _LOG_DEBUG (">> D" << interestName);
     m_ccnxHandle->publishData (interestName,
                                lexical_cast<string> (*stateDiff),
                                m_syncResponseFreshness);
@@ -201,7 +206,16 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
 
   if (!timedProcessing)
     {
-      m_scheduler.schedule (TIME_MILLISECONDS (m_rangeUniformRandom ()) /*from 20 to 100ms*/,
+      uint32_t waitDelay =
+#ifndef NS3_MODULE
+        m_rangeUniformRandom ()
+#else
+        m_rangeUniformRandom.GetValue ()
+#endif
+        ;
+      
+      _LOG_DEBUG ("Digest is not in the log. Schedule processing after small delay: " << waitDelay << "ms");
+      m_scheduler.schedule (TIME_MILLISECONDS (waitDelay) /*from 20 to 100ms*/,
                             bind (&SyncLogic::processSyncInterest, this, digest, interestName, true),
                             DELAYED_INTEREST_PROCESSING);
       
