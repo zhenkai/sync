@@ -233,12 +233,15 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
   try
     {
       recursive_mutex::scoped_lock lock (m_stateMutex);
-      
+
       string last = name.substr(name.find_last_of("/") + 1);
       istringstream ss (dataBuffer);
 
+      m_syncInterestTable.remove (name); // just in case, remove both interests from our interest table. No reason to keep them there
       if (last == "state")
         {
+          m_syncInterestTable.remove (name.substr(0, name.find_last_of("/")));
+          
           FullState full;
           ss >> full;
           BOOST_FOREACH (LeafConstPtr leaf, full.getLeaves()) // order doesn't matter
