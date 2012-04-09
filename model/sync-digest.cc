@@ -44,7 +44,7 @@ using namespace boost::archive::iterators;
 using namespace std;
 
 // Other options: VP_md2, EVP_md5, EVP_sha, EVP_sha1, EVP_sha256, EVP_dss, EVP_dss1, EVP_mdc2, EVP_ripemd160
-#define HASH_FUNCTION EVP_sha1
+#define HASH_FUNCTION EVP_sha256
 
 
 // #ifndef DIGEST_BASE64
