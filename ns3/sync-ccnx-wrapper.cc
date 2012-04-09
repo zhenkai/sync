@@ -48,6 +48,7 @@ INIT_LOGGER ("CcnxWrapper");
 namespace Sync {
 
 CcnxWrapper::CcnxWrapper()
+  : m_rand (0, std::numeric_limits<uint32_t>::max ())
 {
 }
 
@@ -112,6 +113,8 @@ int CcnxWrapper::sendInterest (const string &strInterest, const DataCallback &da
   Ptr<Packet> packet = Create<Packet> ();
   packet->AddHeader (interestHeader);
 
+  // NS_LOG_DEBUG (interestHeader);
+  
   m_protocolHandler (packet);
 
   m_transmittedInterests (&interestHeader, this, m_face);

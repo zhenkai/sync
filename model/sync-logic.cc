@@ -61,6 +61,11 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
 #endif
 #endif
 #endif
+
+  _LOG_DEBUG ("syncPrefix");
+  
+#ifndef NS3_MODULE
+  // In NS3 module these functions are moved to StartApplication method
   
   m_ccnxHandle->setInterestFilter (m_syncPrefix,
                                    bind (&SyncLogic::respondSyncInterest, this, _1));
@@ -68,6 +73,7 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   m_scheduler.schedule (TIME_SECONDS (0),
                         bind (&SyncLogic::sendSyncInterest, this),
                         REEXPRESSING_INTEREST);
+#endif
 }
 
 SyncLogic::~SyncLogic ()
@@ -77,6 +83,29 @@ SyncLogic::~SyncLogic ()
 
   m_ccnxHandle.reset ();
 }
+
+#ifdef NS3_MODULE
+void
+SyncLogic::StartApplication ()
+{
+  m_ccnxHandle->SetNode (GetNode ());
+  m_ccnxHandle->StartApplication ();
+
+  m_ccnxHandle->setInterestFilter (m_syncPrefix,
+                                   bind (&SyncLogic::respondSyncInterest, this, _1));
+
+  m_scheduler.schedule (TIME_SECONDS (0),
+                        bind (&SyncLogic::sendSyncInterest, this),
+                        REEXPRESSING_INTEREST);
+}
+
+void
+SyncLogic::StopApplication ()
+{
+  m_ccnxHandle->StopApplication ();
+}
+#endif
+
 
 void
 SyncLogic::respondSyncInterest (const string &interest)
@@ -409,21 +438,5 @@ SyncLogic::sendSyncInterest ()
                         bind (&SyncLogic::sendSyncInterest, this),
                         REEXPRESSING_INTEREST);
 }
-
-#ifdef NS3_MODULE
-void
-SyncLogic::StartApplication ()
-{
-  m_ccnxHandle->SetNode (GetNode ());
-  m_ccnxHandle->StartApplication ();
-}
-
-void
-SyncLogic::StopApplication ()
-{
-  m_ccnxHandle->StopApplication ();
-}
-#endif
-
 
 }

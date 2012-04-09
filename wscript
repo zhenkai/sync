@@ -35,6 +35,7 @@ def configure(conf):
         conf.check_modules(['point-to-point-layout'], mandatory = False)
 
         conf.check_boost(lib='system iostreams thread')
+        conf.define ('NS3_LOG_ENABLE', 1)
     else:
         conf.check_boost(lib='system iostreams test thread')
         conf.define ('STANDALONE', 1)
@@ -89,7 +90,14 @@ def build (bld):
             use = 'BOOST BOOST_IOSTREAMS SSL TINYXML CCNX ' + ' '.join (['ns3_'+dep for dep in ['core', 'network', 'internet', 'NDNabstraction']]).upper (),
             includes = ['model', 'ns3', 'helper'],
             )
-        
+
+        example = bld.program (
+            target = "sync-example",
+            features=['cxx', 'cxxprogram'],
+            source = ['examples/sync-example.cc'],
+            use = 'sync-ns3',
+            includes = ['model', 'ccnx', 'helper'],
+            )
         # from waflib import Utils,Logs,Errors
         # Logs.pprint ('CYAN', program.use)
         
