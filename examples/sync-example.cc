@@ -14,12 +14,12 @@ NS_LOG_COMPONENT_DEFINE ("SyncExample");
 
 void OnUpdate (Ptr<Node> node, const std::string &prefix, const SeqNo &newSeq, const SeqNo &/*oldSeq*/)
 {
-  NS_LOG_LOGIC (node->GetId () << prefix << newSeq);
+  NS_LOG_LOGIC (Simulator::Now ().ToDouble (Time::S) <<"s\tNode: " << node->GetId () << ", prefix: " << prefix << ", seqNo: " << newSeq);
 }
 
 void OnRemove (Ptr<Node> node, const std::string &prefix)
 {
-  NS_LOG_LOGIC (node->GetId () << prefix);
+  NS_LOG_LOGIC (Simulator::Now ().ToDouble (Time::S) <<"s\tNode: " << node->GetId () << ", prefix: "<< prefix);
 }
 
 int 
@@ -79,6 +79,13 @@ main (int argc, char *argv[])
 
   nodes.Get (1)->AddApplication (app);
   apps.Add (app);
+
+  // one data
+  Simulator::ScheduleWithContext (0, Seconds (0.5), &SyncLogic::addLocalNames, DynamicCast<SyncLogic> (apps.Get (0)), "/0", 1, 1);
+
+  // two producers at the same time
+  Simulator::ScheduleWithContext (0, Seconds (1.001), &SyncLogic::addLocalNames, DynamicCast<SyncLogic> (apps.Get (0)), "/0", 1, 2);
+  Simulator::ScheduleWithContext (1, Seconds (1.001), &SyncLogic::addLocalNames, DynamicCast<SyncLogic> (apps.Get (1)), "/1", 1, 2);
   
   Simulator::Stop (finishTime);
   Simulator::Run ();
