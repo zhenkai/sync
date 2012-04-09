@@ -34,7 +34,9 @@
 using namespace std;
 using namespace boost;
 
-// INIT_LOGGER ("SyncLogic");
+#ifndef _STANDALONE
+INIT_LOGGER ("SyncLogic");
+#endif
 
 namespace Sync
 {
@@ -49,12 +51,14 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   , m_randomGenerator (static_cast<unsigned int> (std::time (0)))
   , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (20,80))
 {
+#ifdef _STANDALONE
 #ifdef _DEBUG
 #ifdef HAVE_LOG4CXX
   // _LOG_FUNCTION (syncPrefix);
   static int id = 0;
   staticModuleLogger = log4cxx::Logger::getLogger ("SyncLogic." + lexical_cast<string> (id));
   id ++;
+#endif
 #endif
 #endif
   

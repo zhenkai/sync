@@ -23,6 +23,8 @@
 #ifndef SYNC_LOGIC_EVENT_CONTAINER_H
 #define SYNC_LOGIC_EVENT_CONTAINER_H
 
+#include "sync-event.h"
+
 #include <boost/function.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
@@ -39,8 +41,6 @@ namespace mi = boost::multi_index;
 
 namespace Sync
 {
-
-typedef boost::function< void ( ) > Event;
 
 struct LogicEvent
 {

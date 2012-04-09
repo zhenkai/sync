@@ -23,10 +23,8 @@
 #ifndef SYNC_SCHEDULER_H
 #define SYNC_SCHEDULER_H
 
-#include <boost/thread/thread.hpp>
-#include <boost/thread/mutex.hpp>
-
-#include "sync-logic-event-container.h"
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include "sync-event.h"
 
 namespace Sync {
 
@@ -49,6 +47,15 @@ public:
   ~Scheduler ();
 
   /**
+   * @brief Schedule an event at absolute time 'abstime'
+   * @param abstime Absolute time
+   * @param event function to be called at the time
+   * @param label Label for the event
+   */
+  // void
+  // schedule (const boost::system_time &abstime, Event event, uint32_t label);
+
+  /**
    * @brief Schedule an event at relative time 'reltime'
    * @param reltime Relative time
    * @param event function to be called at the time
@@ -63,27 +70,6 @@ public:
    */
   void
   cancel (uint32_t label);
-
-#ifdef _DEBUG
-  size_t
-  getEventsSize ()
-  {
-    boost::lock_guard<boost::mutex> lock (m_eventsMutex);
-    return m_events.size ();
-  }
-#endif
-  
-private:
-  void
-  threadLoop ();
-    
-private:
-  EventsContainer m_events;
-  boost::condition_variable m_eventsCondition;
-  boost::mutex  m_eventsMutex;
-
-  boost::thread m_thread;
-  bool          m_threadRunning;
 };
   
 }

@@ -58,20 +58,6 @@ def configure(conf):
 
     conf.load('tinyxml')
     conf.check_tinyxml ()
-
-    # else:
-        # if 'CXXFLAGS' in conf.env:
-        #     tmp = conf.env['CXXFLAGS']
-        # else:
-        #     tmp = []
-        # conf.env['CXXFLAGS'] = tmp + ['-g']
-        # if 'CFLAGS' in conf.env:
-        #     tmp = conf.env['CFLAGS']
-        # else:
-        #     tmp = []
-        # conf.env['CFLAGS'] = tmp + ['-g']
-        # _report_optional_feature(conf, "debug", "Debug Symbols", True, '')
-
                    
 def build (bld):
     if bld.get_define ("NS3_MODULE"):
@@ -81,11 +67,12 @@ def build (bld):
             source =  [
                 # 'ns3/sync-ccnx-wrapper.cc',
                 'ns3/sync-ns3-name-info.cc',
+                'ns3/sync-scheduler.cc',
                 
-                'model/sync-app-data-fetch.cc',
-                'model/sync-app-data-publish.cc',
-                'model/sync-app-socket-c.cc',
-                'model/sync-app-socket.cc',
+                # 'model/sync-app-data-fetch.cc',
+                # 'model/sync-app-data-publish.cc',
+                # 'ns3/sync-app.cc',
+
                 'model/sync-diff-leaf.cc',
                 'model/sync-diff-state.cc',
                 'model/sync-digest.cc',
@@ -114,11 +101,11 @@ def build (bld):
                 'ccnx/sync-ccnx-wrapper.cc',
                 'ccnx/sync-scheduler.cc',
                 'ccnx/sync-log.cc',
-                
-                'model/sync-app-data-fetch.cc',
-                'model/sync-app-data-publish.cc',
-                'model/sync-app-socket-c.cc',
-                'model/sync-app-socket.cc',
+                'ccnx/sync-app-data-fetch.cc',
+                'ccnx/sync-app-data-publish.cc',
+                'ccnx/sync-app-socket-c.cc',
+                'ccnx/sync-app-socket.cc',
+
                 'model/sync-diff-leaf.cc',
                 'model/sync-diff-state.cc',
                 'model/sync-digest.cc',
