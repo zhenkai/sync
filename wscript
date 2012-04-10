@@ -69,6 +69,7 @@ def build (bld):
                 'ns3/sync-ccnx-wrapper.cc',
                 'ns3/sync-ns3-name-info.cc',
                 'ns3/sync-scheduler.cc',
+                'ns3/sync-logic-helper.cc',
                 
                 # 'model/sync-app-data-fetch.cc',
                 # 'model/sync-app-data-publish.cc',

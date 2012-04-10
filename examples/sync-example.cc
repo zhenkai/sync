@@ -6,20 +6,21 @@
 #include <ns3/point-to-point-module.h>
 
 #include "sync-logic.h"
+#include "sync-logic-helper.h"
 
 using namespace ns3;
 using namespace Sync;
 
 NS_LOG_COMPONENT_DEFINE ("SyncExample");
 
-void OnUpdate (Ptr<Node> node, const std::string &prefix, const SeqNo &newSeq, const SeqNo &/*oldSeq*/)
+void OnUpdate (const std::string &prefix, const SeqNo &newSeq, const SeqNo &/*oldSeq*/)
 {
-  NS_LOG_LOGIC (Simulator::Now ().ToDouble (Time::S) <<"s\tNode: " << node->GetId () << ", prefix: " << prefix << ", seqNo: " << newSeq);
+  NS_LOG_LOGIC (Simulator::Now ().ToDouble (Time::S) <<"s\tNode: " << Simulator::GetContext () << ", prefix: " << prefix << ", seqNo: " << newSeq);
 }
 
-void OnRemove (Ptr<Node> node, const std::string &prefix)
+void OnRemove (const std::string &prefix)
 {
-  NS_LOG_LOGIC (Simulator::Now ().ToDouble (Time::S) <<"s\tNode: " << node->GetId () << ", prefix: "<< prefix);
+  NS_LOG_LOGIC (Simulator::Now ().ToDouble (Time::S) <<"s\tNode: " << Simulator::GetContext () << ", prefix: "<< prefix);
 }
 
 int 
@@ -64,28 +65,20 @@ main (int argc, char *argv[])
   ccnxHelper.AddRoute ("1", "/sync", 1, 0);
   ccnxHelper.AddRoute ("2", "/sync", 0, 0);
 
-  ApplicationContainer apps;
-  Ptr<Application> app;
-  app = Create<SyncLogic> ("/sync",
-                           boost::bind (OnUpdate, nodes.Get (0), _1, _2, _3),
-                           boost::bind (OnRemove, nodes.Get (0), _1));
-
-  nodes.Get (0)->AddApplication (app);
-  apps.Add (app);
-
-  app = Create<SyncLogic> ("/sync",
-                           boost::bind (OnUpdate, nodes.Get (1), _1, _2, _3),
-                           boost::bind (OnRemove, nodes.Get (1), _1));
-
-  nodes.Get (1)->AddApplication (app);
-  apps.Add (app);
-
+  SyncLogicHelper logicHelper;
+  logicHelper.SetPrefix ("/sync");
+  logicHelper.SetCallbacks (OnUpdate, OnRemove);
+  ApplicationContainer apps = logicHelper.Install (NodeContainer (nodes.Get (0), nodes.Get (1)));
+  
   // one data
   Simulator::ScheduleWithContext (0, Seconds (0.5), &SyncLogic::addLocalNames, DynamicCast<SyncLogic> (apps.Get (0)), "/0", 1, 1);
 
   // two producers at the same time
   Simulator::ScheduleWithContext (0, Seconds (1.001), &SyncLogic::addLocalNames, DynamicCast<SyncLogic> (apps.Get (0)), "/0", 1, 2);
   Simulator::ScheduleWithContext (1, Seconds (1.001), &SyncLogic::addLocalNames, DynamicCast<SyncLogic> (apps.Get (1)), "/1", 1, 2);
+
+  logicHelper.Install (nodes.Get (2)).
+    Start (Seconds (2.001));
   
   Simulator::Stop (finishTime);
   Simulator::Run ();
