@@ -95,12 +95,14 @@ BOOST_AUTO_TEST_CASE (LeafDigest)
 
   output_test_stream output;
   output << fullLeaf.getDigest ();
-  BOOST_CHECK (output.is_equal ("991f8cf6262dfe0f519c63f6e9b92fe69e741a9b", true));
+  // BOOST_CHECK (output.is_equal ("991f8cf6262dfe0f519c63f6e9b92fe69e741a9b", true)); // for sha1
+	BOOST_CHECK (output.is_equal ("526d63e6e1f05f97502fd500a1729c4907f3841483ae4561b7e6307c40188f35", true)); // for sha256
 
   fullLeaf.setSeq (SeqNo (13));
   output << fullLeaf.getDigest ();
   BOOST_CHECK (!output.is_equal ("991f8cf6262dfe0f519c63f6e9b92fe69e741a9b", false));
-  BOOST_CHECK (output.is_equal ("585a8687ab41d5c29f86e5906c8f188ddca816b3", true));
+  // BOOST_CHECK (output.is_equal ("585a8687ab41d5c29f86e5906c8f188ddca816b3", true)); // for sha1
+	BOOST_CHECK (output.is_equal ("39fefe65b3e1021776c07d3a9a3023c6c7cdf12724ee7f3a98b813b22f46d5ec", true)); // for sha256
 }
 
 BOOST_AUTO_TEST_SUITE_END()

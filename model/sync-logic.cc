@@ -34,7 +34,7 @@
 using namespace std;
 using namespace boost;
 
-// INIT_LOGGER ("SyncLogic");
+INIT_LOGGER ("SyncLogic");
 
 namespace Sync
 {

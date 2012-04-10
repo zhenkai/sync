@@ -61,8 +61,10 @@ BOOST_AUTO_TEST_CASE (DigestGenerationTest)
   
   output_test_stream output;
   BOOST_CHECK_NO_THROW (output << d1);
-  BOOST_CHECK (output.check_length (40,false) );
-  BOOST_CHECK (output.is_equal ("e5fa44f2b31c1fb553b6021e7360d07d5d91ff5e", true));
+  // BOOST_CHECK (output.check_length (40, false) );
+  // BOOST_CHECK (output.is_equal ("e5fa44f2b31c1fb553b6021e7360d07d5d91ff5e", true)); // for sha1
+	BOOST_CHECK (output.check_length (64, false) );
+	BOOST_CHECK (output.is_equal ("4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865", true)); // for sha256
 }
 
 BOOST_AUTO_TEST_CASE (DigestComparison)
@@ -79,7 +81,8 @@ BOOST_AUTO_TEST_CASE (DigestComparison)
   BOOST_CHECK (d1 != d2);
   
   Digest d3;
-  istringstream is (string ("e5fa44f2b31c1fb553b6021e7360d07d5d91ff5e")); //real sha-1 for "1\n"
+  // istringstream is (string ("e5fa44f2b31c1fb553b6021e7360d07d5d91ff5e")); // real sha-1 for "1\n"
+	istringstream is (string ("4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865")); // real sha256 for "1\n"
   BOOST_CHECK_NO_THROW (is >> d3);
   BOOST_CHECK (!d3.empty ());
   BOOST_CHECK (d3 == d1);
