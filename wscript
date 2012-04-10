@@ -87,7 +87,7 @@ def build (bld):
                 'model/sync-state.cc',
                 'model/sync-std-name-info.cc',
                 ],
-            use = 'BOOST BOOST_IOSTREAMS SSL TINYXML CCNX ' + ' '.join (['ns3_'+dep for dep in ['core', 'network', 'internet', 'NDNabstraction']]).upper (),
+            use = 'BOOST BOOST_IOSTREAMS SSL TINYXML ' + ' '.join (['ns3_'+dep for dep in ['core', 'network', 'internet', 'NDNabstraction']]).upper (),
             includes = ['model', 'ns3', 'helper'],
             )
 
@@ -96,7 +96,7 @@ def build (bld):
             features=['cxx', 'cxxprogram'],
             source = ['examples/sync-example.cc'],
             use = 'sync-ns3',
-            includes = ['model', 'ccnx', 'helper'],
+            includes = ['model', 'ns3', 'helper'],
             )
         # from waflib import Utils,Logs,Errors
         # Logs.pprint ('CYAN', program.use)
