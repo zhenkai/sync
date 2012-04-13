@@ -42,16 +42,39 @@ main (int argc, char *argv[])
 
   // Creating nodes
   NodeContainer nodes;
-  nodes.Create (3);
+  nodes.Create (11);
 
   // Connecting nodes using two links
   PointToPointHelper p2p;
-  p2p.Install (nodes.Get (0), nodes.Get (1));
+  p2p.Install (nodes.Get (0), nodes.Get (4));
   p2p.Install (nodes.Get (1), nodes.Get (2));
+  p2p.Install (nodes.Get (1), nodes.Get (4));
+  p2p.Install (nodes.Get (1), nodes.Get (5));
+  p2p.Install (nodes.Get (2), nodes.Get (6));
+  p2p.Install (nodes.Get (2), nodes.Get (7));
+  p2p.Install (nodes.Get (3), nodes.Get (4));
+  p2p.Install (nodes.Get (3), nodes.Get (8));
+  p2p.Install (nodes.Get (4), nodes.Get (5));
+  p2p.Install (nodes.Get (4), nodes.Get (8));
+  p2p.Install (nodes.Get (5), nodes.Get (6));
+  p2p.Install (nodes.Get (5), nodes.Get (9));
+  p2p.Install (nodes.Get (5), nodes.Get (10));
+  p2p.Install (nodes.Get (6), nodes.Get (10));
+  p2p.Install (nodes.Get (7), nodes.Get (10));
+  p2p.Install (nodes.Get (8), nodes.Get (9));
+  p2p.Install (nodes.Get (9), nodes.Get (10));
 
   Names::Add ("0", nodes.Get (0));
   Names::Add ("1", nodes.Get (1));
   Names::Add ("2", nodes.Get (2));
+  Names::Add ("3", nodes.Get(3));
+  Names::Add ("4", nodes.Get(4));
+  Names::Add ("5", nodes.Get(5));
+  Names::Add ("6", nodes.Get(6));
+  Names::Add ("7", nodes.Get(7));
+  Names::Add ("8", nodes.Get(8));
+  Names::Add ("9", nodes.Get(9));
+  Names::Add ("10", nodes.Get(10));
   
   // Install CCNx stack on all nodes
   NS_LOG_INFO ("Installing CCNx stack");
@@ -63,7 +86,37 @@ main (int argc, char *argv[])
   ccnxHelper.AddRoute ("0", "/sync", 0, 0);
   ccnxHelper.AddRoute ("1", "/sync", 0, 0);
   ccnxHelper.AddRoute ("1", "/sync", 1, 0);
+  ccnxHelper.AddRoute ("1", "/sync", 2, 0);
   ccnxHelper.AddRoute ("2", "/sync", 0, 0);
+  ccnxHelper.AddRoute ("2", "/sync", 1, 0);
+  ccnxHelper.AddRoute ("2", "/sync", 2, 0);
+  ccnxHelper.AddRoute ("3", "/sync", 0, 0);
+  ccnxHelper.AddRoute ("3", "/sync", 1, 0);
+  ccnxHelper.AddRoute ("4", "/sync", 0, 0);
+  ccnxHelper.AddRoute ("4", "/sync", 1, 0);
+  ccnxHelper.AddRoute ("4", "/sync", 2, 0);
+  ccnxHelper.AddRoute ("4", "/sync", 3, 0);
+  ccnxHelper.AddRoute ("4", "/sync", 4, 0);
+  ccnxHelper.AddRoute ("5", "/sync", 0, 0);
+  ccnxHelper.AddRoute ("5", "/sync", 1, 0);
+  ccnxHelper.AddRoute ("5", "/sync", 2, 0);
+  ccnxHelper.AddRoute ("5", "/sync", 3, 0);
+  ccnxHelper.AddRoute ("5", "/sync", 4, 0);
+  ccnxHelper.AddRoute ("6", "/sync", 0, 0);
+  ccnxHelper.AddRoute ("6", "/sync", 1, 0);
+  ccnxHelper.AddRoute ("6", "/sync", 2, 0);
+  ccnxHelper.AddRoute ("7", "/sync", 0, 0);
+  ccnxHelper.AddRoute ("7", "/sync", 1, 0);
+  ccnxHelper.AddRoute ("8", "/sync", 0, 0);
+  ccnxHelper.AddRoute ("8", "/sync", 1, 0);
+  ccnxHelper.AddRoute ("8", "/sync", 2, 0);
+  ccnxHelper.AddRoute ("9", "/sync", 0, 0);
+  ccnxHelper.AddRoute ("9", "/sync", 1, 0);
+  ccnxHelper.AddRoute ("9", "/sync", 2, 0);
+  ccnxHelper.AddRoute ("10", "/sync", 0, 0);
+  ccnxHelper.AddRoute ("10", "/sync", 1, 0);
+  ccnxHelper.AddRoute ("10", "/sync", 2, 0);
+  ccnxHelper.AddRoute ("10", "/sync", 3, 0);
 
   SyncLogicHelper logicHelper;
   logicHelper.SetPrefix ("/sync");
