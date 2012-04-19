@@ -99,6 +99,16 @@ def build (bld):
             use = 'sync-ns3',
             includes = ['model', 'ns3', 'helper'],
             )
+
+        sync_eval = bld.program (
+            target = "sync-eval",
+            features=['cxx', 'cxxprogram'],
+            source = ['evaluation/sync-eval.cc',
+                      'evaluation/standard-muc.cc',
+                      ],
+            use = 'sync-ns3',
+            includes = ['model', 'ns3', 'helper'],
+            )
         # from waflib import Utils,Logs,Errors
         # Logs.pprint ('CYAN', program.use)
         

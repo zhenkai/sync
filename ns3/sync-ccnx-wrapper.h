@@ -32,7 +32,7 @@
 #include <ns3/random-variable.h>
 #include <ns3/ccnx-app.h>
 #include <ns3/ccnx-name-components.h>
-#include <ns3/hash-helper.h>
+#include <ns3/ccnx-name-components-hash-helper.h>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
