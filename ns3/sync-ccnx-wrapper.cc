@@ -29,6 +29,8 @@
 
 namespace ll = boost::lambda;
 
+#include "../evaluation/type-tag.h"
+
 #include <ns3/ccnx-name-components.h>
 #include <ns3/ccnx-interest-header.h>
 #include <ns3/ccnx-content-object-header.h>
@@ -85,7 +87,7 @@ CcnxWrapper::publishData (const string &dataName, const string &dataBuffer, int 
   data.SetFreshness (Seconds (freshness));
 
   Ptr<Packet> packet = Create<Packet> (reinterpret_cast<const uint8_t*> (dataBuffer.c_str ()), dataBuffer.size ());
-  
+  packet->AddPacketTag (CreateObject<TypeTag> (TypeTag::DATA));
   packet->AddHeader (data);
   packet->AddTrailer (trailer);
 
@@ -111,6 +113,7 @@ int CcnxWrapper::sendInterest (const string &strInterest, const DataCallback &da
   interestHeader.SetInterestLifetime (Seconds (60.0));
 
   Ptr<Packet> packet = Create<Packet> ();
+  packet->AddPacketTag (CreateObject<TypeTag> (TypeTag::INTEREST));
   packet->AddHeader (interestHeader);
 
   // NS_LOG_DEBUG (interestHeader);
