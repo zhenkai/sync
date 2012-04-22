@@ -107,8 +107,8 @@ public:
   getScheduler () { return m_scheduler; }
 #endif
 
-protected:
 #ifdef NS3_MODULE
+public:
   virtual void StartApplication ();
   virtual void StopApplication ();
 #endif
@@ -151,7 +151,11 @@ private:
   ns3::UniformVariable m_rangeUniformRandom;
 #endif
   
+#ifndef NS3_MODULE
+  static const int m_syncResponseFreshness = 60;
+#else
   static const int m_syncResponseFreshness = 2;
+#endif
 
   enum EventLabels
     {

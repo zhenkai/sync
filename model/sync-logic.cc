@@ -107,6 +107,8 @@ void
 SyncLogic::StopApplication ()
 {
   m_ccnxHandle->StopApplication ();
+  m_scheduler.cancel (REEXPRESSING_INTEREST);
+  m_scheduler.cancel (DELAYED_INTEREST_PROCESSING);
 }
 #endif
 

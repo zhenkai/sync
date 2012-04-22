@@ -105,6 +105,7 @@ def build (bld):
             features=['cxx', 'cxxprogram'],
             source = ['evaluation/sync-eval.cc',
                       'evaluation/standard-muc.cc',
+                      'evaluation/sync-muc.cc',
                       ],
             use = 'sync-ns3',
             includes = ['model', 'ns3', 'helper'],
