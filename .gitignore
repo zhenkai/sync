@@ -5,3 +5,4 @@ build/
 doc/html
 .DS_Store
 animation.xml
+.R*
