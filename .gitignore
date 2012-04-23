@@ -4,3 +4,4 @@ build/
 *.pyc
 doc/html
 .DS_Store
+animation.xml

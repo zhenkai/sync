@@ -453,8 +453,9 @@ SyncLogic::sendSyncInterest ()
   m_ccnxHandle->sendInterest (os.str (),
                               bind (&SyncLogic::processSyncData, this, _1, _2));
 
+  _LOG_DEBUG ("What the fuck?? " << m_syncInterestReexpress);
   m_scheduler.cancel (REEXPRESSING_INTEREST);
-  m_scheduler.schedule (TIME_SECONDS (4),
+  m_scheduler.schedule (TIME_SECONDS (m_syncInterestReexpress),
                         bind (&SyncLogic::sendSyncInterest, this),
                         REEXPRESSING_INTEREST);
 }
