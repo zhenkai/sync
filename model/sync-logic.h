@@ -152,10 +152,10 @@ private:
 #endif
   
 #ifdef NS3_MODULE
-  static const int m_syncResponseFreshness = 10000; //
+  static const int m_syncResponseFreshness = 100; //
   static const int m_syncInterestReexpress = 10000; // make sure it doesn't happen
 #else
-  static const int m_syncResponseFreshness = 2;
+  static const int m_syncResponseFreshness = 2000;
   static const int m_syncInterestReexpress = 4;
 #endif
 

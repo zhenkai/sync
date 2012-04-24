@@ -52,7 +52,7 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   , m_randomGenerator (static_cast<unsigned int> (std::time (0)))
   , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (20,80))
 #else
-  , m_rangeUniformRandom (20,80)
+  , m_rangeUniformRandom (1000,2000)
 #endif
 {
 #ifdef _STANDALONE
@@ -339,7 +339,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
       // Otherwise we will get immediate reply from the local daemon and there will be 100% utilization
       m_scheduler.cancel (REEXPRESSING_INTEREST);
       // m_scheduler.schedule (posix_time::seconds (0),
-      m_scheduler.schedule (TIME_SECONDS (m_syncResponseFreshness) + TIME_MILLISECONDS (1),
+      m_scheduler.schedule (TIME_MILLISECONDS (m_syncResponseFreshness) + TIME_MILLISECONDS (1),
                             bind (&SyncLogic::sendSyncInterest, this),
                             REEXPRESSING_INTEREST);
     }
@@ -453,7 +453,6 @@ SyncLogic::sendSyncInterest ()
   m_ccnxHandle->sendInterest (os.str (),
                               bind (&SyncLogic::processSyncData, this, _1, _2));
 
-  _LOG_DEBUG ("What the fuck?? " << m_syncInterestReexpress);
   m_scheduler.cancel (REEXPRESSING_INTEREST);
   m_scheduler.schedule (TIME_SECONDS (m_syncInterestReexpress),
                         bind (&SyncLogic::sendSyncInterest, this),
