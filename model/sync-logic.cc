@@ -209,19 +209,28 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
 
   if (!timedProcessing)
     {
-      uint32_t waitDelay =
+      UnknownDigestContainer::index<hashed>::type::iterator previousUnknownDigest = m_recentUnknownDigests.get<hashed> ().find (digest);
+      if (previousUnknownDigest != m_recentUnknownDigests.get<hashed> ().end ())
+        {
+          _LOG_DEBUG ("Digest is not in the log, but we have already seen it.                      (Don't do anything)");
+        }
+      else
+        {
+          m_recentUnknownDigests.insert (DigestTime (digest, TIME_NOW + TIME_SECONDS (m_unknownDigestStoreTime)));
+          
+          uint32_t waitDelay =
 #ifndef NS3_MODULE
-        m_rangeUniformRandom ()
+            m_rangeUniformRandom ()
 #else
-        m_rangeUniformRandom.GetValue ()
+            m_rangeUniformRandom.GetValue ()
 #endif
-        ;
+            ;
       
-      _LOG_DEBUG ("Digest is not in the log. Schedule processing after small delay: " << waitDelay << "ms");
-      m_scheduler.schedule (TIME_MILLISECONDS (waitDelay) /*from 20 to 100ms*/,
-                            bind (&SyncLogic::processSyncInterest, this, digest, interestName, true),
-                            DELAYED_INTEREST_PROCESSING);
-      
+          _LOG_DEBUG ("Digest is not in the log. Schedule processing after small delay: " << waitDelay << "ms");
+          m_scheduler.schedule (TIME_MILLISECONDS (waitDelay) /*from 20 to 100ms*/,
+                                bind (&SyncLogic::processSyncInterest, this, digest, interestName, true),
+                                DELAYED_INTEREST_PROCESSING);
+        }
     }
   else
     {

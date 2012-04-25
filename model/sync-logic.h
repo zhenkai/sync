@@ -132,6 +132,7 @@ private:
 private:
   FullState m_state;
   DiffStateContainer m_log;
+  UnknownDigestContainer m_recentUnknownDigests;
   boost::recursive_mutex m_stateMutex;
 
   std::string m_outstandingInterest;
@@ -150,10 +151,12 @@ private:
 #else
   ns3::UniformVariable m_rangeUniformRandom;
 #endif
-  
+
+  static const int m_unknownDigestStoreTime = 10; // seconds
 #ifdef NS3_MODULE
-  static const int m_syncResponseFreshness = 100; //
-  static const int m_syncInterestReexpress = 10000; // make sure it doesn't happen
+  static const int m_syncResponseFreshness = 100; // milliseconds
+  static const int m_syncInterestReexpress = 10; // seconds
+  // don't forget to adjust value in SyncCcnxWrapper
 #else
   static const int m_syncResponseFreshness = 2000;
   static const int m_syncInterestReexpress = 4;

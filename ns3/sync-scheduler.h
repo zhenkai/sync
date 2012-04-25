@@ -25,6 +25,7 @@
 
 #include <ns3/nstime.h>
 #include <ns3/event-id.h>
+#include <ns3/simulator.h>
 #include <list>
 #include <map>
 
@@ -32,7 +33,9 @@
 
 #define TIME_SECONDS(number) ns3::Seconds(number)
 #define TIME_MILLISECONDS(number) ns3::MilliSeconds(number)
+#define TIME_NOW ns3::Simulator::Now ()
 typedef ns3::Time TimeDuration;
+typedef ns3::Time TimeAbsolute;
 
 namespace Sync {
 

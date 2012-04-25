@@ -33,7 +33,7 @@
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 // #include <boost/multi_index/random_access_index.hpp>
-// #include <boost/multi_index/member.hpp>
+#include <boost/multi_index/member.hpp>
 #include <boost/multi_index/mem_fun.hpp>
 
 namespace mi = boost::multi_index;
@@ -63,6 +63,7 @@ struct DigestPtrEqual : public std::unary_function<Digest, std::size_t>
 
 /// @cond include_hidden 
 struct sequenced { };
+struct timed { };
 /// @endcond
 
 /**
@@ -82,6 +83,37 @@ struct DiffStateContainer : public mi::multi_index_container<
     ,        
     // sequenced index to access older/newer element (like in list)
     mi::sequenced<mi::tag<sequenced> >
+    >
+  >
+{
+};
+
+struct DigestTime
+{
+  DigestTime (DigestConstPtr digest, const TimeAbsolute &time)
+    : m_digest (digest)
+    , m_time (time)
+  {
+  }
+  
+  DigestConstPtr m_digest;
+  TimeAbsolute m_time;
+};
+
+struct UnknownDigestContainer : public mi::multi_index_container<
+  DigestTime,
+  mi::indexed_by<
+    mi::hashed_unique<
+      mi::tag<hashed>,
+      mi::member<DigestTime, DigestConstPtr, &DigestTime::m_digest>,
+      DigestPtrHash,
+      DigestPtrEqual
+      >
+    ,
+    mi::ordered_non_unique<
+      mi::tag<timed>,
+      mi::member<DigestTime, TimeAbsolute, &DigestTime::m_time>
+      >
     >
   >
 {

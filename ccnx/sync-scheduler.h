@@ -29,7 +29,10 @@
 #include "sync-logic-event-container.h"
 
 #define TIME_SECONDS(number) boost::posix_time::seconds (number)
+#define TIME_MILLISECONDS(number) boost::posix_time::milliseconds(number)
+#define TIME_NOW boost::get_system_time ()
 typedef boost::posix_time::time_duration TimeDuration;
+typedef boost::system_time TimeAbsolute;
 
 namespace Sync {
 
