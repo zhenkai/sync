@@ -241,6 +241,13 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
           m_scheduler.schedule (TIME_MILLISECONDS (waitDelay),
                                 bind (&SyncLogic::processSyncInterest, this, digest, interestName, true),
                                 DELAYED_INTEREST_PROCESSING);
+
+          // just in case, re-express our interest (e.g., probably something bad happened)
+          
+          m_scheduler.cancel (REEXPRESSING_INTEREST);
+          m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (0),
+                                bind (&SyncLogic::sendSyncInterest, this),
+                                REEXPRESSING_INTEREST);
         }
     }
   else
