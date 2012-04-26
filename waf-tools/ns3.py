@@ -20,8 +20,13 @@ def _print_optional_features(conf):
 def _check_dependencies(conf, required, mandatory):
     # Logs.pprint ('CYAN', '  + %s' % required)
     found = []
+    
+    libversion = "optimized"
+    if conf.options.ns3_debug:
+        libversion = "debug"
+    
     for module in required:
-        retval = conf.check_cfg(package = 'libns3-dev-%s-optimized' % module,
+        retval = conf.check_cfg(package = 'libns3-dev-%s-%s' % (module, libversion),
                                 args='--cflags --libs', mandatory=mandatory,
                                 msg="Checking for ns3-%s" % module,
                                 uselib_store='NS3_%s' % module.upper())

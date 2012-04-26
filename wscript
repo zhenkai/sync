@@ -7,6 +7,7 @@ def options(opt):
     opt.add_option('--no-debug',action='store_true',default=False,dest='no_debug',help='''Make an optimized build of the library (remove debugging code)''')
     opt.add_option('--log4cxx', action='store_true',default=False,dest='log4cxx',help='''Compile with log4cxx/native NS3 logging support''')
     opt.add_option('--ns3',     action='store_true',default=False,dest='ns3_enable',help='''Compile as NS-3 module''')
+    opt.add_option('--ns3-debug', action='store_true',default=False,dest='ns3_debug',help='''Link against debug NS3 libraries. Optimized version will be used otherwise''')
     opt.load('compiler_c')
     opt.load('compiler_cxx')
     opt.load('boost')

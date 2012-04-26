@@ -38,6 +38,20 @@ using namespace boost;
 INIT_LOGGER ("SyncLogic");
 #endif
 
+
+#ifdef NS3_MODULE
+#define GET_RANDOM(var) var.GetValue ()
+#else
+#define GET_RANDOM(var) var ()
+#endif
+
+#define TIME_SECONDS_WITH_JITTER(sec) \
+  (TIME_SECONDS (sec) + TIME_MILLISECONDS (GET_RANDOM (m_reexpressionJitter)))
+
+#define TIME_MILLISECONDS_WITH_JITTER(sec) \
+  (TIME_MILLISECONDS (sec) + TIME_MILLISECONDS (GET_RANDOM (m_reexpressionJitter)))
+
+
 namespace Sync
 {
 
@@ -76,7 +90,7 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   m_ccnxHandle->setInterestFilter (m_syncPrefix,
                                    bind (&SyncLogic::respondSyncInterest, this, _1));
 
-  m_scheduler.schedule (TIME_SECONDS (0),
+  m_scheduler.schedule (TIME_SECONDS (0), // no need to add jitter
                         bind (&SyncLogic::sendSyncInterest, this),
                         REEXPRESSING_INTEREST);
 #endif
@@ -100,7 +114,7 @@ SyncLogic::StartApplication ()
   m_ccnxHandle->setInterestFilter (m_syncPrefix,
                                    bind (&SyncLogic::respondSyncInterest, this, _1));
 
-  m_scheduler.schedule (TIME_SECONDS (0),
+  m_scheduler.schedule (TIME_SECONDS (0), // need to send first interests at exactly the same time
                         bind (&SyncLogic::sendSyncInterest, this),
                         REEXPRESSING_INTEREST);
 }
@@ -153,12 +167,6 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
       m_ccnxHandle->publishData (interestName + "/state",
                                  lexical_cast<string> (m_state),
                                  m_syncResponseFreshness);
-      if (m_outstandingInterest == interestName)
-        {
-          m_scheduler.schedule (TIME_SECONDS (0),
-                                bind (&SyncLogic::sendSyncInterest, this),
-                                REEXPRESSING_INTEREST);
-        }
       return;
     }
 
@@ -175,6 +183,12 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
           _LOG_TRACE ("processSyncInterest (): Same state. Adding to PIT");
           m_syncInterestTable.insert (interestName);
         }
+      
+      // !!! important change !!!
+      m_scheduler.cancel (REEXPRESSING_INTEREST);
+      m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (m_syncInterestReexpress),
+                            bind (&SyncLogic::sendSyncInterest, this),
+                            REEXPRESSING_INTEREST);
       return;
     }
   
@@ -202,7 +216,8 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
                                m_syncResponseFreshness);
     if (m_outstandingInterest == interestName)
       {
-        m_scheduler.schedule (TIME_SECONDS (0),
+        m_scheduler.cancel (REEXPRESSING_INTEREST);
+        m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (0),
                               bind (&SyncLogic::sendSyncInterest, this),
                               REEXPRESSING_INTEREST);
       }
@@ -218,18 +233,12 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
         }
       else
         {
-          // m_recentUnknownDigests.insert (DigestTime (digest, TIME_NOW + TIME_SECONDS (m_unknownDigestStoreTime)));
+          m_recentUnknownDigests.insert (DigestTime (digest, TIME_NOW + TIME_SECONDS (m_unknownDigestStoreTime)));
           
-          uint32_t waitDelay =
-#ifndef NS3_MODULE
-            m_rangeUniformRandom ()
-#else
-            m_rangeUniformRandom.GetValue ()
-#endif
-            ;
-      
+          uint32_t waitDelay = GET_RANDOM (m_rangeUniformRandom);      
           _LOG_DEBUG ("Digest is not in the log. Schedule processing after small delay: " << waitDelay << "ms");
-          m_scheduler.schedule (TIME_MILLISECONDS (waitDelay) /*from 20 to 100ms*/,
+
+          m_scheduler.schedule (TIME_MILLISECONDS (waitDelay),
                                 bind (&SyncLogic::processSyncInterest, this, digest, interestName, true),
                                 DELAYED_INTEREST_PROCESSING);
         }
@@ -245,7 +254,8 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
 
       if (m_outstandingInterest == interestName)
         {
-          m_scheduler.schedule (TIME_SECONDS (0),
+          m_scheduler.cancel (REEXPRESSING_INTEREST);
+          m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (0),
                                 bind (&SyncLogic::sendSyncInterest, this),
                                 REEXPRESSING_INTEREST);
         }
@@ -340,7 +350,8 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
   // if state has changed, then it is safe to express a new interest
   if (diffLog->getLeaves ().size () > 0)
     {
-      m_scheduler.schedule (TIME_SECONDS (0),
+      m_scheduler.cancel (REEXPRESSING_INTEREST);
+      m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (0),
                             bind (&SyncLogic::sendSyncInterest, this),
                             REEXPRESSING_INTEREST);
     }
@@ -349,8 +360,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
       // should not reexpress the same interest. Need at least wait for data lifetime
       // Otherwise we will get immediate reply from the local daemon and there will be 100% utilization
       m_scheduler.cancel (REEXPRESSING_INTEREST);
-      // m_scheduler.schedule (posix_time::seconds (0),
-      m_scheduler.schedule (TIME_MILLISECONDS (m_syncResponseFreshness) + TIME_MILLISECONDS (1),
+      m_scheduler.schedule (TIME_MILLISECONDS_WITH_JITTER (m_syncResponseFreshness),
                             bind (&SyncLogic::sendSyncInterest, this),
                             REEXPRESSING_INTEREST);
     }
@@ -382,7 +392,8 @@ SyncLogic::satisfyPendingSyncInterests (DiffStatePtr diffLog)
         {
           _LOG_DEBUG ("Have satisfied our own interest. Scheduling interest reexpression");
           // we need to reexpress interest only if we satisfied our own interest
-          m_scheduler.schedule (TIME_SECONDS (0),
+          m_scheduler.cancel (REEXPRESSING_INTEREST);
+          m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (0),
                                 bind (&SyncLogic::sendSyncInterest, this),
                                 REEXPRESSING_INTEREST);
         }
@@ -465,7 +476,7 @@ SyncLogic::sendSyncInterest ()
                               bind (&SyncLogic::processSyncData, this, _1, _2));
 
   m_scheduler.cancel (REEXPRESSING_INTEREST);
-  m_scheduler.schedule (TIME_SECONDS (m_syncInterestReexpress),
+  m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (m_syncInterestReexpress),
                         bind (&SyncLogic::sendSyncInterest, this),
                         REEXPRESSING_INTEREST);
 }
