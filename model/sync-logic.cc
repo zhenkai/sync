@@ -50,9 +50,11 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   , m_ccnxHandle(new CcnxWrapper())
 #ifndef NS3_MODULE
   , m_randomGenerator (static_cast<unsigned int> (std::time (0)))
-  , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (20,80))
+  , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (200,300))
+  , m_reexpressionJitter (m_randomGenerator, uniform_int<> (0,100))
 #else
-  , m_rangeUniformRandom (1000,2000)
+  , m_rangeUniformRandom (200,300)
+  , m_reexpressionJitter (0, 100)
 #endif
 {
 #ifdef _STANDALONE
@@ -216,7 +218,7 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
         }
       else
         {
-          m_recentUnknownDigests.insert (DigestTime (digest, TIME_NOW + TIME_SECONDS (m_unknownDigestStoreTime)));
+          // m_recentUnknownDigests.insert (DigestTime (digest, TIME_NOW + TIME_SECONDS (m_unknownDigestStoreTime)));
           
           uint32_t waitDelay =
 #ifndef NS3_MODULE

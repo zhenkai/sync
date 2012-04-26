@@ -110,7 +110,7 @@ int CcnxWrapper::sendInterest (const string &strInterest, const DataCallback &da
   CcnxInterestHeader interestHeader;
   interestHeader.SetNonce            (m_rand.GetValue ());
   interestHeader.SetName             (name);
-  interestHeader.SetInterestLifetime (Seconds (10.0)); // really long-lived interests
+  interestHeader.SetInterestLifetime (Seconds (10000.0)); // really long-lived interests
 
   Ptr<Packet> packet = Create<Packet> ();
   packet->AddPacketTag (CreateObject<TypeTag> (TypeTag::INTEREST));

@@ -148,14 +148,16 @@ private:
 #ifndef NS3_MODULE
   boost::mt19937 m_randomGenerator;
   boost::variate_generator<boost::mt19937&, boost::uniform_int<> > m_rangeUniformRandom;
+  boost::variate_generator<boost::mt19937&, boost::uniform_int<> > m_reexpressionJitter;
 #else
   ns3::UniformVariable m_rangeUniformRandom;
+  ns3::UniformVariable m_reexpressionJitter;
 #endif
 
   static const int m_unknownDigestStoreTime = 10; // seconds
 #ifdef NS3_MODULE
   static const int m_syncResponseFreshness = 100; // milliseconds
-  static const int m_syncInterestReexpress = 10; // seconds
+  static const int m_syncInterestReexpress = 10000; // seconds
   // don't forget to adjust value in SyncCcnxWrapper
 #else
   static const int m_syncResponseFreshness = 2000;
