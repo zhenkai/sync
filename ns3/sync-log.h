@@ -27,6 +27,8 @@
 
 #include <ns3/log.h>
 
+#ifdef _DEBUG
+
 #define INIT_LOGGER(name) NS_LOG_COMPONENT_DEFINE(name);
 
 #define _LOG_INFO(x) NS_LOG_INFO(x)
@@ -38,6 +40,17 @@
 #define _LOG_FUNCTION(x) NS_LOG_FUNCTION(x)
 
 #define _LOG_FUNCTION_NOARGS NS_LOG_FUNCTION_NOARGS
+
+#else
+
+#define INIT_LOGGER(name) 
+#define _LOG_INFO(x) 
+#define _LOG_DEBUG(x) 
+#define _LOG_TRACE(x)
+#define _LOG_FUNCTION(x)
+#define _LOG_FUNCTION_NOARGS
+
+#endif
 
 #else
 

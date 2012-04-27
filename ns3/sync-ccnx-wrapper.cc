@@ -108,7 +108,9 @@ int CcnxWrapper::sendInterest (const string &strInterest, const DataCallback &da
   is >> *name;
   
   CcnxInterestHeader interestHeader;
-  interestHeader.SetNonce            (m_rand.GetValue ());
+  uint32_t nonce = m_rand.GetValue ();
+  _LOG_DEBUG ("Nonce: " << nonce);
+  interestHeader.SetNonce            (nonce);
   interestHeader.SetName             (name);
   interestHeader.SetInterestLifetime (Seconds (10000.0)); // really long-lived interests
 

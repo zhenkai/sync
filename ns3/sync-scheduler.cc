@@ -50,7 +50,7 @@ Scheduler::eventWrapper (Event event)
 void
 Scheduler::schedule (const TimeDuration &reltime, Event event, uint32_t label)
 {
-  NS_LOG_DEBUG ("Schedule event for " << (Simulator::Now () +reltime).ToDouble (Time::S) << "s for label " << label);
+  _LOG_DEBUG ("Schedule event for " << (Simulator::Now () +reltime).ToDouble (Time::S) << "s for label " << label);
   
   list< EventId > &eventsForLabel = m_labeledEvents [label];
   list< EventId >::iterator i = eventsForLabel.begin ();
@@ -75,7 +75,7 @@ void
 Scheduler::cancel (uint32_t label)
 {
   list< EventId > &eventsForLabel = m_labeledEvents [label];
-  NS_LOG_DEBUG ("Canceling events for label " << label << " (" << eventsForLabel.size () << " events)");
+  _LOG_DEBUG ("Canceling events for label " << label << " (" << eventsForLabel.size () << " events)");
 
   for (list< EventId >::iterator i = eventsForLabel.begin ();
        i != eventsForLabel.end ();

@@ -20,6 +20,9 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
+#include <ns3/ccnx-pit.h>
+#include <ns3/ccnx.h>
+
 #include "sync-logic.h"
 #include "sync-diff-leaf.h"
 #include "sync-full-leaf.h"
@@ -64,11 +67,11 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   , m_ccnxHandle(new CcnxWrapper())
 #ifndef NS3_MODULE
   , m_randomGenerator (static_cast<unsigned int> (std::time (0)))
-  , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (200,300))
+  , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (500,1000))
   , m_reexpressionJitter (m_randomGenerator, uniform_int<> (0,100))
 #else
   , m_rangeUniformRandom (200,300)
-  , m_reexpressionJitter (0, 100)
+  , m_reexpressionJitter (0,200)
 #endif
 {
 #ifdef _STANDALONE
@@ -81,8 +84,6 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
 #endif
 #endif
 #endif
-
-  _LOG_DEBUG ("syncPrefix");
   
 #ifndef NS3_MODULE
   // In NS3 module these functions are moved to StartApplication method
@@ -177,18 +178,24 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
         {
           _LOG_TRACE ("processSyncInterest (): Digest is zero, adding /state to PIT");
           m_syncInterestTable.insert (interestName + "/state");
+          // _LOG_TRACE (*GetNode ()->GetObject<ns3::Ccnx> ()->GetPit ());
         }
       else
         {
           _LOG_TRACE ("processSyncInterest (): Same state. Adding to PIT");
           m_syncInterestTable.insert (interestName);
+          // _LOG_TRACE (*GetNode ()->GetObject<ns3::Ccnx> ()->GetPit ());
         }
-      
-      // !!! important change !!!
-      m_scheduler.cancel (REEXPRESSING_INTEREST);
-      m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (m_syncInterestReexpress),
-                            bind (&SyncLogic::sendSyncInterest, this),
-                            REEXPRESSING_INTEREST);
+
+      if (m_outstandingInterest == interestName)
+        {
+          _LOG_DEBUG ("Cancelling interest reexpressing 1");
+          // !!! important change !!!
+          m_scheduler.cancel (REEXPRESSING_INTEREST);
+          m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (m_syncInterestReexpress),
+                                bind (&SyncLogic::sendSyncInterest, this),
+                                REEXPRESSING_INTEREST);
+        }
       return;
     }
   
@@ -233,7 +240,7 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
         }
       else
         {
-          m_recentUnknownDigests.insert (DigestTime (digest, TIME_NOW + TIME_SECONDS (m_unknownDigestStoreTime)));
+          // m_recentUnknownDigests.insert (DigestTime (digest, TIME_NOW + TIME_SECONDS (m_unknownDigestStoreTime)));
           
           uint32_t waitDelay = GET_RANDOM (m_rangeUniformRandom);      
           _LOG_DEBUG ("Digest is not in the log. Schedule processing after small delay: " << waitDelay << "ms");
@@ -244,22 +251,24 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
 
           // just in case, re-express our interest (e.g., probably something bad happened)
           
-          m_scheduler.cancel (REEXPRESSING_INTEREST);
-          m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (0),
-                                bind (&SyncLogic::sendSyncInterest, this),
-                                REEXPRESSING_INTEREST);
+          // m_scheduler.cancel (REEXPRESSING_INTEREST);
+          // m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (0),
+          //                       bind (&SyncLogic::sendSyncInterest, this),
+          //                       REEXPRESSING_INTEREST);
         }
     }
   else
     {
-      _LOG_TRACE (">> D " << interestName << "/state" << " (timed processing)");
+      _LOG_TRACE ("                                                                   (timed processing)");
+      // _LOG_TRACE (">> D " << interestName << "/state" << " (timed processing)");
 
-      m_syncInterestTable.remove (interestName + "/state");
-      m_ccnxHandle->publishData (interestName + "/state",
-                                 lexical_cast<string> (m_state),
-                                 m_syncResponseFreshness);
+      // m_syncInterestTable.remove (interestName + "/state");
+      // m_ccnxHandle->publishData (interestName + "/state",
+      //                            lexical_cast<string> (m_state),
+      //                            m_syncResponseFreshness);
 
-      if (m_outstandingInterest == interestName)
+      // exit (1);
+      // if (m_outstandingInterest == interestName)
         {
           m_scheduler.cancel (REEXPRESSING_INTEREST);
           m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (0),
