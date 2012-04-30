@@ -259,13 +259,13 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
     }
   else
     {
-      _LOG_TRACE ("                                                                   (timed processing)");
-      // _LOG_TRACE (">> D " << interestName << "/state" << " (timed processing)");
+      // _LOG_TRACE ("                                                                   (timed processing)");
+      _LOG_TRACE (">> D " << interestName << "/state" << " (timed processing)");
 
-      // m_syncInterestTable.remove (interestName + "/state");
-      // m_ccnxHandle->publishData (interestName + "/state",
-      //                            lexical_cast<string> (m_state),
-      //                            m_syncResponseFreshness);
+      m_syncInterestTable.remove (interestName + "/state");
+      m_ccnxHandle->publishData (interestName + "/state",
+                                 lexical_cast<string> (m_state),
+                                 m_syncResponseFreshness);
 
       // exit (1);
       // if (m_outstandingInterest == interestName)
