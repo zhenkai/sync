@@ -70,8 +70,8 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (500,1000))
   , m_reexpressionJitter (m_randomGenerator, uniform_int<> (0,100))
 #else
-  , m_rangeUniformRandom (200,300)
-  , m_reexpressionJitter (0,200)
+  , m_rangeUniformRandom (200,1000)
+  , m_reexpressionJitter (100,500)
 #endif
 {
 #ifdef _STANDALONE

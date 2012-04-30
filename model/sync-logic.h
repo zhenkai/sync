@@ -157,7 +157,7 @@ private:
   static const int m_unknownDigestStoreTime = 10; // seconds
 #ifdef NS3_MODULE
   static const int m_syncResponseFreshness = 100; // milliseconds
-  static const int m_syncInterestReexpress = 10000; // seconds
+  static const int m_syncInterestReexpress = 10; // seconds
   // don't forget to adjust value in SyncCcnxWrapper
 #else
   static const int m_syncResponseFreshness = 2000;
