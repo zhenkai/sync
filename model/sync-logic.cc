@@ -240,6 +240,10 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
         }
       else
         {
+          bool exists = m_syncInterestTable.remove (interestName);
+          if (exists)
+            return;
+
           // m_recentUnknownDigests.insert (DigestTime (digest, TIME_NOW + TIME_SECONDS (m_unknownDigestStoreTime)));
           
           uint32_t waitDelay = GET_RANDOM (m_rangeUniformRandom);      
@@ -248,7 +252,7 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
           m_scheduler.schedule (TIME_MILLISECONDS (waitDelay),
                                 bind (&SyncLogic::processSyncInterest, this, digest, interestName, true),
                                 DELAYED_INTEREST_PROCESSING);
-
+          
           // just in case, re-express our interest (e.g., probably something bad happened)
           
           // m_scheduler.cancel (REEXPRESSING_INTEREST);
@@ -262,7 +266,7 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
       // _LOG_TRACE ("                                                                   (timed processing)");
       _LOG_TRACE (">> D " << interestName << "/state" << " (timed processing)");
 
-      m_syncInterestTable.remove (interestName + "/state");
+      m_syncInterestTable.remove (interestName);
       m_ccnxHandle->publishData (interestName + "/state",
                                  lexical_cast<string> (m_state),
                                  m_syncResponseFreshness);

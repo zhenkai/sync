@@ -62,12 +62,19 @@ SyncInterestTable::fetchAll ()
 bool
 SyncInterestTable::insert(const string &interest)
 {
+  bool existent = false;
+  
   recursive_mutex::scoped_lock lock (m_mutex);
   TableContainer::iterator it = m_table.find (interest);
   if (it != m_table.end())
-    m_table.erase(it);
+    {
+      existent = true;
+      m_table.erase(it);
+    }
   time_t currentTime = time(0);
   m_table.insert (make_pair(interest, currentTime));
+
+  return existent;
 }
 
 uint32_t
