@@ -51,8 +51,8 @@ INIT_LOGGER ("SyncLogic");
 #define TIME_SECONDS_WITH_JITTER(sec) \
   (TIME_SECONDS (sec) + TIME_MILLISECONDS (GET_RANDOM (m_reexpressionJitter)))
 
-#define TIME_MILLISECONDS_WITH_JITTER(sec) \
-  (TIME_MILLISECONDS (sec) + TIME_MILLISECONDS (GET_RANDOM (m_reexpressionJitter)))
+#define TIME_MILLISECONDS_WITH_JITTER(ms) \
+  (TIME_MILLISECONDS (ms) + TIME_MILLISECONDS (GET_RANDOM (m_reexpressionJitter)))
 
 
 namespace Sync
@@ -370,6 +370,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
   // if state has changed, then it is safe to express a new interest
   if (diffLog->getLeaves ().size () > 0)
     {
+      _LOG_TRACE ("State has changed, expressing a new interest");
       m_scheduler.cancel (REEXPRESSING_INTEREST);
       m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (0),
                             bind (&SyncLogic::sendSyncInterest, this),
@@ -377,6 +378,7 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
     }
   else
     {
+      _LOG_TRACE ("State has not changed, expressing a new interest after " << m_syncResponseFreshness << "ms"); 
       // should not reexpress the same interest. Need at least wait for data lifetime
       // Otherwise we will get immediate reply from the local daemon and there will be 100% utilization
       m_scheduler.cancel (REEXPRESSING_INTEREST);
@@ -392,6 +394,7 @@ SyncLogic::satisfyPendingSyncInterests (DiffStatePtr diffLog)
   vector<string> pis = m_syncInterestTable.fetchAll ();
   if (pis.size () > 0)
     {
+      uint32_t counter = 0;
       stringstream ss;
       ss << *diffLog;
       bool satisfiedOwnInterest = false;
@@ -400,6 +403,7 @@ SyncLogic::satisfyPendingSyncInterests (DiffStatePtr diffLog)
         {
           _LOG_TRACE (">> D " << *ii);
           m_ccnxHandle->publishData (*ii, ss.str(), m_syncResponseFreshness);
+          counter ++;
 
           {
             recursive_mutex::scoped_lock lock (m_stateMutex);
@@ -417,6 +421,7 @@ SyncLogic::satisfyPendingSyncInterests (DiffStatePtr diffLog)
                                 bind (&SyncLogic::sendSyncInterest, this),
                                 REEXPRESSING_INTEREST);
         }
+      _LOG_DEBUG ("Satisfied " << counter << " pending interests");
     }
 }
 
@@ -443,6 +448,8 @@ SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
     //cout << "Add local names" <<endl;
     recursive_mutex::scoped_lock lock (m_stateMutex);
     NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
+
+    _LOG_DEBUG ("addLocalNames (): old state " << *m_state.getDigest ());
 
     SeqNo seqN (session, seq);
     m_state.update(info, seqN);
@@ -491,14 +498,14 @@ SyncLogic::sendSyncInterest ()
 
     m_outstandingInterest = os.str ();
   }
-  
-  m_ccnxHandle->sendInterest (os.str (),
-                              bind (&SyncLogic::processSyncData, this, _1, _2));
 
   m_scheduler.cancel (REEXPRESSING_INTEREST);
   m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (m_syncInterestReexpress),
                         bind (&SyncLogic::sendSyncInterest, this),
                         REEXPRESSING_INTEREST);
+  
+  m_ccnxHandle->sendInterest (os.str (),
+                              bind (&SyncLogic::processSyncData, this, _1, _2));
 }
 
 }
