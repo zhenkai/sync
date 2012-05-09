@@ -94,7 +94,7 @@ public:
    * @param name the data name
    * @param dataBuffer the sync data
    */
-  void processSyncData (const std::string &name, const std::string &dataBuffer);
+  void respondSyncData (const std::string &name, const std::string &dataBuffer);
 
   /**
    * @brief remove a participant's subtree from the sync tree
@@ -118,24 +118,39 @@ private:
   delayedChecksLoop ();
 
   void
-  processSyncInterest (DigestConstPtr digest, const std::string &interestname, bool timedProcessing=false);
+  processSyncInterest (const std::string &name,
+                       DigestConstPtr digest, bool timedProcessing=false);
+
+  void
+  processSyncData (const std::string &name,
+                   DigestConstPtr digest, const std::string &dataBuffer);
   
   void
-  sendSyncInterest ();
-
+  processSyncRecoveryInterest (const std::string &name,
+                               DigestConstPtr digest);
+  
   void 
   insertToDiffLog (DiffStatePtr diff);
 
   void
-  satisfyPendingSyncInterests (DiffStatePtr diff);
+  satisfyPendingSyncInterests (DiffStateConstPtr diff);
 
+  boost::tuple<DigestConstPtr, std::string>
+  convertNameToDigestAndType (const std::string &name);
+
+  void
+  sendSyncInterest ();
+
+  void
+  sendSyncData (const std::string &name,
+                DigestConstPtr digest, StateConstPtr state);
+  
 private:
-  FullState m_state;
+  FullStatePtr m_state;
   DiffStateContainer m_log;
-  UnknownDigestContainer m_recentUnknownDigests;
   boost::recursive_mutex m_stateMutex;
 
-  std::string m_outstandingInterest;
+  std::string m_outstandingInterestName;
   SyncInterestTable m_syncInterestTable;
 
   std::string m_syncPrefix;

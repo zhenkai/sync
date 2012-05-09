@@ -31,16 +31,12 @@
 #include <boost/make_shared.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <vector>
 
 using namespace std;
 using namespace boost;
 
-#ifndef _STANDALONE
 INIT_LOGGER ("SyncLogic");
-#endif
-
 
 #ifdef NS3_MODULE
 #define GET_RANDOM(var) var.GetValue ()
@@ -61,7 +57,9 @@ namespace Sync
 SyncLogic::SyncLogic (const std::string &syncPrefix,
                       LogicUpdateCallback onUpdate,
                       LogicRemoveCallback onRemove)
-  : m_syncPrefix (syncPrefix)
+  : m_state (new FullState)
+  , m_syncInterestTable (TIME_SECONDS (m_syncInterestReexpress))
+  , m_syncPrefix (syncPrefix)
   , m_onUpdate (onUpdate)
   , m_onRemove (onRemove)
   , m_ccnxHandle(new CcnxWrapper())
@@ -73,18 +71,7 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   , m_rangeUniformRandom (200,1000)
   , m_reexpressionJitter (100,500)
 #endif
-{
-#ifdef _STANDALONE
-#ifdef _DEBUG
-#ifdef HAVE_LOG4CXX
-  // _LOG_FUNCTION (syncPrefix);
-  static int id = 0;
-  staticModuleLogger = log4cxx::Logger::getLogger ("SyncLogic." + lexical_cast<string> (id));
-  id ++;
-#endif
-#endif
-#endif
-  
+{ 
 #ifndef NS3_MODULE
   // In NS3 module these functions are moved to StartApplication method
   
@@ -99,9 +86,6 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
 
 SyncLogic::~SyncLogic ()
 {
-  // _LOG_FUNCTION (this);
-  // cout << "SyncLogic::~SyncLogic ()" << endl;
-
   m_ccnxHandle.reset ();
 }
 
@@ -130,72 +114,101 @@ SyncLogic::StopApplication ()
 }
 #endif
 
-
-void
-SyncLogic::respondSyncInterest (const string &interest)
+/**
+ * Two types of intersts
+ *
+ * Normal name:    .../<hash>  
+ * Recovery name:  .../recovery/<hash>
+ */
+boost::tuple<DigestConstPtr, std::string>
+SyncLogic::convertNameToDigestAndType (const std::string &name)
 {
-  _LOG_TRACE ("<< I " << interest);
-  //cout << "Respond Sync Interest" << endl;
-  string hash = interest.substr(interest.find_last_of("/") + 1);
-  // cout << "Received Sync Interest: " << hash << endl;
+  BOOST_ASSERT (name.find (m_syncPrefix) == 0);
+
+  string hash = name.substr (m_syncPrefix.size (), name.size ()-m_syncPrefix.size ());
+  string interestType = "normal";
   
-  DigestPtr digest = make_shared<Digest> ();
-  try
+  size_t pos = hash.find ('/');
+  if (pos != string::npos)
     {
-      istringstream is (hash);
-      is >> *digest;
-    }
-  catch (Error::DigestCalculationError &e)
-    {
-      // log error. ignoring it for now, later we should log it
-      return;
+      hash         = name.substr (pos + 1);
+      interestType = name.substr (0, pos);
     }
 
-  processSyncInterest (digest, interest, false);
+  DigestPtr digest = make_shared<Digest> ();
+  istringstream is (hash);
+  is >> *digest;
+
+  return make_tuple (digest, interestType);
 }
 
 void
-SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &interestName, bool timedProcessing/*=false*/)
+SyncLogic::respondSyncInterest (const string &name)
+{
+  try
+    {
+      _LOG_TRACE ("<< I " << name);
+
+      DigestConstPtr digest;
+      string type;
+      tie (digest, type) = convertNameToDigestAndType (name);
+
+      if (type == "normal") // kind of ineffective...
+        {
+          processSyncInterest (name, digest);
+        }
+      else if (type == "recovery") 
+        {
+          processSyncRecoveryInterest (name, digest);
+        }
+    }
+  catch (Error::DigestCalculationError &e)
+    {
+      _LOG_TRACE ("Something fishy happened...");
+      // log error. ignoring it for now, later we should log it
+      return ;
+    }
+}
+
+void
+SyncLogic::respondSyncData (const std::string &name, const std::string &dataBuffer)
+{
+  try
+    {
+      _LOG_TRACE ("<< D " << name);
+  
+      DigestConstPtr digest;
+      string type;
+      tie (digest, type) = convertNameToDigestAndType (name);
+
+      processSyncData (name, digest, dataBuffer);
+    }
+  catch (Error::DigestCalculationError &e)
+    {
+      _LOG_TRACE ("Something fishy happened...");
+      // log error. ignoring it for now, later we should log it
+      return;
+    }
+      
+}
+
+
+void
+SyncLogic::processSyncInterest (const std::string &name, DigestConstPtr digest, bool timedProcessing/*=false*/)
 {
   recursive_mutex::scoped_lock lock (m_stateMutex);
 
   // Special case when state is not empty and we have received request with zero-root digest
-  if (digest->isZero () && !m_state.getDigest()->isZero ())
+  if (digest->isZero () && !m_state->getDigest()->isZero ())
     {
-      _LOG_TRACE (">> D " << interestName << "/state" << " (zero)");
-
-      m_syncInterestTable.remove (interestName + "/state");
-      m_ccnxHandle->publishData (interestName + "/state",
-                                 lexical_cast<string> (m_state),
-                                 m_syncResponseFreshness);
+      sendSyncData (name, digest, m_state);
       return;
     }
 
-  if (*m_state.getDigest() == *digest)
+  if (*m_state->getDigest() == *digest)
     {
-      // cout << interestName << "\n";
-      if (digest->isZero ())
-        {
-          _LOG_TRACE ("processSyncInterest (): Digest is zero, adding /state to PIT");
-          m_syncInterestTable.insert (interestName + "/state");
-          // _LOG_TRACE (*GetNode ()->GetObject<ns3::Ccnx> ()->GetPit ());
-        }
-      else
-        {
-          _LOG_TRACE ("processSyncInterest (): Same state. Adding to PIT");
-          m_syncInterestTable.insert (interestName);
-          // _LOG_TRACE (*GetNode ()->GetObject<ns3::Ccnx> ()->GetPit ());
-        }
-
-      if (m_outstandingInterest == interestName)
-        {
-          _LOG_DEBUG ("Cancelling interest reexpressing 1");
-          // !!! important change !!!
-          m_scheduler.cancel (REEXPRESSING_INTEREST);
-          m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (m_syncInterestReexpress),
-                                bind (&SyncLogic::sendSyncInterest, this),
-                                REEXPRESSING_INTEREST);
-        }
+      _LOG_TRACE ("processSyncInterest (): Same state. Adding to PIT");
+      m_syncInterestTable.insert (digest, name);
       return;
     }
   
@@ -204,113 +217,63 @@ SyncLogic::processSyncInterest (DigestConstPtr digest, const std::string &intere
   if (stateInDiffLog != m_log.end ())
   {
     DiffStateConstPtr stateDiff = (*stateInDiffLog)->diff ();
-    // string state = lexical_cast<string> (*stateDiff);
-    // erase_all (state, "\n");
-    // _LOG_TRACE (">> D " << interestName << ", state: " << state);
-    // _LOG_DEBUG ("Log size: " << m_log.size ());
 
-    // BOOST_FOREACH (DiffStateConstPtr ds, m_log.get<sequenced> ())
-    //   {
-    //     string state = lexical_cast<string> (*ds);
-    //     erase_all (state, "\n");
-    //     _LOG_DEBUG ("   " << state << ", " << *ds->getDigest ());
-    //   }
-
-    m_syncInterestTable.remove (interestName);
-    _LOG_DEBUG (">> D" << interestName);
-    m_ccnxHandle->publishData (interestName,
-                               lexical_cast<string> (*stateDiff),
-                               m_syncResponseFreshness);
-    if (m_outstandingInterest == interestName)
-      {
-        m_scheduler.cancel (REEXPRESSING_INTEREST);
-        m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (0),
-                              bind (&SyncLogic::sendSyncInterest, this),
-                              REEXPRESSING_INTEREST);
-      }
+    sendSyncData (name, digest, stateDiff);
     return;
   }
 
   if (!timedProcessing)
     {
-      UnknownDigestContainer::index<hashed>::type::iterator previousUnknownDigest = m_recentUnknownDigests.get<hashed> ().find (digest);
-      if (previousUnknownDigest != m_recentUnknownDigests.get<hashed> ().end ())
+      bool exists = m_syncInterestTable.insert (digest, name);
+      if (exists) // somebody else replied, so restart random-game timer
         {
-          _LOG_DEBUG ("Digest is not in the log, but we have already seen it.                      (Don't do anything)");
+          _LOG_DEBUG ("Unknown digest, but somebody may have already replied, so restart our timer");
+          m_scheduler.cancel (DELAYED_INTEREST_PROCESSING);
         }
-      else
-        {
-          bool exists = m_syncInterestTable.remove (interestName);
-          if (exists)
-            return;
 
-          // m_recentUnknownDigests.insert (DigestTime (digest, TIME_NOW + TIME_SECONDS (m_unknownDigestStoreTime)));
-          
-          uint32_t waitDelay = GET_RANDOM (m_rangeUniformRandom);      
-          _LOG_DEBUG ("Digest is not in the log. Schedule processing after small delay: " << waitDelay << "ms");
+      uint32_t waitDelay = GET_RANDOM (m_rangeUniformRandom);      
+      _LOG_DEBUG ("Digest is not in the log. Schedule processing after small delay: " << waitDelay << "ms");
 
-          m_scheduler.schedule (TIME_MILLISECONDS (waitDelay),
-                                bind (&SyncLogic::processSyncInterest, this, digest, interestName, true),
-                                DELAYED_INTEREST_PROCESSING);
-          
-          // just in case, re-express our interest (e.g., probably something bad happened)
-          
-          // m_scheduler.cancel (REEXPRESSING_INTEREST);
-          // m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (0),
-          //                       bind (&SyncLogic::sendSyncInterest, this),
-          //                       REEXPRESSING_INTEREST);
-        }
+      m_scheduler.schedule (TIME_MILLISECONDS (waitDelay),
+                            bind (&SyncLogic::processSyncInterest, this, name, digest, true),
+                            DELAYED_INTEREST_PROCESSING);
     }
   else
     {
-      // _LOG_TRACE ("                                                                   (timed processing)");
-      _LOG_TRACE (">> D " << interestName << "/state" << " (timed processing)");
-
-      m_syncInterestTable.remove (interestName);
-      m_ccnxHandle->publishData (interestName + "/state",
-                                 lexical_cast<string> (m_state),
-                                 m_syncResponseFreshness);
-
-      // exit (1);
-      // if (m_outstandingInterest == interestName)
-        {
-          m_scheduler.cancel (REEXPRESSING_INTEREST);
-          m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (0),
-                                bind (&SyncLogic::sendSyncInterest, this),
-                                REEXPRESSING_INTEREST);
-        }
+      BOOST_ASSERT (false); // not implemented yet
+      
+      // _LOG_TRACE (">> D " << *digest << " (timed processing)");
     }
 }
 
 void
-SyncLogic::processSyncData (const string &name, const string &dataBuffer)
+SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, const string &dataBuffer)
 {
-  _LOG_TRACE ("<< D " << name);
   DiffStatePtr diffLog = make_shared<DiffState> ();
   
   try
     {
       recursive_mutex::scoped_lock lock (m_stateMutex);
 
-      string last = name.substr(name.find_last_of("/") + 1);
-      istringstream ss (dataBuffer);
+      m_syncInterestTable.remove (name); // Remove satisfied interest from PIT
 
-      m_syncInterestTable.remove (name); // just in case, remove both interests from our interest table. No reason to keep them there
-      if (last == "state")
+      DiffState diff;
+      istringstream ss (dataBuffer);
+      ss >> diff;
+      BOOST_FOREACH (LeafConstPtr leaf, diff.getLeaves().get<ordered>())
         {
-          m_syncInterestTable.remove (name.substr(0, name.find_last_of("/")));
-          
-          FullState full;
-          ss >> full;
-          BOOST_FOREACH (LeafConstPtr leaf, full.getLeaves()) // order doesn't matter
+          DiffLeafConstPtr diffLeaf = dynamic_pointer_cast<const DiffLeaf> (leaf);
+          BOOST_ASSERT (diffLeaf != 0);
+
+          NameInfoConstPtr info = diffLeaf->getInfo();
+          if (diffLeaf->getOperation() == UPDATE)
             {
-              NameInfoConstPtr info = leaf->getInfo ();
-              SeqNo seq = leaf->getSeq ();
+              SeqNo seq = diffLeaf->getSeq();
 
               bool inserted = false;
               bool updated = false;
               SeqNo oldSeq;
-              tie (inserted, updated, oldSeq) = m_state.update (info, seq);
+              tie (inserted, updated, oldSeq) = m_state->update (info, seq);
 
               if (inserted || updated)
                 {
@@ -318,44 +281,17 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
                   m_onUpdate (info->toString (), seq, oldSeq);
                 }
             }
-        }
-      else
-        {
-          DiffState diff;
-          ss >> diff;
-          BOOST_FOREACH (LeafConstPtr leaf, diff.getLeaves().get<ordered>())
+          else if (diffLeaf->getOperation() == REMOVE)
             {
-              DiffLeafConstPtr diffLeaf = dynamic_pointer_cast<const DiffLeaf> (leaf);
-              BOOST_ASSERT (diffLeaf != 0);
-
-              NameInfoConstPtr info = diffLeaf->getInfo();
-              if (diffLeaf->getOperation() == UPDATE)
+              if (m_state->remove (info))
                 {
-                  SeqNo seq = diffLeaf->getSeq();
-
-                  bool inserted = false;
-                  bool updated = false;
-                  SeqNo oldSeq;
-                  tie (inserted, updated, oldSeq) = m_state.update (info, seq);
-
-                  if (inserted || updated)
-                    {
-                      diffLog->update (info, seq);
-                      m_onUpdate (info->toString (), seq, oldSeq);
-                    }
+                  diffLog->remove (info);
+                  m_onRemove (info->toString ());
                 }
-              else if (diffLeaf->getOperation() == REMOVE)
-                {
-                  if (m_state.remove (info))
-                    {
-                      diffLog->remove (info);
-                      m_onRemove (info->toString ());
-                    }
-                }
-              else
-                {
-                  BOOST_ASSERT (false); // just in case
-                }
+            }
+          else
+            {
+              BOOST_ASSERT (false); // just in case
             }
         }
 
@@ -367,77 +303,55 @@ SyncLogic::processSyncData (const string &name, const string &dataBuffer)
       // don't do anything
     }
 
+  BOOST_ASSERT (diffLog->getLeaves ().size () > 0);
+
+  satisfyPendingSyncInterests (diffLog); // if there are interests in PIT, there is a point to satisfy them using new state
+  
   // if state has changed, then it is safe to express a new interest
-  if (diffLog->getLeaves ().size () > 0)
-    {
-      _LOG_TRACE ("State has changed, expressing a new interest");
-      m_scheduler.cancel (REEXPRESSING_INTEREST);
-      m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (0),
-                            bind (&SyncLogic::sendSyncInterest, this),
-                            REEXPRESSING_INTEREST);
-    }
-  else
-    {
-      _LOG_TRACE ("State has not changed, expressing a new interest after " << m_syncResponseFreshness << "ms"); 
-      // should not reexpress the same interest. Need at least wait for data lifetime
-      // Otherwise we will get immediate reply from the local daemon and there will be 100% utilization
-      m_scheduler.cancel (REEXPRESSING_INTEREST);
-      m_scheduler.schedule (TIME_MILLISECONDS_WITH_JITTER (m_syncResponseFreshness),
-                            bind (&SyncLogic::sendSyncInterest, this),
-                            REEXPRESSING_INTEREST);
-    }
+  m_scheduler.cancel (REEXPRESSING_INTEREST);
+  m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (0),
+                        bind (&SyncLogic::sendSyncInterest, this),
+                        REEXPRESSING_INTEREST);
 }
 
 void
-SyncLogic::satisfyPendingSyncInterests (DiffStatePtr diffLog)
+SyncLogic::processSyncRecoveryInterest (const std::string &name, DigestConstPtr digest)
 {
-  vector<string> pis = m_syncInterestTable.fetchAll ();
-  if (pis.size () > 0)
+  recursive_mutex::scoped_lock lock (m_stateMutex);
+  
+  DiffStateContainer::iterator stateInDiffLog = m_log.find (digest);
+
+  if (stateInDiffLog == m_log.end ()) return;
+
+  sendSyncData (name, digest, m_state);
+}
+
+void
+SyncLogic::satisfyPendingSyncInterests (DiffStateConstPtr diffLog)
+{
+  uint32_t counter = 0;
+  while (m_syncInterestTable.size () > 0)
     {
-      uint32_t counter = 0;
-      stringstream ss;
-      ss << *diffLog;
-      bool satisfiedOwnInterest = false;
+      Interest interest = m_syncInterestTable.pop ();
       
-      for (vector<string>::iterator ii = pis.begin(); ii != pis.end(); ++ii)
-        {
-          _LOG_TRACE (">> D " << *ii);
-          m_ccnxHandle->publishData (*ii, ss.str(), m_syncResponseFreshness);
-          counter ++;
-
-          {
-            recursive_mutex::scoped_lock lock (m_stateMutex);
-            // _LOG_DEBUG (*ii << " == " << m_outstandingInterest << " = " << (*ii == m_outstandingInterest));
-            satisfiedOwnInterest = satisfiedOwnInterest || (*ii == m_outstandingInterest) || (*ii == (m_outstandingInterest + "/state"));
-          }
-        }
-
-      if (satisfiedOwnInterest)
-        {
-          _LOG_DEBUG ("Have satisfied our own interest. Scheduling interest reexpression");
-          // we need to reexpress interest only if we satisfied our own interest
-          m_scheduler.cancel (REEXPRESSING_INTEREST);
-          m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (0),
-                                bind (&SyncLogic::sendSyncInterest, this),
-                                REEXPRESSING_INTEREST);
-        }
-      _LOG_DEBUG ("Satisfied " << counter << " pending interests");
+      _LOG_TRACE (">> D " << interest.m_name);
+      sendSyncData (interest.m_name, interest.m_digest, diffLog);
+      counter ++;
     }
+  _LOG_DEBUG ("Satisfied " << counter << " pending interests");
 }
 
 void
 SyncLogic::insertToDiffLog (DiffStatePtr diffLog) 
 {
-  //cout << "Process Pending Interests" <<endl;
-  diffLog->setDigest (m_state.getDigest());  
+  diffLog->setDigest (m_state->getDigest());  
   if (m_log.size () > 0)
     {
       m_log.get<sequenced> ().front ()->setNext (diffLog);
     }
-  m_log.erase (m_state.getDigest()); // remove diff state with the same digest.  next pointers are still valid
+  m_log.erase (m_state->getDigest()); // remove diff state with the same digest.  next pointers are still valid
   /// @todo Optimization
   m_log.get<sequenced> ().push_front (diffLog);
-  // _LOG_DEBUG (*diffLog->getDigest () << " " << m_log.size ());
 }
 
 void
@@ -449,12 +363,12 @@ SyncLogic::addLocalNames (const string &prefix, uint32_t session, uint32_t seq)
     recursive_mutex::scoped_lock lock (m_stateMutex);
     NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
 
-    _LOG_DEBUG ("addLocalNames (): old state " << *m_state.getDigest ());
+    _LOG_DEBUG ("addLocalNames (): old state " << *m_state->getDigest ());
 
     SeqNo seqN (session, seq);
-    m_state.update(info, seqN);
+    m_state->update(info, seqN);
 
-    _LOG_DEBUG ("addLocalNames (): new state " << *m_state.getDigest ());
+    _LOG_DEBUG ("addLocalNames (): new state " << *m_state->getDigest ());
     
     diff = make_shared<DiffState>();
     diff->update(info, seqN);
@@ -472,7 +386,7 @@ SyncLogic::remove(const string &prefix)
   {
     recursive_mutex::scoped_lock lock (m_stateMutex);
     NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
-    m_state.remove(info);	
+    m_state->remove(info);	
 
     diff = make_shared<DiffState>();
     diff->remove(info);
@@ -489,14 +403,11 @@ SyncLogic::sendSyncInterest ()
   ostringstream os;
 
   {
-    // cout << "Sending Sync Interest" << endl;
     recursive_mutex::scoped_lock lock (m_stateMutex);
 
-    os << m_syncPrefix << "/" << *m_state.getDigest();
-
+    os << m_syncPrefix << "/" << *m_state->getDigest();
+    m_outstandingInterestName = os.str ();
     _LOG_TRACE (">> I " << os.str ());
-
-    m_outstandingInterest = os.str ();
   }
 
   m_scheduler.cancel (REEXPRESSING_INTEREST);
@@ -505,7 +416,31 @@ SyncLogic::sendSyncInterest ()
                         REEXPRESSING_INTEREST);
   
   m_ccnxHandle->sendInterest (os.str (),
-                              bind (&SyncLogic::processSyncData, this, _1, _2));
+                              bind (&SyncLogic::respondSyncData, this, _1, _2));
 }
+
+void
+SyncLogic::sendSyncData (const std::string &name, DigestConstPtr digest, StateConstPtr state)
+{
+
+  // sending
+
+  bool satisfiedOwnInterest = false;
+  {
+    recursive_mutex::scoped_lock lock (m_stateMutex);
+    satisfiedOwnInterest = (m_outstandingInterestName == name);
+  }
+  
+  if (satisfiedOwnInterest)
+    {
+      _LOG_TRACE ("Satisfied our own Interest. Re-expressing (hopefully with a new digest)");
+      
+      m_scheduler.cancel (REEXPRESSING_INTEREST);
+      m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (0),
+                            bind (&SyncLogic::sendSyncInterest, this),
+                            REEXPRESSING_INTEREST);
+    }
+}
+
 
 }

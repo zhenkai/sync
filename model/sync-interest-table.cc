@@ -30,9 +30,10 @@ INIT_LOGGER ("SyncInterestTable");
 namespace Sync
 {
 
-SyncInterestTable::SyncInterestTable ()
+SyncInterestTable::SyncInterestTable (TimeDuration lifetime)
+  : m_entryLifetime (lifetime)
 {
-  m_scheduler.schedule (TIME_SECONDS (4),
+  m_scheduler.schedule (TIME_SECONDS (m_checkPeriod),
                         bind (&SyncInterestTable::expireInterests, this),
                         0);
 }
@@ -41,38 +42,32 @@ SyncInterestTable::~SyncInterestTable ()
 {
 }
 
-vector<string>
-SyncInterestTable::fetchAll ()
+Interest
+SyncInterestTable::pop ()
 {
   expireInterests ();
   recursive_mutex::scoped_lock lock (m_mutex);
-  
-  vector<string> entries;
-  for (unordered_map<string, time_t>::iterator it = m_table.begin();
-       it != m_table.end();
-       ++it)
-    {
-      entries.push_back(it->first);
-    }
-  m_table.clear ();
 
-  return entries;
+  BOOST_ASSERT (m_table.size () != 0);
+  Interest ret = *m_table.begin ();
+  m_table.erase (m_table.begin ());
+
+  return ret;
 }
 
 bool
-SyncInterestTable::insert(const string &interest)
+SyncInterestTable::insert (DigestConstPtr digest, const string &name)
 {
   bool existent = false;
   
   recursive_mutex::scoped_lock lock (m_mutex);
-  TableContainer::iterator it = m_table.find (interest);
+  InterestContainer::index<named>::type::iterator it = m_table.get<named> ().find (name);
   if (it != m_table.end())
     {
       existent = true;
-      m_table.erase(it);
+      m_table.erase (it);
     }
-  time_t currentTime = time(0);
-  m_table.insert (make_pair(interest, currentTime));
+  m_table.insert (Interest (digest, name));
 
   return existent;
 }
@@ -85,42 +80,56 @@ SyncInterestTable::size () const
 }
 
 bool
-SyncInterestTable::remove (const std::string &interest)
+SyncInterestTable::remove (const string &name)
 {
   recursive_mutex::scoped_lock lock (m_mutex);
-  TableContainer::iterator item = m_table.find (interest);
-  if (item != m_table.end ())
+
+  InterestContainer::index<named>::type::iterator item = m_table.get<named> ().find (name);
+  if (item != m_table.get<named> ().end ())
     {
-      m_table.erase (item);
+      m_table.get<named> ().erase (name);
+      return true;
+    }
+
+  return false;
+}
+
+bool
+SyncInterestTable::remove (DigestConstPtr digest)
+{
+  recursive_mutex::scoped_lock lock (m_mutex);
+  InterestContainer::index<hashed>::type::iterator item = m_table.get<hashed> ().find (digest);
+  if (item != m_table.get<hashed> ().end ())
+    {
+      m_table.get<hashed> ().erase (digest); // erase all records associated with the digest
       return true;
     }
   return false;
 }
-
 
 void SyncInterestTable::expireInterests ()
 { 
   recursive_mutex::scoped_lock lock (m_mutex);
 
   uint32_t count = 0;
-  time_t currentTime = time(0);
-  TableContainer::iterator it = m_table.begin (); 
-  while (it != m_table.end())
+  TimeAbsolute expireTime = TIME_NOW - m_entryLifetime;
+  
+  while (m_table.size () > 0)
     {
-    time_t timestamp = it->second;
-    _LOG_DEBUG ("expireInterests (): " << timestamp << ", " << currentTime);
-    if (currentTime - timestamp > m_checkPeriod)
-      {
-        it = m_table.erase (it);
-        count ++;
-      }
-    else
-      ++it;
+      InterestContainer::index<timed>::type::iterator item = m_table.get<timed> ().begin ();
+      
+      if (item->m_time < expireTime)
+        {
+          m_table.get<timed> ().erase (item);
+          count ++;
+        }
+      else
+        break;
   }
 
   _LOG_DEBUG ("expireInterests (): expired " << count);
   
-  m_scheduler.schedule (TIME_SECONDS (4),
+  m_scheduler.schedule (TIME_SECONDS (m_checkPeriod),
                         bind (&SyncInterestTable::expireInterests, this),
                         0);
 }

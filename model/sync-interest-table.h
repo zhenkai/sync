@@ -22,16 +22,18 @@
 
 #ifndef SYNC_INTEREST_TABLE_H
 #define SYNC_INTEREST_TABLE_H
+
 #include <string>
 #include <vector>
-#include <boost/unordered_map.hpp>
-#include <boost/unordered_set.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include <ctime>
 #include "sync-scheduler.h"
+#include "sync-digest.h"
+#include "sync-interest-container.h"
 
 namespace Sync {
+
 
 /**
  * \ingroup sync
@@ -42,7 +44,7 @@ namespace Sync {
 class SyncInterestTable
 {
 public:
-  SyncInterestTable ();
+  SyncInterestTable (TimeDuration lifetime);
   ~SyncInterestTable ();
 
   /**
@@ -50,19 +52,25 @@ public:
    * timestamp
    */
   bool
-  insert (const std::string &interest);
+  insert (DigestConstPtr interest, const std::string &name);
 
   /**
-   * @brief Remove interest (e.g., when it was satisfied)
+   * @brief Remove interest by digest (e.g., when it was satisfied)
    */
   bool
-  remove (const std::string &interest);
+  remove (DigestConstPtr interest);
 
   /**
-   * @brief fetch all Interests and clear the table
+   * @brief Remove interest by name (e.g., when it was satisfied)
    */
-  std::vector<std::string>
-  fetchAll ();
+  bool
+  remove (const std::string &name);
+  
+  /**
+   * @brief pop a non-expired Interest from PIT
+   */
+  Interest
+  pop ();
 
   uint32_t
   size () const;
@@ -75,10 +83,10 @@ private:
   expireInterests ();
 
 private:
-  typedef boost::unordered_map<std::string, time_t> TableContainer;
-  
-  static const int m_checkPeriod = 4;
-  TableContainer m_table; // pit entries
+  static const int m_checkPeriod = 4; // seconds
+
+  TimeDuration m_entryLifetime;
+  InterestContainer m_table;
 
   Scheduler m_scheduler;
   mutable boost::recursive_mutex m_mutex;

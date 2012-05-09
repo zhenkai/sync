@@ -34,6 +34,10 @@
  */
 namespace Sync {
 
+class State;
+typedef boost::shared_ptr<State> StatePtr;
+typedef boost::shared_ptr<State> StateConstPtr;
+
 /**
  * \ingroup sync
  * @brief Container for state leaves and definition of the abstract interface to work with State objects
