@@ -126,8 +126,10 @@ SyncLogic::convertNameToDigestAndType (const std::string &name)
   BOOST_ASSERT (name.find (m_syncPrefix) == 0);
 
   string hash = name.substr (m_syncPrefix.size (), name.size ()-m_syncPrefix.size ());
+  if (hash[0] == '/')
+    hash = hash.substr (1, hash.size ()-1);
   string interestType = "normal";
-  
+
   size_t pos = hash.find ('/');
   if (pos != string::npos)
     {
@@ -299,19 +301,24 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
     }
   catch (Error::SyncXmlDecodingFailure &e)
     {
+      _LOG_TRACE ("Something really fishy happened during state decoding " <<
+                  diagnostic_information (e));
       diffLog.reset ();
       // don't do anything
     }
 
-  BOOST_ASSERT (diffLog->getLeaves ().size () > 0);
+  if (diffLog != 0)
+    {
+      BOOST_ASSERT (diffLog->getLeaves ().size () > 0);
 
-  satisfyPendingSyncInterests (diffLog); // if there are interests in PIT, there is a point to satisfy them using new state
+      satisfyPendingSyncInterests (diffLog); // if there are interests in PIT, there is a point to satisfy them using new state
   
-  // if state has changed, then it is safe to express a new interest
-  m_scheduler.cancel (REEXPRESSING_INTEREST);
-  m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (0),
-                        bind (&SyncLogic::sendSyncInterest, this),
-                        REEXPRESSING_INTEREST);
+      // if state has changed, then it is safe to express a new interest
+      m_scheduler.cancel (REEXPRESSING_INTEREST);
+      m_scheduler.schedule (TIME_SECONDS_WITH_JITTER (0),
+                            bind (&SyncLogic::sendSyncInterest, this),
+                            REEXPRESSING_INTEREST);
+    }
 }
 
 void
@@ -422,9 +429,12 @@ SyncLogic::sendSyncInterest ()
 void
 SyncLogic::sendSyncData (const std::string &name, DigestConstPtr digest, StateConstPtr state)
 {
-
   // sending
+  m_ccnxHandle->publishData (name,
+                             lexical_cast<string> (*state),
+                             m_syncResponseFreshness); // in NS-3 it doesn't have any effect... yet
 
+  // checking if our own interest got satisfied
   bool satisfiedOwnInterest = false;
   {
     recursive_mutex::scoped_lock lock (m_stateMutex);
