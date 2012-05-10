@@ -142,6 +142,9 @@ private:
   sendSyncInterest ();
 
   void
+  sendSyncRecoveryInterests (DigestConstPtr digest);
+
+  void
   sendSyncData (const std::string &name,
                 DigestConstPtr digest, StateConstPtr state);
   
@@ -182,7 +185,8 @@ private:
   enum EventLabels
     {
       DELAYED_INTEREST_PROCESSING = 1,
-      REEXPRESSING_INTEREST = 2
+      REEXPRESSING_INTEREST = 2,
+      REEXPRESSING_RECOVERY_INTEREST = 3
     };
 
 #ifdef _DEBUG

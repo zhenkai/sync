@@ -133,9 +133,11 @@ SyncLogic::convertNameToDigestAndType (const std::string &name)
   size_t pos = hash.find ('/');
   if (pos != string::npos)
     {
-      hash         = name.substr (pos + 1);
-      interestType = name.substr (0, pos);
+      interestType = hash.substr (0, pos);
+      hash         = hash.substr (pos + 1);
     }
+
+  _LOG_TRACE (hash << ", " << interestType);
 
   DigestPtr digest = make_shared<Digest> ();
   istringstream is (hash);
@@ -183,7 +185,15 @@ SyncLogic::respondSyncData (const std::string &name, const std::string &dataBuff
       string type;
       tie (digest, type) = convertNameToDigestAndType (name);
 
-      processSyncData (name, digest, dataBuffer);
+      if (type == "normal")
+        {
+          processSyncData (name, digest, dataBuffer);
+        }
+      else
+        {
+          m_scheduler.cancel (REEXPRESSING_RECOVERY_INTEREST);
+          processSyncData (name, digest, dataBuffer);
+        }
     }
   catch (Error::DigestCalculationError &e)
     {
@@ -191,7 +201,6 @@ SyncLogic::respondSyncData (const std::string &name, const std::string &dataBuff
       // log error. ignoring it for now, later we should log it
       return;
     }
-      
 }
 
 
@@ -242,9 +251,8 @@ SyncLogic::processSyncInterest (const std::string &name, DigestConstPtr digest, 
     }
   else
     {
-      BOOST_ASSERT (false); // not implemented yet
-      
-      // _LOG_TRACE (">> D " << *digest << " (timed processing)");
+      _LOG_TRACE ("                                                      (timed processing)");
+      sendSyncRecoveryInterests (digest);
     }
 }
 
@@ -307,11 +315,12 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
       // don't do anything
     }
 
-  if (diffLog != 0)
+  if (diffLog != 0 && diffLog->getLeaves ().size () > 0)
     {
-      BOOST_ASSERT (diffLog->getLeaves ().size () > 0);
+      // Do it only if everything went fine and state changed
 
-      satisfyPendingSyncInterests (diffLog); // if there are interests in PIT, there is a point to satisfy them using new state
+      // this is kind of wrong
+      // satisfyPendingSyncInterests (diffLog); // if there are interests in PIT, there is a point to satisfy them using new state
   
       // if state has changed, then it is safe to express a new interest
       m_scheduler.cancel (REEXPRESSING_INTEREST);
@@ -328,7 +337,11 @@ SyncLogic::processSyncRecoveryInterest (const std::string &name, DigestConstPtr 
   
   DiffStateContainer::iterator stateInDiffLog = m_log.find (digest);
 
-  if (stateInDiffLog == m_log.end ()) return;
+  if (stateInDiffLog == m_log.end ())
+    {
+      _LOG_TRACE ("Could not find " << *digest << " in digest log");
+      return;
+    }
 
   sendSyncData (name, digest, m_state);
 }
@@ -336,16 +349,41 @@ SyncLogic::processSyncRecoveryInterest (const std::string &name, DigestConstPtr 
 void
 SyncLogic::satisfyPendingSyncInterests (DiffStateConstPtr diffLog)
 {
-  uint32_t counter = 0;
-  while (m_syncInterestTable.size () > 0)
+  DiffStatePtr fullStateLog = make_shared<DiffState> ();
+  {
+    recursive_mutex::scoped_lock lock (m_stateMutex);
+    BOOST_FOREACH (LeafConstPtr leaf, m_state->getLeaves ()/*.get<timed> ()*/)
+      {
+        fullStateLog->update (leaf->getInfo (), leaf->getSeq ());
+        /// @todo Impose limit on how many state info should be send out
+      }
+  }
+  
+  try
     {
-      Interest interest = m_syncInterestTable.pop ();
-      
-      _LOG_TRACE (">> D " << interest.m_name);
-      sendSyncData (interest.m_name, interest.m_digest, diffLog);
-      counter ++;
+      uint32_t counter = 0;
+      while (m_syncInterestTable.size () > 0)
+        {
+          Interest interest = m_syncInterestTable.pop ();
+
+          if (!interest.m_unknown)
+            {
+              _LOG_TRACE (">> D " << interest.m_name);
+              sendSyncData (interest.m_name, interest.m_digest, diffLog);
+            }
+          else
+            {
+              _LOG_TRACE (">> D (unknown)" << interest.m_name);
+              sendSyncData (interest.m_name, interest.m_digest, fullStateLog);
+            }
+          counter ++;
+        }
+      _LOG_DEBUG ("Satisfied " << counter << " pending interests");
     }
-  _LOG_DEBUG ("Satisfied " << counter << " pending interests");
+  catch (Error::InterestTableIsEmpty &e)
+    {
+      // ok. not really an error
+    }
 }
 
 void
@@ -427,8 +465,27 @@ SyncLogic::sendSyncInterest ()
 }
 
 void
+SyncLogic::sendSyncRecoveryInterests (DigestConstPtr digest)
+{
+  ostringstream os;
+  os << m_syncPrefix << "/recovery/" << *digest;
+  _LOG_TRACE (">> I " << os.str ());
+
+  // no need for retransmission
+  // m_scheduler.cancel (REEXPRESSING_RECOVERY_INTEREST);
+  // m_scheduler.schedule (TIME_SECONDS_WITH_JITTER(1.0),//TIME_SECONDS_WITH_JITTER (m_syncInterestReexpress),
+  //                       bind (&SyncLogic::sendSyncRecoveryInterests, this, digest),
+  //                       REEXPRESSING_RECOVERY_INTEREST);
+
+  m_ccnxHandle->sendInterest (os.str (),
+                              bind (&SyncLogic::respondSyncData, this, _1, _2));
+}
+
+
+void
 SyncLogic::sendSyncData (const std::string &name, DigestConstPtr digest, StateConstPtr state)
 {
+  _LOG_TRACE (">> D " << name);
   // sending
   m_ccnxHandle->publishData (name,
                              lexical_cast<string> (*state),

@@ -48,7 +48,9 @@ SyncInterestTable::pop ()
   expireInterests ();
   recursive_mutex::scoped_lock lock (m_mutex);
 
-  BOOST_ASSERT (m_table.size () != 0);
+  if (m_table.size () == 0)
+    BOOST_THROW_EXCEPTION (Error::InterestTableIsEmpty ());
+
   Interest ret = *m_table.begin ();
   m_table.erase (m_table.begin ());
 

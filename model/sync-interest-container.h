@@ -42,16 +42,18 @@ namespace Sync {
 
 struct Interest
 {
-  Interest (DigestConstPtr digest, const std::string &name)
+  Interest (DigestConstPtr digest, const std::string &name, bool unknown=false)
   : m_digest (digest)
   , m_name (name)
   , m_time (TIME_NOW)
+  , m_unknown (unknown)
   {
   }
   
   DigestConstPtr m_digest;
   std::string    m_name;
   TimeAbsolute   m_time;
+  bool           m_unknown;
 };
 
 /// @cond include_hidden 

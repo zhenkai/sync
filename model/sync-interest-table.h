@@ -92,6 +92,11 @@ private:
   mutable boost::recursive_mutex m_mutex;
 };
 
+namespace Error {
+struct InterestTableIsEmpty : virtual boost::exception, virtual std::exception { };
+}
+
+
 } // Sync
 
 #endif // SYNC_INTEREST_TABLE_H
