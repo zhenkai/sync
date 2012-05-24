@@ -65,8 +65,8 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   , m_ccnxHandle(new CcnxWrapper())
 #ifndef NS3_MODULE
   , m_randomGenerator (static_cast<unsigned int> (std::time (0)))
-  , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (500,1000))
-  , m_reexpressionJitter (m_randomGenerator, uniform_int<> (0,100))
+  , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (200,1000))
+  , m_reexpressionJitter (m_randomGenerator, uniform_int<> (100,500))
 #else
   , m_rangeUniformRandom (200,1000)
   , m_reexpressionJitter (100,500)
@@ -219,7 +219,7 @@ SyncLogic::processSyncInterest (const std::string &name, DigestConstPtr digest, 
   if (*m_state->getDigest() == *digest)
     {
       _LOG_TRACE ("processSyncInterest (): Same state. Adding to PIT");
-      m_syncInterestTable.insert (digest, name);
+      m_syncInterestTable.insert (digest, name, false);
       return;
     }
   
@@ -235,7 +235,7 @@ SyncLogic::processSyncInterest (const std::string &name, DigestConstPtr digest, 
 
   if (!timedProcessing)
     {
-      bool exists = m_syncInterestTable.insert (digest, name);
+      bool exists = m_syncInterestTable.insert (digest, name, true);
       if (exists) // somebody else replied, so restart random-game timer
         {
           _LOG_DEBUG ("Unknown digest, but somebody may have already replied, so restart our timer");
@@ -260,12 +260,15 @@ void
 SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, const string &dataBuffer)
 {
   DiffStatePtr diffLog = make_shared<DiffState> ();
+  bool ownInterestSatisfied = false;
   
   try
     {
       recursive_mutex::scoped_lock lock (m_stateMutex);
 
       m_syncInterestTable.remove (name); // Remove satisfied interest from PIT
+
+      ownInterestSatisfied = (name == m_outstandingInterestName);
 
       DiffState diff;
       istringstream ss (dataBuffer);
@@ -315,7 +318,8 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
       // don't do anything
     }
 
-  if (diffLog != 0 && diffLog->getLeaves ().size () > 0)
+  if ((diffLog != 0 && diffLog->getLeaves ().size () > 0) ||
+      ownInterestSatisfied)
     {
       // Do it only if everything went fine and state changed
 

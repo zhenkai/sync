@@ -58,7 +58,7 @@ SyncInterestTable::pop ()
 }
 
 bool
-SyncInterestTable::insert (DigestConstPtr digest, const string &name)
+SyncInterestTable::insert (DigestConstPtr digest, const string &name, bool unknownState/*=false*/)
 {
   bool existent = false;
   
@@ -69,7 +69,7 @@ SyncInterestTable::insert (DigestConstPtr digest, const string &name)
       existent = true;
       m_table.erase (it);
     }
-  m_table.insert (Interest (digest, name));
+  m_table.insert (Interest (digest, name, unknownState));
 
   return existent;
 }

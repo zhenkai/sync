@@ -52,7 +52,7 @@ public:
    * timestamp
    */
   bool
-  insert (DigestConstPtr interest, const std::string &name);
+  insert (DigestConstPtr interest, const std::string &name, bool unknownState=false);
 
   /**
    * @brief Remove interest by digest (e.g., when it was satisfied)
