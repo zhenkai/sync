@@ -182,6 +182,9 @@ private:
   static const int m_syncInterestReexpress = 4;
 #endif
 
+  static const int m_defaultRecoveryRetransmitInterval = 200; // milliseconds
+  uint32_t m_recoveryRetransmissionInterval; // milliseconds
+  
   enum EventLabels
     {
       DELAYED_INTEREST_PROCESSING = 1,

@@ -63,13 +63,14 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   , m_onUpdate (onUpdate)
   , m_onRemove (onRemove)
   , m_ccnxHandle(new CcnxWrapper())
+  , m_recoveryRetransmissionInterval (m_defaultRecoveryRetransmitInterval)
 #ifndef NS3_MODULE
   , m_randomGenerator (static_cast<unsigned int> (std::time (0)))
   , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (200,1000))
   , m_reexpressionJitter (m_randomGenerator, uniform_int<> (100,500))
 #else
   , m_rangeUniformRandom (200,1000)
-  , m_reexpressionJitter (100,500)
+  , m_reexpressionJitter (10,500)
 #endif
 { 
 #ifndef NS3_MODULE
@@ -191,6 +192,7 @@ SyncLogic::respondSyncData (const std::string &name, const std::string &dataBuff
         }
       else
         {
+          // timer is always restarted when we schedule recovery
           m_scheduler.cancel (REEXPRESSING_RECOVERY_INTEREST);
           processSyncData (name, digest, dataBuffer);
         }
@@ -252,6 +254,8 @@ SyncLogic::processSyncInterest (const std::string &name, DigestConstPtr digest, 
   else
     {
       _LOG_TRACE ("                                                      (timed processing)");
+      
+      m_recoveryRetransmissionInterval = m_defaultRecoveryRetransmitInterval;
       sendSyncRecoveryInterests (digest);
     }
 }
@@ -475,11 +479,16 @@ SyncLogic::sendSyncRecoveryInterests (DigestConstPtr digest)
   os << m_syncPrefix << "/recovery/" << *digest;
   _LOG_TRACE (">> I " << os.str ());
 
-  // no need for retransmission
-  // m_scheduler.cancel (REEXPRESSING_RECOVERY_INTEREST);
-  // m_scheduler.schedule (TIME_SECONDS_WITH_JITTER(1.0),//TIME_SECONDS_WITH_JITTER (m_syncInterestReexpress),
-  //                       bind (&SyncLogic::sendSyncRecoveryInterests, this, digest),
-  //                       REEXPRESSING_RECOVERY_INTEREST);
+  TimeDuration nextRetransmission = TIME_MILLISECONDS_WITH_JITTER (m_recoveryRetransmissionInterval);
+  m_recoveryRetransmissionInterval <<= 1;
+    
+  m_scheduler.cancel (REEXPRESSING_RECOVERY_INTEREST);
+  if (m_recoveryRetransmissionInterval < 100*1000) // <100 seconds
+    {
+      m_scheduler.schedule (nextRetransmission,
+                            bind (&SyncLogic::sendSyncRecoveryInterests, this, digest),
+                            REEXPRESSING_RECOVERY_INTEREST);
+    }
 
   m_ccnxHandle->sendInterest (os.str (),
                               bind (&SyncLogic::respondSyncData, this, _1, _2));
