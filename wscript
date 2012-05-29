@@ -4,7 +4,7 @@ VERSION='0.0.1'
 APPNAME='sync'
 
 def options(opt):
-    opt.add_option('--no-debug',action='store_true',default=False,dest='no_debug',help='''Make an optimized build of the library (remove debugging code)''')
+    opt.add_option('--debug',action='store_true',default=False,dest='debug',help='''debugging mode''')
     opt.add_option('--log4cxx', action='store_true',default=False,dest='log4cxx',help='''Compile with log4cxx/native NS3 logging support''')
     opt.add_option('--ns3',     action='store_true',default=False,dest='ns3_enable',help='''Compile as NS-3 module''')
     opt.add_option('--ns3-debug', action='store_true',default=False,dest='ns3_debug',help='''Link against debug NS3 libraries. Optimized version will be used otherwise''')
@@ -47,7 +47,7 @@ def configure(conf):
         if conf.options.log4cxx:
             conf.check_cfg(package='liblog4cxx', args=['--cflags', '--libs'], uselib_store='LOG4CXX', mandatory=True)
 
-    if not conf.options.no_debug:
+    if conf.options.debug:
         conf.define ('_DEBUG', 1)
         conf.env.append_value('CXXFLAGS', ['-O0', '-g3'])
     else:

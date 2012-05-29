@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
   s1.publish (p1, 0, data1, 10);
   _LOG_DEBUG ("s1 publish");
   s1.publish (p1, 0, data2, 10);
-  this_thread::sleep (posix_time::milliseconds (250));
+  this_thread::sleep (posix_time::milliseconds (1000));
   
   // from code logic, we won't be fetching our own data
   a1.set(p1 + "/0/1", data1);
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
   // another single source, multiple data at once
   s2.publish(p2, 0, data4, 10); 
   s2.publish(p2, 0, data5, 10);
-  this_thread::sleep (posix_time::milliseconds (200));
+  this_thread::sleep (posix_time::milliseconds (1000));
 
   // from code logic, we won't be fetching our own data
   a3.set(p3 + "/0/0", data3);
