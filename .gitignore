@@ -6,3 +6,8 @@ doc/html
 .DS_Store
 animation.xml
 .R*
+*.app
+Makefile
+*.o
+ui_*
+moc_*
