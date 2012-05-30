@@ -107,23 +107,15 @@ Scheduler::threadLoop ()
   // cout << "Exited...\n";  
 }
 
-
 void
-Scheduler::schedule (const boost::system_time &abstime, Event event, uint32_t label)
+Scheduler::schedule (const TimeDuration &reltime, Event event, uint32_t label)
 {
   {
     lock_guard<mutex> lock (m_eventsMutex);
-    m_events.insert (LogicEvent (abstime, event, label));
+    m_events.insert (LogicEvent (boost::get_system_time () + reltime, event, label));
   }
   m_eventsCondition.notify_one ();
   m_thread.interrupt (); // interrupt sleep, if currently sleeping
-}
-
-void
-Scheduler::schedule (const boost::posix_time::time_duration &reltime, Event event, uint32_t label)
-{
-  // cout << reltime << endl;
-  schedule (boost::get_system_time () + reltime, event, label);
 }
 
 void

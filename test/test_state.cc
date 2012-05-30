@@ -30,9 +30,9 @@ using boost::test_tools::output_test_stream;
 #include <boost/make_shared.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include "../model/sync-std-name-info.h"
-#include "../model/sync-full-state.h"
-#include "../model/sync-diff-state.h"
+#include "sync-std-name-info.h"
+#include "sync-full-state.h"
+#include "sync-diff-state.h"
 
 using namespace Sync;
 using namespace std;

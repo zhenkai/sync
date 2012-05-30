@@ -173,6 +173,26 @@ operator >> (std::istream &is, Digest &digest);
 //   return *this;
 // }
 
+struct DigestPtrHash : public std::unary_function<Digest, std::size_t>
+{
+  std::size_t
+  operator() (DigestConstPtr digest) const
+  {
+    // std::cout << "digest->getHash: " << digest->getHash () << " (" << *digest << ")" << std::endl;
+    return digest->getHash ();
+  }
+};
+
+struct DigestPtrEqual : public std::unary_function<Digest, std::size_t>
+{
+  bool
+  operator() (DigestConstPtr digest1, DigestConstPtr digest2) const
+  {
+    // std::cout << boost::cref(*digest1) << " == " << boost::cref(*digest2) << " : " << (*digest1 == *digest2) << std::endl;
+    return *digest1 == *digest2;
+  }
+};
+
 
 } // Sync
 

@@ -37,6 +37,11 @@ typedef boost::posix_time::time_duration TimeDurationType;
 
 namespace Sync {
 
+class FullState;
+typedef boost::shared_ptr<FullState> FullStatePtr;
+typedef boost::shared_ptr<FullState> FullStateConstPtr;
+
+
 /**
  * \ingroup sync
  * @brief Cumulative SYNC state

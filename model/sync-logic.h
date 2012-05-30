@@ -43,6 +43,11 @@
 #endif
 #endif
 
+#ifdef NS3_MODULE
+#include <ns3/application.h>
+#include <ns3/random-variable.h>
+#endif
+
 namespace Sync {
 
 /**
@@ -51,6 +56,9 @@ namespace Sync {
  * interests and data)
  */
 class SyncLogic
+#ifdef NS3_MODULE
+  : public ns3::Application
+#endif
 {
 public:
   typedef boost::function< void ( const std::string &/*prefix*/, const SeqNo &/*newSeq*/, const SeqNo &/*oldSeq*/ ) > LogicUpdateCallback;
@@ -86,7 +94,7 @@ public:
    * @param name the data name
    * @param dataBuffer the sync data
    */
-  void processSyncData (const std::string &name, const std::string &dataBuffer);
+  void respondSyncData (const std::string &name, const std::string &dataBuffer);
 
   /**
    * @brief remove a participant's subtree from the sync tree
@@ -98,29 +106,54 @@ public:
   Scheduler &
   getScheduler () { return m_scheduler; }
 #endif
+
+#ifdef NS3_MODULE
+public:
+  virtual void StartApplication ();
+  virtual void StopApplication ();
+#endif
   
 private:
   void
   delayedChecksLoop ();
 
   void
-  processSyncInterest (DigestConstPtr digest, const std::string &interestname, bool timedProcessing=false);
+  processSyncInterest (const std::string &name,
+                       DigestConstPtr digest, bool timedProcessing=false);
+
+  void
+  processSyncData (const std::string &name,
+                   DigestConstPtr digest, const std::string &dataBuffer);
   
   void
-  sendSyncInterest ();
-
+  processSyncRecoveryInterest (const std::string &name,
+                               DigestConstPtr digest);
+  
   void 
   insertToDiffLog (DiffStatePtr diff);
 
   void
-  satisfyPendingSyncInterests (DiffStatePtr diff);
+  satisfyPendingSyncInterests (DiffStateConstPtr diff);
 
+  boost::tuple<DigestConstPtr, std::string>
+  convertNameToDigestAndType (const std::string &name);
+
+  void
+  sendSyncInterest ();
+
+  void
+  sendSyncRecoveryInterests (DigestConstPtr digest);
+
+  void
+  sendSyncData (const std::string &name,
+                DigestConstPtr digest, StateConstPtr state);
+  
 private:
-  FullState m_state;
+  FullStatePtr m_state;
   DiffStateContainer m_log;
   boost::recursive_mutex m_stateMutex;
 
-  std::string m_outstandingInterest;
+  std::string m_outstandingInterestName;
   SyncInterestTable m_syncInterestTable;
 
   std::string m_syncPrefix;
@@ -130,22 +163,34 @@ private:
 
   Scheduler m_scheduler;
 
+#ifndef NS3_MODULE
   boost::mt19937 m_randomGenerator;
   boost::variate_generator<boost::mt19937&, boost::uniform_int<> > m_rangeUniformRandom;
-  
-  static const int m_syncResponseFreshness = 2;
+  boost::variate_generator<boost::mt19937&, boost::uniform_int<> > m_reexpressionJitter;
+#else
+  ns3::UniformVariable m_rangeUniformRandom;
+  ns3::UniformVariable m_reexpressionJitter;
+#endif
 
+  static const int m_unknownDigestStoreTime = 10; // seconds
+#ifdef NS3_MODULE
+  static const int m_syncResponseFreshness = 100; // milliseconds
+  static const int m_syncInterestReexpress = 10; // seconds
+  // don't forget to adjust value in SyncCcnxWrapper
+#else
+  static const int m_syncResponseFreshness = 2000;
+  static const int m_syncInterestReexpress = 4;
+#endif
+
+  static const int m_defaultRecoveryRetransmitInterval = 200; // milliseconds
+  uint32_t m_recoveryRetransmissionInterval; // milliseconds
+  
   enum EventLabels
     {
       DELAYED_INTEREST_PROCESSING = 1,
-      REEXPRESSING_INTEREST = 2
+      REEXPRESSING_INTEREST = 2,
+      REEXPRESSING_RECOVERY_INTEREST = 3
     };
-
-#ifdef _DEBUG
-#ifdef HAVE_LOG4CXX
-  log4cxx::LoggerPtr staticModuleLogger;
-#endif
-#endif  
 };
 
 

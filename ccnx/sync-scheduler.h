@@ -28,6 +28,12 @@
 
 #include "sync-logic-event-container.h"
 
+#define TIME_SECONDS(number) boost::posix_time::seconds (number)
+#define TIME_MILLISECONDS(number) boost::posix_time::milliseconds(number)
+#define TIME_NOW boost::get_system_time ()
+typedef boost::posix_time::time_duration TimeDuration;
+typedef boost::system_time TimeAbsolute;
+
 namespace Sync {
 
 /**
@@ -49,22 +55,13 @@ public:
   ~Scheduler ();
 
   /**
-   * @brief Schedule an event at absolute time 'abstime'
-   * @param abstime Absolute time
-   * @param event function to be called at the time
-   * @param label Label for the event
-   */
-  void
-  schedule (const boost::system_time &abstime, Event event, uint32_t label);
-
-  /**
    * @brief Schedule an event at relative time 'reltime'
    * @param reltime Relative time
    * @param event function to be called at the time
    * @param label Label for the event
    */
   void
-  schedule (const boost::posix_time::time_duration &reltime, Event event, uint32_t label); 
+  schedule (const TimeDuration &reltime, Event event, uint32_t label); 
 
   /**
    * @brief Cancel all events for the label

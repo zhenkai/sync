@@ -20,24 +20,16 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#include <boost/test/unit_test.hpp>
-#include <boost/test/output_test_stream.hpp> 
-#include <map>
-using boost::test_tools::output_test_stream;
+#ifndef SYNC_EVENT_H
+#define SYNC_EVENT_H
 
-#include <boost/make_shared.hpp>
+#include <boost/function.hpp>
 
-#include "sync-interest-table.h"
-
-using namespace Sync;
-using namespace std;
-using namespace boost;
-
-BOOST_AUTO_TEST_CASE (InterestTableTest)
+namespace Sync
 {
-  SyncInterestTable *table = 0;
-  BOOST_CHECK_NO_THROW (table = new SyncInterestTable ());
 
-  BOOST_CHECK_NO_THROW (delete table);
-}
+typedef boost::function< void ( ) > Event;
 
+} // Sync
+
+#endif // SYNC_EVENT_H

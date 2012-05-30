@@ -20,10 +20,9 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#ifndef SYNC_DIFF_STATE_CONTAINER_H
-#define SYNC_DIFF_STATE_CONTAINER_H
+#ifndef SYNC_INTEREST_CONTAINER_H
+#define SYNC_INTEREST_CONTAINER_H
 
-#include "sync-diff-state.h"
 #include "sync-digest.h"
 
 #include <boost/multi_index_container.hpp>
@@ -32,6 +31,7 @@
 // #include <boost/multi_index/composite_key.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index/ordered_index.hpp>
 // #include <boost/multi_index/random_access_index.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/mem_fun.hpp>
@@ -40,28 +40,53 @@ namespace mi = boost::multi_index;
 
 namespace Sync {
 
+struct Interest
+{
+  Interest (DigestConstPtr digest, const std::string &name, bool unknown=false)
+  : m_digest (digest)
+  , m_name (name)
+  , m_time (TIME_NOW)
+  , m_unknown (unknown)
+  {
+  }
+  
+  DigestConstPtr m_digest;
+  std::string    m_name;
+  TimeAbsolute   m_time;
+  bool           m_unknown;
+};
+
 /// @cond include_hidden 
-struct sequenced { };
-struct timed { };
+struct named { };
+struct hashed;
+struct timed;
 /// @endcond
 
 /**
  * \ingroup sync
- * @brief Container for differential states
+ * @brief Container for interests (application PIT)
  */
-struct DiffStateContainer : public mi::multi_index_container<
-  DiffStatePtr,
+struct InterestContainer : public mi::multi_index_container<
+  Interest,
   mi::indexed_by<
-    // For fast access to elements using DiffState hashes
     mi::hashed_unique<
+      mi::tag<named>,
+      BOOST_MULTI_INDEX_MEMBER(Interest, std::string, m_name)
+    >
+    ,
+    
+    mi::hashed_non_unique<
       mi::tag<hashed>,
-      mi::const_mem_fun<DiffState, DigestConstPtr, &DiffState::getDigest>,
+      BOOST_MULTI_INDEX_MEMBER(Interest, DigestConstPtr, m_digest),
       DigestPtrHash,
       DigestPtrEqual
       >
-    ,        
-    // sequenced index to access older/newer element (like in list)
-    mi::sequenced<mi::tag<sequenced> >
+    ,
+    
+    mi::ordered_non_unique<
+      mi::tag<timed>,
+      BOOST_MULTI_INDEX_MEMBER(Interest, TimeAbsolute, m_time)
+      >
     >
   >
 {
@@ -69,4 +94,4 @@ struct DiffStateContainer : public mi::multi_index_container<
 
 } // Sync
 
-#endif // SYNC_DIFF_STATE_CONTAINER_H
+#endif // SYNC_INTEREST_CONTAINER_H

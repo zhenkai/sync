@@ -26,8 +26,8 @@
 using boost::test_tools::output_test_stream;
 
 #include <boost/make_shared.hpp>
-#include "../model/sync-scheduler.h"
-#include "../model/sync-logic.h"
+#include "sync-scheduler.h"
+#include "sync-logic.h"
 
 using namespace Sync;
 using namespace std;

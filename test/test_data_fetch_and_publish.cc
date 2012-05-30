@@ -27,9 +27,9 @@ using boost::test_tools::output_test_stream;
 
 #include <boost/make_shared.hpp>
 
-#include "../model/sync-ccnx-wrapper.h"
-#include "../model/sync-app-data-fetch.h"
-#include "../model/sync-app-data-publish.h"
+#include "sync-ccnx-wrapper.h"
+#include "sync-app-data-fetch.h"
+#include "sync-app-data-publish.h"
 
 using namespace Sync;
 using namespace std;
