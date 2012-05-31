@@ -11,3 +11,4 @@ Makefile
 *.o
 ui_*
 moc_*
+*.pb.*
