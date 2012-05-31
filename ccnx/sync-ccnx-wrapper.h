@@ -54,6 +54,7 @@ struct CcnxOperationException : virtual boost::exception, virtual std::exception
 class CcnxWrapper {
 public:
   typedef boost::function<void (std::string, std::string)> DataCallback;
+  typedef boost::function<void (std::string, const char *buf, size_t len)> RawDataCallback;
   typedef boost::function<void (std::string)> InterestCallback;
   
   /**
@@ -77,7 +78,10 @@ public:
    * @return the return code of ccn_express_interest
    */
   int
-  sendInterest (const std::string &strInterest, const DataCallback &dataCallback);
+  sendInterest (const std::string &strInterest, const DataCallback &dataCallback, int retry = 0);
+
+  int 
+  sendInterestForRawData (const std::string &strInterest, const RawDataCallback &rawDataCallback, int retry = 0);
 
   /**
    * @brief set Interest filter (specify what interest you want to receive)
@@ -127,6 +131,9 @@ private:
 
   void
   ccnLoop ();
+
+  int 
+  sendInterest (const std::string &strInterest, void *dataPass);
   /// @endcond
 private:
   ccn* m_handle;
@@ -139,6 +146,40 @@ private:
 };
 
 typedef boost::shared_ptr<CcnxWrapper> CcnxWrapperPtr;
+
+enum CallbackType { STRING_FORM, RAW_DATA};
+
+class ClosurePass {
+public:
+  ClosurePass(CallbackType type, int retry): m_type(type), m_retry(retry) {}
+  int getRetry() {return m_retry;}
+  void decRetry() { m_retry--;}
+  CallbackType getCallbackType() {return m_type;}
+  virtual ~ClosurePass(){}
+  virtual void runCallback(std::string name, const char *data, size_t len) = 0;
+
+protected:
+  int m_retry;
+  CallbackType m_type;
+};
+
+class DataClosurePass: public ClosurePass {
+public:
+  DataClosurePass(CallbackType type, int retry, const CcnxWrapper::DataCallback &dataCallback);
+  virtual ~DataClosurePass();
+  virtual void runCallback(std::string name, const char *, size_t len);
+private:
+  CcnxWrapper::DataCallback * m_callback;  
+};
+
+class RawDataClosurePass: public ClosurePass {
+public:
+  RawDataClosurePass(CallbackType type, int retry, const CcnxWrapper::RawDataCallback &RawDataCallback);
+  virtual ~RawDataClosurePass();
+  virtual void runCallback(std::string name, const char *, size_t len);
+private:
+  CcnxWrapper::RawDataCallback * m_callback;  
+};
 
 } // Sync
 

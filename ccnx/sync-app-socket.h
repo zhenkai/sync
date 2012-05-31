@@ -70,6 +70,8 @@ public:
    */
   void remove (const std::string &prefix) {m_syncLogic.remove(prefix);}
 
+  int getSeq();
+
 private:
   CcnxWrapperPtr m_appHandle;
 

@@ -235,17 +235,27 @@ incomingData(ccn_closure *selfp,
              ccn_upcall_kind kind,
              ccn_upcall_info *info)
 {
-  CcnxWrapper::DataCallback *f = static_cast<CcnxWrapper::DataCallback*> (selfp->data);
+  //CcnxWrapper::DataCallback *f = static_cast<CcnxWrapper::DataCallback*> (selfp->data);
+  ClosurePass *cp = static_cast<ClosurePass *> (selfp->data);
 
   switch (kind)
     {
     case CCN_UPCALL_FINAL:  // effecitve in unit tests
-      delete f;
+      delete cp;
+      cp = NULL;
       delete selfp;
       return CCN_UPCALL_RESULT_OK;
 
     case CCN_UPCALL_CONTENT:
       break;
+
+    case CCN_UPCALL_INTEREST_TIMED_OUT: {
+      if (cp != NULL && cp->getRetry() > 0) {
+        cp->decRetry();
+        return CCN_UPCALL_RESULT_REEXPRESS;
+      }
+      return CCN_UPCALL_RESULT_OK;
+    }
 
     default:
       return CCN_UPCALL_RESULT_OK;
@@ -255,7 +265,6 @@ incomingData(ccn_closure *selfp,
   size_t len;
   if (ccn_content_get_value(info->content_ccnb, info->pco->offset[CCN_PCO_E], info->pco, (const unsigned char **)&pcontent, &len) < 0)
     BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("decode ContentObject failed"));
-  string content(pcontent, len);
 
   string name;
   for (int i = 0; i < info->content_comps->n - 1; i++)
@@ -267,11 +276,25 @@ incomingData(ccn_closure *selfp,
       string compStr(comp, size);
       name += compStr;
     }
-  (*f) (name, content);
+
+  cp->runCallback(name, pcontent, len);
+
   return CCN_UPCALL_RESULT_OK;
 }
 
-int CcnxWrapper::sendInterest (const string &strInterest, const DataCallback &dataCallback)
+int CcnxWrapper::sendInterest (const string &strInterest, const DataCallback &dataCallback, int retry)
+{
+  DataClosurePass * pass = new DataClosurePass(STRING_FORM, retry, dataCallback);
+  sendInterest(strInterest, pass);
+}
+
+int CcnxWrapper::sendInterestForRawData (const string &strInterest, const RawDataCallback &rawDataCallback, int retry)
+{
+  RawDataClosurePass * pass = new RawDataClosurePass(RAW_DATA, retry, rawDataCallback);
+  sendInterest(strInterest, pass);
+}
+
+int CcnxWrapper::sendInterest (const string &strInterest, void *dataPass)
 {
   recursive_mutex::scoped_lock lock(m_mutex);
   if (!m_running)
@@ -282,7 +305,7 @@ int CcnxWrapper::sendInterest (const string &strInterest, const DataCallback &da
   ccn_closure *dataClosure = new ccn_closure;
 
   ccn_name_from_uri (pname, strInterest.c_str());
-  dataClosure->data = new DataCallback (dataCallback); // should be removed when closure is removed
+  dataClosure->data = dataPass;
 
   dataClosure->p = &incomingData;
   if (ccn_express_interest (m_handle, pname, dataClosure, NULL) < 0)
@@ -331,6 +354,46 @@ CcnxWrapper::clearInterestFilter (const std::string &prefix)
     }
 
   ccn_charbuf_destroy(&pname);
+}
+
+DataClosurePass::DataClosurePass (CallbackType type, int retry, const CcnxWrapper::DataCallback &dataCallback): ClosurePass(type, retry), m_callback(NULL)
+{
+   m_callback = new CcnxWrapper::DataCallback (dataCallback); 
+}
+
+DataClosurePass::~DataClosurePass () 
+{
+  delete m_callback;
+  m_callback = NULL;
+}
+
+void 
+DataClosurePass::runCallback(std::string name, const char *data, size_t len) 
+{
+  string content(data, len);
+  if (m_callback != NULL) {
+    (*m_callback)(name, content);
+  }
+}
+
+
+RawDataClosurePass::RawDataClosurePass (CallbackType type, int retry, const CcnxWrapper::RawDataCallback &rawDataCallback): ClosurePass(type, retry), m_callback(NULL)
+{
+   m_callback = new CcnxWrapper::RawDataCallback (rawDataCallback); 
+}
+
+RawDataClosurePass::~RawDataClosurePass () 
+{
+  delete m_callback;
+  m_callback = NULL;
+}
+
+void 
+RawDataClosurePass::runCallback(std::string name, const char *data, size_t len) 
+{
+  if (m_callback != NULL) {
+    (*m_callback)(name, data, len);
+  }
 }
 
 }
