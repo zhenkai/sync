@@ -94,7 +94,7 @@ def build (bld):
                 'model/sync-std-name-info.cc',
                 ],
             use = 'BOOST BOOST_IOSTREAMS SSL TINYXML ' + ' '.join (['ns3_'+dep for dep in ['core', 'network', 'internet', 'NDNabstraction']]).upper (),
-            includes = ['model', 'ns3', 'helper'],
+            includes = ['include', 'include/ns3', 'helper'],
             )
 
         example = bld.program (
@@ -102,7 +102,7 @@ def build (bld):
             features=['cxx', 'cxxprogram'],
             source = ['examples/sync-example.cc'],
             use = 'sync-ns3',
-            includes = ['model', 'ns3', 'helper'],
+            includes = ['include', 'include/ns3', 'helper'],
             )
 
         sync_eval = bld.program (
@@ -113,7 +113,7 @@ def build (bld):
                       'evaluation/sync-muc.cc',
                       ],
             use = 'sync-ns3',
-            includes = ['model', 'ns3', 'helper'],
+            includes = ['include', 'include/ns3', 'helper'],
             )
         # from waflib import Utils,Logs,Errors
         # Logs.pprint ('CYAN', program.use)
@@ -126,11 +126,8 @@ def build (bld):
                 'ccnx/sync-ccnx-wrapper.cc',
                 'ccnx/sync-scheduler.cc',
                 'ccnx/sync-log.cc',
-                #'ccnx/sync-app-data-fetch.cc',
-                #'ccnx/sync-app-data-publish.cc',
                 #'ccnx/sync-app-socket-c.cc',
                 'ccnx/sync-app-socket.cc',
-                
                 'model/sync-diff-leaf.cc',
                 'model/sync-diff-state.cc',
                 'model/sync-digest.cc',
@@ -145,7 +142,7 @@ def build (bld):
                 'model/sync-std-name-info.cc',
                 ],
             use = 'BOOST BOOST_IOSTREAMS BOOST_THREAD SSL TINYXML CCNX',
-            includes = ['model', 'ccnx', 'helper'],
+            includes = ['include', 'helper'],
             )
         
         # Unit tests
@@ -155,7 +152,7 @@ def build (bld):
               source = bld.path.ant_glob(['test/**/*.cc']),
               features=['cxx', 'cxxprogram'],
               use = 'BOOST_TEST sync',
-              includes = ['model', 'ccnx', 'helper'],
+              includes = ['include', 'helper'],
               )
 
         if bld.get_define ("HAVE_LOG4CXX"):
