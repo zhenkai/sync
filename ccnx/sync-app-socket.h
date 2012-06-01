@@ -24,9 +24,14 @@
 #define SYNC_APP_SOCKET_H
 
 #include "sync-logic.h"
-#include "sync-app-data-fetch.h"
-#include "sync-app-data-publish.h"
 #include <boost/function.hpp>
+#include <boost/unordered_map.hpp>
+#include "sync-seq-no.h"
+#include "sync-ccnx-wrapper.h"
+#include <utility>
+#include <map>
+#include <vector>
+#include <sstream>
 
 namespace Sync {
 
@@ -37,6 +42,8 @@ namespace Sync {
 class SyncAppSocket
 {
 public:
+  typedef boost::function< void (const std::vector<MissingDataInfo> &, SyncAppSocket * ) > NewDataCallback;
+  typedef boost::function< void ( const std::string &/*prefix*/ ) > RemoveCallback;
   /**
    * @brief the constructor for SyncAppSocket; the parameter syncPrefix
    * should be passed to the constructor of m_syncAppWrapper; the other
@@ -48,7 +55,7 @@ public:
    * @param syncPrefix the name prefix for Sync Interest
    * @param dataCallback the callback to process data
    */
-  SyncAppSocket (const std::string &syncPrefix, CcnxWrapper::DataCallback dataCallback);
+  SyncAppSocket (const std::string &syncPrefix, NewDataCallback dataCallback, RemoveCallback rmCallback);
   ~SyncAppSocket ();
 
   /**
@@ -60,7 +67,9 @@ public:
    * @param dataBuffer the data itself
    * @param freshness the freshness time for the data (in seconds)
    */
-  bool publish (const std::string &prefix, uint32_t session, const std::string &dataBuffer, int freshness);
+  bool publishString (const std::string &prefix, uint32_t session, const std::string &dataBuffer, int freshness);
+
+  bool publishRaw(const std::string &prefix, uint32_t session, const char *buf, size_t len, int freshness);
 
   /**
    * @brief delete a participant's subtree from the sync tree; SyncLogic will do the work
@@ -70,13 +79,20 @@ public:
    */
   void remove (const std::string &prefix) {m_syncLogic.remove(prefix);}
 
-  int getSeq();
+  void fetchString(const std::string &prefix, const SeqNo &seq, CcnxWrapper::StringDataCallback callback, int retry = 0);
+  void fetchRaw(const std::string &prefix, const SeqNo &seq, CcnxWrapper::RawDataCallback callback, int retry = 0);
+
+  void passCallback(std::vector<MissingDataInfo> &v) {m_newDataCallback(v, this);}
 
 private:
-  CcnxWrapperPtr m_appHandle;
+  uint32_t
+  getNextSeq (const std::string &prefix, uint32_t session);
 
-  AppDataFetch   m_fetcher;
-  AppDataPublish m_publisher;
+private:
+  typedef boost::unordered_map<std::string, SeqNo> SequenceLog;
+  NewDataCallback m_newDataCallback;
+  SequenceLog m_sequenceLog;
+  CcnxWrapperPtr m_ccnxHandle;
   SyncLogic      m_syncLogic;
 };
 

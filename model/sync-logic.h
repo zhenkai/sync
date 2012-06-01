@@ -50,6 +50,12 @@
 
 namespace Sync {
 
+struct MissingDataInfo {
+  std::string prefix;
+  SeqNo low;
+  SeqNo high;
+};
+
 /**
  * \ingroup sync
  * @brief A wrapper for SyncApp, which handles ccnx related things (process
@@ -61,7 +67,8 @@ class SyncLogic
 #endif
 {
 public:
-  typedef boost::function< void ( const std::string &/*prefix*/, const SeqNo &/*newSeq*/, const SeqNo &/*oldSeq*/ ) > LogicUpdateCallback;
+  //typedef boost::function< void ( const std::string &/*prefix*/, const SeqNo &/*newSeq*/, const SeqNo &/*oldSeq*/ ) > LogicUpdateCallback;
+  typedef boost::function< void (const std::vector<MissingDataInfo> & ) > LogicUpdateCallback;
   typedef boost::function< void ( const std::string &/*prefix*/ ) > LogicRemoveCallback;
 
   /**

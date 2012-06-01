@@ -43,7 +43,14 @@ struct Handler
   : instance (_instance)
   {
   }
-  
+
+  void wrapper (vector<MissingDataInfo> &v) {
+    int n = v.size();
+    for (int i = 0; i < n; i++) {
+      onUpdate (v[i].prefix, v[i].high, v[i].low);
+    }
+  }
+
   void onUpdate (const string &p/*prefix*/, const SeqNo &seq/*newSeq*/, const SeqNo &oldSeq/*oldSeq*/)
   {
     m_map[p] = seq.getSeq ();
@@ -68,7 +75,7 @@ BOOST_AUTO_TEST_CASE (SyncLogicTest)
 {
   Handler h1 ("1");
 
-  SyncLogic l1 ("/bcast", bind (&Handler::onUpdate, &h1, _1, _2, _3), bind (&Handler::onRemove, &h1, _1));
+  SyncLogic l1 ("/bcast", bind (&Handler::wrapper, &h1, _1), bind (&Handler::onRemove, &h1, _1));
   l1.addLocalNames ("/one", 1, 2);
 
   BOOST_CHECK_EQUAL (h1.m_map.size (), 0);
@@ -76,7 +83,7 @@ BOOST_AUTO_TEST_CASE (SyncLogicTest)
   BOOST_CHECK_EQUAL (h1.m_map.size (), 0);
 
   Handler h2 ("2");
-  SyncLogic l2 ("/bcast", bind (&Handler::onUpdate, &h2, _1, _2, _3), bind (&Handler::onRemove, &h2, _1));
+  SyncLogic l2 ("/bcast", bind (&Handler::wrapper, &h2, _1), bind (&Handler::onRemove, &h2, _1));
   
   sleep (1);
   BOOST_CHECK_EQUAL (h1.m_map.size (), 0);

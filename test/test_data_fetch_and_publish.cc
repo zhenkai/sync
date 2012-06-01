@@ -20,6 +20,7 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
+/*
 #include <boost/test/unit_test.hpp>
 #include <boost/test/output_test_stream.hpp> 
 #include <map>
@@ -71,7 +72,7 @@ BOOST_AUTO_TEST_CASE (AppDataPublishAndFetchTest)
   string str[5] = {"panda", "express", "tastes", "so", "good"};
 
   for (int i = 0; i < 5; i++) {
-    foo.set(interest + "/" + "0/" /*session*/ + seq[i], str[i]);
+    foo.set(interest + "/" + "0/" + seq[i], str[i]);
   }
 
   boost::function<void (string, string)> setFunc =
@@ -107,5 +108,6 @@ BOOST_AUTO_TEST_CASE (AppDataPublishAndFetchTest)
   BOOST_CHECK_EQUAL(poo.toString(), bar.toString());
 
 }
+*/
 
 

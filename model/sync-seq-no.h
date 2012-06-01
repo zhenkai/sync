@@ -122,6 +122,26 @@ public:
   }
 
   bool
+  operator <= (const SeqNo &seq) const
+  {
+    return m_session <= seq.m_session || (m_session == seq.m_session && m_seq <= seq.m_seq);
+  }
+
+  SeqNo &
+  operator ++ ()
+  {
+    m_seq ++;
+    return *this;
+  }
+
+  SeqNo &
+  operator --()
+  {
+    m_seq --;
+    return *this;
+  }
+
+  bool
   isValid () const
   {
     return m_valid;

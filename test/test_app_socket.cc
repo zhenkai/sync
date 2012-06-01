@@ -49,6 +49,19 @@ public:
     // cout << str1 << ", " << str2 << endl;
   }
 
+  void fetchAll(vector<MissingDataInfo> &v, SyncAppSocket *socket) {
+    int n = v.size();
+    for (int i = 0; i < n; i++) {
+      SeqNo s = ++v[i].low;
+      for(; s <= v[i].high; ++s) {
+        socket->fetchString(v[i].prefix, s, bind(&TestSocketApp::set, this, _1, _2));
+      }
+    }
+  }
+
+  void pass(const string &prefix) {
+  }
+
   string toString(){
     map<string, string>::iterator it = data.begin(); 
     string str = "\n";
@@ -76,18 +89,18 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
   string p1("/irl.cs.ucla.edu"), p2("/yakshi.org"), p3("/google.com");
 
   _LOG_DEBUG ("s1");
-  SyncAppSocket s1 (syncPrefix, bind(&TestSocketApp::set, &a1, _1, _2));
+  SyncAppSocket s1 (syncPrefix, bind(&TestSocketApp::fetchAll, &a1, _1, _2), bind(&TestSocketApp::pass, &a1, _1));
   this_thread::sleep (posix_time::milliseconds (50));
   _LOG_DEBUG ("s2");
-  SyncAppSocket s2 (syncPrefix, bind(&TestSocketApp::set, &a2, _1, _2));
+  SyncAppSocket s2 (syncPrefix, bind(&TestSocketApp::fetchAll, &a2, _1, _2), bind(&TestSocketApp::pass, &a2, _1));
   this_thread::sleep (posix_time::milliseconds (50));
-  SyncAppSocket s3 (syncPrefix, bind(&TestSocketApp::set, &a3, _1, _2));
+  SyncAppSocket s3 (syncPrefix, bind(&TestSocketApp::fetchAll, &a3, _1, _2), bind(&TestSocketApp::pass, &a3, _1));
   this_thread::sleep (posix_time::milliseconds (50));
 
   // single source
   string data0 = "Very funny Scotty, now beam down my clothes";
   _LOG_DEBUG ("s1 publish");
-  s1.publish (p1, 0, data0, 10); 
+  s1.publishString (p1, 0, data0, 10); 
   this_thread::sleep (posix_time::milliseconds (120));
 
   // from code logic, we won't be fetching our own data
@@ -100,9 +113,9 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
   string data2 = "Don't look conspicuous, it draws fire";
 
   _LOG_DEBUG ("s1 publish");
-  s1.publish (p1, 0, data1, 10);
+  s1.publishString (p1, 0, data1, 10);
   _LOG_DEBUG ("s1 publish");
-  s1.publish (p1, 0, data2, 10);
+  s1.publishString (p1, 0, data2, 10);
   this_thread::sleep (posix_time::milliseconds (1000));
   
   // from code logic, we won't be fetching our own data
@@ -116,12 +129,12 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
   string data4 = "I got a fortune cookie once that said 'You like Chinese food'";
   string data5 = "Real men wear pink. Why? Because their wives make them";
   _LOG_DEBUG ("s3 publish");
-  s3.publish(p3, 0, data3, 10); 
+  s3.publishString(p3, 0, data3, 10); 
   this_thread::sleep (posix_time::milliseconds (200));
   
   // another single source, multiple data at once
-  s2.publish(p2, 0, data4, 10); 
-  s2.publish(p2, 0, data5, 10);
+  s2.publishString(p2, 0, data4, 10); 
+  s2.publishString(p2, 0, data5, 10);
   this_thread::sleep (posix_time::milliseconds (1000));
 
   // from code logic, we won't be fetching our own data
@@ -135,9 +148,9 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
   _LOG_DEBUG ("Simultaneous publishing");
   string data6 = "Shakespeare says: 'Prose before hos.'";
   string data7 = "Pick good people, talent never wears out";
-  s1.publish(p1, 0, data6, 10); 
+  s1.publishString(p1, 0, data6, 10); 
   // this_thread::sleep (posix_time::milliseconds (1000));
-  s2.publish(p2, 0, data7, 10); 
+  s2.publishString(p2, 0, data7, 10); 
   this_thread::sleep (posix_time::milliseconds (1500));
 
   // from code logic, we won't be fetching our own data

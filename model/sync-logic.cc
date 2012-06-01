@@ -279,6 +279,7 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
       DiffState diff;
       istringstream ss (dataBuffer);
       ss >> diff;
+      vector<MissingDataInfo> v;
       BOOST_FOREACH (LeafConstPtr leaf, diff.getLeaves().get<ordered>())
         {
           DiffLeafConstPtr diffLeaf = dynamic_pointer_cast<const DiffLeaf> (leaf);
@@ -297,7 +298,12 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
               if (inserted || updated)
                 {
                   diffLog->update (info, seq);
-                  m_onUpdate (info->toString (), seq, oldSeq);
+                  //m_onUpdate (info->toString (), seq, oldSeq);
+                  MissingDataInfo mdi;
+                  mdi.prefix = info->toString();
+                  mdi.low = oldSeq;
+                  mdi.high = seq;
+                  v.push_back(mdi);
                 }
             }
           else if (diffLeaf->getOperation() == REMOVE)
@@ -313,6 +319,11 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
               BOOST_ASSERT (false); // just in case
             }
         }
+
+      if (!v.empty()) 
+      {
+        m_onUpdate(v);
+      }
 
       insertToDiffLog (diffLog);
     }
@@ -470,7 +481,7 @@ SyncLogic::sendSyncInterest ()
                         bind (&SyncLogic::sendSyncInterest, this),
                         REEXPRESSING_INTEREST);
   
-  m_ccnxHandle->sendInterest (os.str (),
+  m_ccnxHandle->sendInterestForString (os.str (),
                               bind (&SyncLogic::respondSyncData, this, _1, _2));
 }
 
@@ -492,7 +503,7 @@ SyncLogic::sendSyncRecoveryInterests (DigestConstPtr digest)
                             REEXPRESSING_RECOVERY_INTEREST);
     }
 
-  m_ccnxHandle->sendInterest (os.str (),
+  m_ccnxHandle->sendInterestForString (os.str (),
                               bind (&SyncLogic::respondSyncData, this, _1, _2));
 }
 
@@ -502,7 +513,7 @@ SyncLogic::sendSyncData (const std::string &name, DigestConstPtr digest, StateCo
 {
   _LOG_TRACE (">> D " << name);
   // sending
-  m_ccnxHandle->publishData (name,
+  m_ccnxHandle->publishStringData (name,
                              lexical_cast<string> (*state),
                              m_syncResponseFreshness); // in NS-3 it doesn't have any effect... yet
 

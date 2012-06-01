@@ -158,9 +158,13 @@ CcnxWrapper::ccnLoop ()
 }
 
 /// @endcond
+int
+CcnxWrapper::publishStringData (const string &name, const string &dataBuffer, int freshness) {
+  publishRawData(name, dataBuffer.c_str(), dataBuffer.length(), freshness);
+}
 
 int
-CcnxWrapper::publishData (const string &name, const string &dataBuffer, int freshness)
+CcnxWrapper::publishRawData (const string &name, const char *buf, size_t len, int freshness)
 {
   recursive_mutex::scoped_lock lock(m_mutex);
   if (!m_running)
@@ -181,7 +185,7 @@ CcnxWrapper::publishData (const string &name, const string &dataBuffer, int fres
 			 NULL,
 			 m_keyLoactor);
   if(ccn_encode_ContentObject(content, pname, signed_info,
-			   dataBuffer.c_str(), dataBuffer.length (),
+			   (const unsigned char *)buf, len,
 			   NULL, getPrivateKey()) < 0)
     BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("encode content failed"));
 
@@ -235,7 +239,6 @@ incomingData(ccn_closure *selfp,
              ccn_upcall_kind kind,
              ccn_upcall_info *info)
 {
-  //CcnxWrapper::DataCallback *f = static_cast<CcnxWrapper::DataCallback*> (selfp->data);
   ClosurePass *cp = static_cast<ClosurePass *> (selfp->data);
 
   switch (kind)
@@ -282,13 +285,13 @@ incomingData(ccn_closure *selfp,
   return CCN_UPCALL_RESULT_OK;
 }
 
-int CcnxWrapper::sendInterest (const string &strInterest, const DataCallback &dataCallback, int retry)
+int CcnxWrapper::sendInterestForString (const string &strInterest, const StringDataCallback &strDataCallback, int retry)
 {
-  DataClosurePass * pass = new DataClosurePass(STRING_FORM, retry, dataCallback);
+  DataClosurePass * pass = new DataClosurePass(STRING_FORM, retry, strDataCallback);
   sendInterest(strInterest, pass);
 }
 
-int CcnxWrapper::sendInterestForRawData (const string &strInterest, const RawDataCallback &rawDataCallback, int retry)
+int CcnxWrapper::sendInterest (const string &strInterest, const RawDataCallback &rawDataCallback, int retry)
 {
   RawDataClosurePass * pass = new RawDataClosurePass(RAW_DATA, retry, rawDataCallback);
   sendInterest(strInterest, pass);
@@ -356,9 +359,9 @@ CcnxWrapper::clearInterestFilter (const std::string &prefix)
   ccn_charbuf_destroy(&pname);
 }
 
-DataClosurePass::DataClosurePass (CallbackType type, int retry, const CcnxWrapper::DataCallback &dataCallback): ClosurePass(type, retry), m_callback(NULL)
+DataClosurePass::DataClosurePass (CallbackType type, int retry, const CcnxWrapper::StringDataCallback &strDataCallback): ClosurePass(type, retry), m_callback(NULL)
 {
-   m_callback = new CcnxWrapper::DataCallback (dataCallback); 
+   m_callback = new CcnxWrapper::StringDataCallback (strDataCallback); 
 }
 
 DataClosurePass::~DataClosurePass () 

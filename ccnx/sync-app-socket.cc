@@ -28,13 +28,12 @@ using namespace boost;
 namespace Sync
 {
 
-SyncAppSocket::SyncAppSocket (const string &syncPrefix, CcnxWrapper::DataCallback dataCallback)
-	: m_appHandle (new CcnxWrapper())
-  , m_fetcher (m_appHandle, dataCallback)
-  , m_publisher (m_appHandle)
+SyncAppSocket::SyncAppSocket (const string &syncPrefix, NewDataCallback dataCallback, RemoveCallback rmCallback )
+	: m_ccnxHandle (new CcnxWrapper())
+  , m_newDataCallback(dataCallback)
   , m_syncLogic (syncPrefix,
-                 bind (&AppDataFetch::onUpdate, m_fetcher, _1, _2, _3),
-                 bind (&AppDataFetch::onRemove, m_fetcher, _1))
+                 bind(&SyncAppSocket::passCallback, this, _1),
+                 rmCallback)
 {
 }
 
@@ -42,10 +41,62 @@ SyncAppSocket::~SyncAppSocket()
 {
 }
 
-bool SyncAppSocket::publish (const string &prefix, uint32_t session, const string &dataBuffer, int freshness)
+bool 
+SyncAppSocket::publishString (const string &prefix, uint32_t session, const string &dataBuffer, int freshness)
 {
-  uint32_t sequence = m_publisher.publishData (prefix, session, dataBuffer, freshness);
+  uint32_t sequence = getNextSeq(prefix, session);
+  ostringstream contentNameWithSeqno;
+  contentNameWithSeqno << prefix << "/" << session << "/" << sequence;
+  m_ccnxHandle->publishStringData (contentNameWithSeqno.str (), dataBuffer, freshness);
+
+  SeqNo s(session, sequence + 1);
+  m_sequenceLog[prefix] = s;
+
   m_syncLogic.addLocalNames (prefix, session, sequence);
+}
+
+bool 
+SyncAppSocket::publishRaw(const std::string &prefix, uint32_t session, const char *buf, size_t len, int freshness)
+{
+  uint32_t sequence = getNextSeq(prefix, session);
+  ostringstream contentNameWithSeqno;
+  contentNameWithSeqno << prefix << "/" << session << "/" << sequence;
+  m_ccnxHandle->publishRawData (contentNameWithSeqno.str (), buf, len, freshness);
+
+  SeqNo s(session, sequence + 1);
+  m_sequenceLog[prefix] = s;
+  m_syncLogic.addLocalNames (prefix, session, sequence);
+}
+
+
+void 
+SyncAppSocket::fetchString(const std::string &prefix, const SeqNo &seq, CcnxWrapper::StringDataCallback callback, int retry)
+{
+  ostringstream interestName;
+  interestName << prefix << "/" << seq.getSession() << "/" << seq.getSeq();
+  m_ccnxHandle->sendInterestForString(interestName.str(), callback, retry);
+}
+
+void 
+SyncAppSocket::fetchRaw(const std::string &prefix, const SeqNo &seq, CcnxWrapper::RawDataCallback callback, int retry)
+{
+  ostringstream interestName;
+  interestName << prefix << "/" << seq.getSession() << "/" << seq.getSeq();
+  m_ccnxHandle->sendInterest(interestName.str(), callback, retry);
+}
+
+uint32_t
+SyncAppSocket::getNextSeq (const string &prefix, uint32_t session)
+{
+  SequenceLog::iterator i = m_sequenceLog.find (prefix);
+
+  if (i != m_sequenceLog.end ())
+    {
+      SeqNo s = i->second;
+      if (s.getSession() == session)
+        return s.getSeq();
+    }
+  return 0;
 }
 
 }

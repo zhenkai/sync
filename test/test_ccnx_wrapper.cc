@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE (CcnxWrapperTest)
   this_thread::sleep (posix_time::milliseconds (10));
 
   string interest = "/ucla.edu/0";
-  hb.sendInterest(interest, memberFunc);
+  hb.sendInterestForString(interest, memberFunc);
 
   // give time for ccnd to react
   sleep(1);
@@ -71,9 +71,9 @@ BOOST_AUTO_TEST_CASE (CcnxWrapperTest)
 
   string name = "/ucla.edu/0";
   string data = "random bits: !#$!@#$!";
-  ha.publishData(name, data, 5);
+  ha.publishStringData(name, data, 5);
 
-  hb.sendInterest(interest, memberFunc);
+  hb.sendInterestForString(interest, memberFunc);
 
   // give time for ccnd to react
   this_thread::sleep (posix_time::milliseconds (5));
