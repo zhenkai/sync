@@ -23,7 +23,7 @@
 #ifndef SYNC_FULL_STATE_H
 #define SYNC_FULL_STATE_H
 
-#ifndef STANDALONE
+#ifdef NS3_MODULE 
 #include "ns3/nstime.h"
 typedef ns3::Time TimeType;
 typedef ns3::Time TimeDurationType;
@@ -31,7 +31,7 @@ typedef ns3::Time TimeDurationType;
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 typedef boost::posix_time::ptime TimeType;
 typedef boost::posix_time::time_duration TimeDurationType;
-#endif // STANDALONE
+#endif // NS3_MODULE
 
 #include "sync-state.h"
 

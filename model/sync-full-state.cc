@@ -22,9 +22,9 @@
 
 #include "sync-full-state.h"
 
-#ifndef STANDALONE
+#ifdef NS3_MODULE
 #include "ns3/simulator.h"
-#endif // STANDALONE
+#endif // NS3_MODULE
 
 #include <boost/make_shared.hpp>
 #include <boost/lambda/lambda.hpp>
@@ -41,7 +41,7 @@ namespace Sync {
 
 
 FullState::FullState ()
-// m_lastUpdated is initialized to "not_a_date_time" in STANDALONE mode and to "0" time in NS-3 mode
+// m_lastUpdated is initialized to "not_a_date_time" in normal lib mode and to "0" time in NS-3 mode
 {
 }
 
@@ -52,11 +52,11 @@ FullState::~FullState ()
 TimeDurationType
 FullState::getTimeFromLastUpdate () const
 {
-#ifndef STANDALONE
+#ifdef NS3_MODULE
   return ns3::Simulator::Now () - m_lastUpdated;
 #else
   return boost::posix_time::second_clock::universal_time () - m_lastUpdated;
-#endif // STANDALONE
+#endif // NS3_MODULE
 }
 
 DigestConstPtr
@@ -89,11 +89,11 @@ FullState::getDigest ()
 boost::tuple<bool/*inserted*/, bool/*updated*/, SeqNo/*oldSeqNo*/>
 FullState::update (NameInfoConstPtr info, const SeqNo &seq)
 {
-#ifndef STANDALONE  
+#ifdef NS3_MODULE
   m_lastUpdated = ns3::Simulator::Now ();
 #else
   m_lastUpdated = boost::posix_time::second_clock::universal_time ();
-#endif // STANDALONE  
+#endif // NS3_MODULE
 
   m_digest.reset ();
 
@@ -120,11 +120,11 @@ FullState::update (NameInfoConstPtr info, const SeqNo &seq)
 bool
 FullState::remove (NameInfoConstPtr info)
 {
-#ifndef STANDALONE  
+#ifdef NS3_MODULE
   m_lastUpdated = ns3::Simulator::Now ();
 #else
   m_lastUpdated = boost::posix_time::second_clock::universal_time ();
-#endif // STANDALONE  
+#endif // NS3_MODULE
 
   m_digest.reset ();
 

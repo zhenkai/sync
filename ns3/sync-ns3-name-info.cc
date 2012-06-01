@@ -20,7 +20,7 @@
  *	   Alexander Afanasyev <alexander.afanasyev@ucla.edu>
  */
 
-#ifndef STANDALONE
+#ifdef NS3_MODULE
 
 #include "sync-ns3-name-info.h"
 #include "ns3/ccnx-name-components.h"

@@ -40,7 +40,6 @@ def configure(conf):
         conf.define ('NS3_LOG_ENABLE', 1)
     else:
         conf.check_boost(lib='system iostreams test thread')
-        conf.define ('STANDALONE', 1)
 
         conf.load ('ccnx')
         conf.check_ccnx (path=conf.options.ccnx_dir)
