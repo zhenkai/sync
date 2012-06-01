@@ -299,10 +299,7 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
                 {
                   diffLog->update (info, seq);
                   //m_onUpdate (info->toString (), seq, oldSeq);
-                  MissingDataInfo mdi;
-                  mdi.prefix = info->toString();
-                  mdi.low = oldSeq;
-                  mdi.high = seq;
+                  MissingDataInfo mdi = {info->toString(), ++oldSeq, seq};
                   v.push_back(mdi);
                 }
             }

@@ -44,6 +44,15 @@ struct TestStruct {
     s_str1 = str1;
     s_str2 = str2;
   }
+  char *m_buf;
+  size_t m_len;
+
+  void rawSet(string str1, const char *buf, size_t len) {
+    std::cout << "In rawSet" << std::endl;
+    m_buf = (char  *)calloc(1, len);
+    memcpy(m_buf, buf, len);
+    s_str1 = str1;
+  }
 };
 
 BOOST_AUTO_TEST_CASE (CcnxWrapperTest)
@@ -56,6 +65,9 @@ BOOST_AUTO_TEST_CASE (CcnxWrapperTest)
   boost::function<void (string)> globalFunc = echo;
   boost::function<void (string, string)> memberFunc =
     bind(&TestStruct::set, &foo, _1, _2);
+
+  boost::function<void (string, const char *, size_t)> rawFunc =
+    bind(&TestStruct::rawSet, &foo, _1, _2, _3);
 
   string prefix = "/ucla.edu";
   ha.setInterestFilter(prefix, globalFunc);
@@ -79,6 +91,14 @@ BOOST_AUTO_TEST_CASE (CcnxWrapperTest)
   this_thread::sleep (posix_time::milliseconds (5));
   BOOST_CHECK_EQUAL(foo.s_str1, name);
   BOOST_CHECK_EQUAL(foo.s_str2, data);
+
+  string rawDataName = "/ucla.edu/1";
+  int num[5] = {0, 1, 2, 3, 4};
+  ha.publishRawData(rawDataName, (const char *)num, sizeof(num), 30);
+  hb.sendInterest(rawDataName, rawFunc);
+  BOOST_CHECK_EQUAL(foo.s_str1, rawDataName);
+  
+  BOOST_CHECK(memcmp((char *)num, foo.m_buf, foo.m_len) == 0);
 }
 
 

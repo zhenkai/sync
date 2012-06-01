@@ -137,6 +137,10 @@ void funcUpdate( const std::string &/*prefix*/, const SeqNo &/*newSeq*/, const S
 {
 }
 
+void funcPass( const std::vector<MissingDataInfo> &v)
+{
+}
+
 void funcRemove( const std::string &/*prefix*/ )
 {
 }
@@ -144,7 +148,7 @@ void funcRemove( const std::string &/*prefix*/ )
 BOOST_AUTO_TEST_CASE (SyncLogicSchedulerTest)
 {  
   SyncLogic *logic = 0;
-  BOOST_CHECK_NO_THROW (logic = new SyncLogic ("/prefix", funcUpdate, funcRemove));
+  BOOST_CHECK_NO_THROW (logic = new SyncLogic ("/prefix", funcPass, funcRemove));
   this_thread::sleep (posix_time::milliseconds (100));
 
   Scheduler &scheduler = logic->getScheduler ();

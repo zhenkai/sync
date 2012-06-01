@@ -40,6 +40,9 @@ using namespace boost;
 
 INIT_LOGGER ("Test.AppSocket");
 
+#define PRINT 
+//std::cout << "Line: " << __LINE__ << std::endl;
+
 class TestSocketApp {
 public:
   map<string, string> data;
@@ -51,9 +54,12 @@ public:
 
   void fetchAll(const vector<MissingDataInfo> &v, SyncAppSocket *socket) {
     int n = v.size();
+
+    PRINT
+
     for (int i = 0; i < n; i++) {
-      SeqNo s = v[i].low;
-      for(++s; s <= v[i].high; ++s) {
+      for(SeqNo s = v[i].low; s <= v[i].high; ++s) {
+        PRINT
         socket->fetchString(v[i].prefix, s, bind(&TestSocketApp::set, this, _1, _2));
       }
     }
@@ -101,7 +107,7 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
   string data0 = "Very funny Scotty, now beam down my clothes";
   _LOG_DEBUG ("s1 publish");
   s1.publishString (p1, 0, data0, 10); 
-  this_thread::sleep (posix_time::milliseconds (120));
+  this_thread::sleep (posix_time::milliseconds (1000));
 
   // from code logic, we won't be fetching our own data
   a1.set(p1 + "/0/0", data0);
