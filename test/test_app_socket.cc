@@ -49,11 +49,11 @@ public:
     // cout << str1 << ", " << str2 << endl;
   }
 
-  void fetchAll(vector<MissingDataInfo> &v, SyncAppSocket *socket) {
+  void fetchAll(const vector<MissingDataInfo> &v, SyncAppSocket *socket) {
     int n = v.size();
     for (int i = 0; i < n; i++) {
-      SeqNo s = ++v[i].low;
-      for(; s <= v[i].high; ++s) {
+      SeqNo s = v[i].low;
+      for(++s; s <= v[i].high; ++s) {
         socket->fetchString(v[i].prefix, s, bind(&TestSocketApp::set, this, _1, _2));
       }
     }

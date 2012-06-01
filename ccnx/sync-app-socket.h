@@ -82,7 +82,7 @@ public:
   void fetchString(const std::string &prefix, const SeqNo &seq, CcnxWrapper::StringDataCallback callback, int retry = 0);
   void fetchRaw(const std::string &prefix, const SeqNo &seq, CcnxWrapper::RawDataCallback callback, int retry = 0);
 
-  void passCallback(std::vector<MissingDataInfo> &v) {m_newDataCallback(v, this);}
+  void passCallback(const std::vector<MissingDataInfo> &v) {m_newDataCallback(v, this);}
 
 private:
   uint32_t

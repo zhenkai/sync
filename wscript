@@ -8,6 +8,7 @@ def options(opt):
     opt.add_option('--log4cxx', action='store_true',default=False,dest='log4cxx',help='''Compile with log4cxx/native NS3 logging support''')
     opt.add_option('--ns3',     action='store_true',default=False,dest='ns3_enable',help='''Compile as NS-3 module''')
     opt.add_option('--ns3-debug', action='store_true',default=False,dest='ns3_debug',help='''Link against debug NS3 libraries. Optimized version will be used otherwise''')
+    opt.add_option('--test', action='store_true',default=False,dest='_test',help='''build unit tests''')
     opt.load('compiler_c')
     opt.load('compiler_cxx')
     opt.load('boost')
@@ -52,6 +53,9 @@ def configure(conf):
         conf.env.append_value('CXXFLAGS', ['-O0', '-g3'])
     else:
         conf.env.append_value('CXXFLAGS', ['-O3'])
+
+    if conf.options._test:
+      conf.define('_TEST', 1)
 
     try:
         conf.load('doxygen')
@@ -145,13 +149,14 @@ def build (bld):
             )
         
         # Unit tests
-        unittests = bld.program (
-            target="unit-tests",
-            source = bld.path.ant_glob(['test/**/*.cc']),
-            features=['cxx', 'cxxprogram'],
-            use = 'BOOST_TEST sync',
-            includes = ['model', 'ccnx', 'helper'],
-            )
+        if bld.get_define("_TEST"):
+          unittests = bld.program (
+              target="unit-tests",
+              source = bld.path.ant_glob(['test/**/*.cc']),
+              features=['cxx', 'cxxprogram'],
+              use = 'BOOST_TEST sync',
+              includes = ['model', 'ccnx', 'helper'],
+              )
 
         if bld.get_define ("HAVE_LOG4CXX"):
             libsync.use += ' LOG4CXX'

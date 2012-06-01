@@ -44,7 +44,7 @@ struct Handler
   {
   }
 
-  void wrapper (vector<MissingDataInfo> &v) {
+  void wrapper (const vector<MissingDataInfo> &v) {
     int n = v.size();
     for (int i = 0; i < n; i++) {
       onUpdate (v[i].prefix, v[i].high, v[i].low);
