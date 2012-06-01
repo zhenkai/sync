@@ -61,6 +61,7 @@ SyncAppSocket::publishRaw(const std::string &prefix, uint32_t session, const cha
   uint32_t sequence = getNextSeq(prefix, session);
   ostringstream contentNameWithSeqno;
   contentNameWithSeqno << prefix << "/" << session << "/" << sequence;
+
   m_ccnxHandle->publishRawData (contentNameWithSeqno.str (), buf, len, freshness);
 
   SeqNo s(session, sequence + 1);
@@ -82,6 +83,7 @@ SyncAppSocket::fetchRaw(const std::string &prefix, const SeqNo &seq, CcnxWrapper
 {
   ostringstream interestName;
   interestName << prefix << "/" << seq.getSession() << "/" << seq.getSeq();
+  //std::cout << "Socket " << this << " Send Interest <" << interestName.str() << "> for raw data " << endl;
   m_ccnxHandle->sendInterest(interestName.str(), callback, retry);
 }
 

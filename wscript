@@ -52,7 +52,7 @@ def configure(conf):
         conf.define ('_DEBUG', 1)
         conf.env.append_value('CXXFLAGS', ['-O0', '-g3'])
     else:
-        conf.env.append_value('CXXFLAGS', ['-O3'])
+        conf.env.append_value('CXXFLAGS', ['-O3', '-g'])
 
     if conf.options._test:
       conf.define('_TEST', 1)

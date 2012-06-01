@@ -44,14 +44,16 @@ struct TestStruct {
     s_str1 = str1;
     s_str2 = str2;
   }
-  char *m_buf;
-  size_t m_len;
+  int * num;
+  int n;
 
   void rawSet(string str1, const char *buf, size_t len) {
     std::cout << "In rawSet" << std::endl;
-    m_buf = (char  *)calloc(1, len);
-    memcpy(m_buf, buf, len);
     s_str1 = str1;
+
+    n = len / 4; 
+    num = new int [n];
+    memcpy(num, buf, len);
   }
 };
 
@@ -96,9 +98,12 @@ BOOST_AUTO_TEST_CASE (CcnxWrapperTest)
   int num[5] = {0, 1, 2, 3, 4};
   ha.publishRawData(rawDataName, (const char *)num, sizeof(num), 30);
   hb.sendInterest(rawDataName, rawFunc);
+
+  this_thread::sleep (posix_time::milliseconds (5));
   BOOST_CHECK_EQUAL(foo.s_str1, rawDataName);
-  
-  BOOST_CHECK(memcmp((char *)num, foo.m_buf, foo.m_len) == 0);
+  for (int i = 0; i < 5; i++) {
+    BOOST_CHECK(foo.num[i] == num[i]);
+  }
 }
 
 

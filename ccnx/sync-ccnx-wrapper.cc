@@ -166,6 +166,7 @@ CcnxWrapper::publishStringData (const string &name, const string &dataBuffer, in
 int
 CcnxWrapper::publishRawData (const string &name, const char *buf, size_t len, int freshness)
 {
+
   recursive_mutex::scoped_lock lock(m_mutex);
   if (!m_running)
     return -1;

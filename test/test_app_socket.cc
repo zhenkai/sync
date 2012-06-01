@@ -51,6 +51,19 @@ public:
     data.insert(make_pair(str1, str2));
     // cout << str1 << ", " << str2 << endl;
   }
+  
+  void setNum(string str1, const char *buf, size_t len) {
+    int n = len / 4;
+    int *numbers = new int [n];
+    memcpy(numbers, buf, len);
+    for (int i = 0; i < n; i++) {
+      sum += numbers[i];
+    }
+    delete numbers;
+
+  }
+
+  int sum;
 
   void fetchAll(const vector<MissingDataInfo> &v, SyncAppSocket *socket) {
     int n = v.size();
@@ -59,8 +72,22 @@ public:
 
     for (int i = 0; i < n; i++) {
       for(SeqNo s = v[i].low; s <= v[i].high; ++s) {
-        PRINT
+        //PRINT
         socket->fetchString(v[i].prefix, s, bind(&TestSocketApp::set, this, _1, _2));
+      }
+    }
+  }
+
+  void fetchNumbers(const vector<MissingDataInfo> &v, SyncAppSocket *socket) {
+    int n = v.size();
+
+    PRINT
+
+    std::cout << "In fetchNumbers. size of v is:  " << n << std::endl;
+    for (int i = 0; i < n; i++) {
+      for(SeqNo s = v[i].low; s <= v[i].high; ++s) {
+        PRINT
+        socket->fetchRaw(v[i].prefix, s, bind(&TestSocketApp::setNum, this, _1, _2, _3));
       }
     }
   }
@@ -166,6 +193,33 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
   // a2.set(p2 + "/0/0", data7);
   BOOST_CHECK_EQUAL(a1.toString(), a2.toString());
   BOOST_CHECK_EQUAL(a2.toString(), a3.toString());
+
+  _LOG_DEBUG("Begin new test");
+  std::cout << "Begin new Test " << std::endl;
+  string syncRawPrefix = "/this/is/the/prefix";
+  a1.sum = 0;
+  a2.sum = 0;
+  SyncAppSocket s4 (syncRawPrefix, bind(&TestSocketApp::fetchNumbers, &a1, _1, _2), bind(&TestSocketApp::pass, &a1, _1));
+  SyncAppSocket s5 (syncRawPrefix, bind(&TestSocketApp::fetchNumbers, &a2, _1, _2), bind(&TestSocketApp::pass, &a2, _1));
+
+  int num[5] = {0, 1, 2, 3, 4};
+
+  string p4 = "/xiaonei.com";
+  string p5 = "/mitbbs.com";
+
+  s4.publishRaw(p4, 0,(const char *) num, sizeof(num), 10);
+  a1.setNum(p4, (const char *) num, sizeof (num));
+
+  this_thread::sleep (posix_time::milliseconds (200));
+  BOOST_CHECK(a1.sum == a2.sum && a1.sum == 10);
+
+  int newNum[5] = {9, 7, 2, 1, 1};
+
+  s5.publishRaw(p5, 0,(const char *) newNum, sizeof(newNum), 10);
+  a2.setNum(p5, (const char *)newNum, sizeof (newNum));
+  this_thread::sleep (posix_time::milliseconds (1000));
+  BOOST_CHECK_EQUAL(a1.sum, a2.sum);
+  BOOST_CHECK_EQUAL(a1.sum, 30);
 
   _LOG_DEBUG ("Finish");
 }
