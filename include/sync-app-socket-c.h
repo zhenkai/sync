@@ -26,12 +26,25 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+  
   typedef struct SyncAppSocketStruct SyncAppSocketStruct;
+  
+  struct MissingDataInfoC
+  {
+    const char *prefix;
+    int session;
+    int low;
+    int high;
+  };
 
-  SyncAppSocketStruct *create_sync_app_socket(const char *prefix, void (*callback)(const char *, const char *));
+  SyncAppSocketStruct *create_sync_app_socket(const char *prefix, 
+      void (*updatecallback)(const struct MissingDataInfo*, const int, const SyncAppSocketStruct*),
+      void (*removecallback)(const char *));
   void delete_sync_app_socket(SyncAppSocketStruct **sock);
   int sync_app_socket_publish(SyncAppSocketStruct *sock, const char *prefix, int session, const char *buf, int freshness);
   void sync_app_socket_remove(SyncAppSocketStruct *sock, const char *prefix);
+  void sync_app_socket_fetch(SyncAppSocketStruct *sock, const char *prefix, int session, int seq,
+      void (*callback)(const char*, const char*), int retry = 0);
 #ifdef __cplusplus
 }
 #endif
