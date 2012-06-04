@@ -109,6 +109,9 @@ public:
    */
   void remove (const std::string &prefix);
 
+  std::string
+  getRootDigest();
+
 #ifdef _DEBUG
   Scheduler &
   getScheduler () { return m_scheduler; }

@@ -102,3 +102,4 @@ SyncAppSocket::getNextSeq (const string &prefix, uint32_t session)
 }
 
 }
+
