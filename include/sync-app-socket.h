@@ -82,11 +82,16 @@ public:
   void fetchString(const std::string &prefix, const SeqNo &seq, CcnxWrapper::StringDataCallback callback, int retry = 0);
   void fetchRaw(const std::string &prefix, const SeqNo &seq, CcnxWrapper::RawDataCallback callback, int retry = 0);
 
-  void passCallback(const std::vector<MissingDataInfo> &v) {m_newDataCallback(v, this);}
+  // for sync-demo
+  std::string getRootDigest() {return m_syncLogic.getRootDigest();}
+
 
 private:
   uint32_t
   getNextSeq (const std::string &prefix, uint32_t session);
+
+  void 
+  passCallback(const std::vector<MissingDataInfo> &v) {m_newDataCallback(v, this);}
 
 private:
   typedef boost::unordered_map<std::string, SeqNo> SequenceLog;

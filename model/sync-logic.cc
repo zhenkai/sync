@@ -532,5 +532,14 @@ SyncLogic::sendSyncData (const std::string &name, DigestConstPtr digest, StateCo
     }
 }
 
+string
+SyncLogic::getRootDigest() 
+{
+  ostringstream os;
+  recursive_mutex::scoped_lock lock (m_stateMutex);
+  os << *m_state->getDigest();
+  return os.str();
+}
+
 
 }
