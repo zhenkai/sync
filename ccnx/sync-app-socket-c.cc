@@ -113,7 +113,7 @@ delete_sync_app_socket(SyncAppSocketStruct **sock) {
 // should fix this "feature"
 extern "C" 
 int
-sync_app_socket_publish(SyncAppSocketStruct *sock, const char *prefix, int session, const char *buf, int freshness) 
+sync_app_socket_publish(const SyncAppSocketStruct *sock, const char *prefix, int session, const char *buf, int freshness) 
 {
   SyncAppSocket *temp = (SyncAppSocket*) sock;
   return temp->publishString(prefix, session, buf, freshness);
@@ -121,7 +121,7 @@ sync_app_socket_publish(SyncAppSocketStruct *sock, const char *prefix, int sessi
 
 extern "C"
 void
-sync_app_socket_remove(SyncAppSocketStruct *sock, const char *prefix) 
+sync_app_socket_remove(const SyncAppSocketStruct *sock, const char *prefix) 
 {
   SyncAppSocket *temp = (SyncAppSocket*) sock;
   temp->remove(prefix);
@@ -129,8 +129,8 @@ sync_app_socket_remove(SyncAppSocketStruct *sock, const char *prefix)
 
 extern "C"
 void
-sync_app_socket_fetch(SyncAppSocketStruct *sock, const char *prefix, int session, int sequence, 
-    void (*callback)(const char*, const char*), int retry = 0)
+sync_app_socket_fetch(const SyncAppSocketStruct *sock, const char *prefix, int session, int sequence, 
+    void (*callback)(const char*, const char*), int retry)
 {
   SyncAppSocket *temp = (SyncAppSocket*) sock;
   string s(prefix);
@@ -140,3 +140,4 @@ sync_app_socket_fetch(SyncAppSocketStruct *sock, const char *prefix, int session
 
   temp->fetchString(s, seq, cb, retry);
 }
+
