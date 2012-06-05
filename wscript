@@ -125,7 +125,7 @@ def build (bld):
                 'ccnx/sync-ccnx-wrapper.cc',
                 'ccnx/sync-scheduler.cc',
                 'ccnx/sync-log.cc',
-                #'ccnx/sync-app-socket-c.cc',
+                'ccnx/sync-app-socket-c.cc',
                 'ccnx/sync-app-socket.cc',
                 'model/sync-diff-leaf.cc',
                 'model/sync-diff-state.cc',
