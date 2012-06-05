@@ -299,7 +299,15 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
                 {
                   diffLog->update (info, seq);
                   //m_onUpdate (info->toString (), seq, oldSeq);
-                  MissingDataInfo mdi = {info->toString(), ++oldSeq, seq};
+                  if (!oldSeq.isValid())
+                  {
+                    oldSeq = SeqNo(seq.getSession(), 0);
+                  }
+                  else
+                  {
+                    ++oldSeq;
+                  }
+                  MissingDataInfo mdi = {info->toString(), oldSeq, seq};
                   v.push_back(mdi);
                 }
             }

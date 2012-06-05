@@ -85,6 +85,7 @@ public:
 
     std::cout << "In fetchNumbers. size of v is:  " << n << std::endl;
     for (int i = 0; i < n; i++) {
+      std::cout << "In fetchNumbers. v[i].low is (" <<v[i].low.getSession() <<", " << v[i].low.getSeq() << ") v[i].high is ("<<v[i].high.getSession() <<", " <<v[i].high.getSeq()<<")" << std::endl;
       for(SeqNo s = v[i].low; s <= v[i].high; ++s) {
         PRINT
         socket->fetchRaw(v[i].prefix, s, bind(&TestSocketApp::setNum, this, _1, _2, _3));
