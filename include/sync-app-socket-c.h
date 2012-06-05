@@ -38,13 +38,13 @@ extern "C" {
   };
 
   SyncAppSocketStruct *create_sync_app_socket(const char *prefix, 
-      void (*updatecallback)(const struct MissingDataInfo*, const int, const SyncAppSocketStruct*),
+      void (*updatecallback)(const struct MissingDataInfoC*, const int, const SyncAppSocketStruct*),
       void (*removecallback)(const char *));
   void delete_sync_app_socket(SyncAppSocketStruct **sock);
-  int sync_app_socket_publish(SyncAppSocketStruct *sock, const char *prefix, int session, const char *buf, int freshness);
-  void sync_app_socket_remove(SyncAppSocketStruct *sock, const char *prefix);
-  void sync_app_socket_fetch(SyncAppSocketStruct *sock, const char *prefix, int session, int seq,
-      void (*callback)(const char*, const char*), int retry = 0);
+  int sync_app_socket_publish(const SyncAppSocketStruct *sock, const char *prefix, int session, const char *buf, int freshness);
+  void sync_app_socket_remove(const SyncAppSocketStruct *sock, const char *prefix);
+  void sync_app_socket_fetch(const SyncAppSocketStruct *sock, const char *prefix, int session, int seq,
+      void (*callback)(const char*, const char*), int retry);
 #ifdef __cplusplus
 }
 #endif
