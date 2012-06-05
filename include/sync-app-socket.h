@@ -84,12 +84,10 @@ public:
 
   // for sync-demo
   std::string getRootDigest() {return m_syncLogic.getRootDigest();}
-
-
-private:
   uint32_t
   getNextSeq (const std::string &prefix, uint32_t session);
 
+private:
   void 
   passCallback(const std::vector<MissingDataInfo> &v) {m_newDataCallback(v, this);}
 
