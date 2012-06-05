@@ -188,7 +188,7 @@ private:
   static const int m_syncInterestReexpress = 10; // seconds
   // don't forget to adjust value in SyncCcnxWrapper
 #else
-  static const int m_syncResponseFreshness = 2000;
+  static const int m_syncResponseFreshness = 4;
   static const int m_syncInterestReexpress = 4;
 #endif
 
