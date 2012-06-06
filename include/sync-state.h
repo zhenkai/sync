@@ -26,6 +26,7 @@
 #include "sync-state-leaf-container.h"
 #include <boost/exception/all.hpp>
 #include "boost/tuple/tuple.hpp"
+#include "sync-state.pb.h"
 
 /**
  * \defgroup sync SYNC protocol
@@ -74,29 +75,31 @@ protected:
   LeafContainer m_leaves;
 };
 
-/**
- * @brief Formats an XML representation of the state
- * @param os output stream
- * @param state state
- * @returns output stream
- */
-std::ostream &
-operator << (std::ostream &os, const State &state);
 
 /**
- * @brief Parses an XML representation to the state
- * @param in input data stream
+ * @brief Formats a protobuf SyncStateMsg msg
+ * @param oss output SyncStateMsg msg
  * @param state state
- * @returns input stream
+ * @returns output SyncStateMsg msg
  */
-std::istream &
-operator >> (std::istream &in, State &state);
+SyncStateMsg &
+operator << (SyncStateMsg &ossm, const State &state);
+
+
+/**
+ * @brief Parse a protobuf SyncStateMsg msg
+ * @param iss input SyncStateMsg msg
+ * @param state state
+ * @returns SyncStateMsg msg
+ */
+SyncStateMsg &
+operator >> (SyncStateMsg &issm, const State &state);
 
 namespace Error {
 /**
- * @brief Will be thrown when XML cannot be properly decoded to State
+ * @brief Will be thrown when data cannot be properly decoded to SyncStateMsg
  */
-struct SyncXmlDecodingFailure : virtual boost::exception, virtual std::exception { };
+struct SyncStateMsgDecodingFailure : virtual boost::exception, virtual std::exception { };
 }
 
 } // Sync

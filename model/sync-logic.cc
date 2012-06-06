@@ -178,7 +178,7 @@ SyncLogic::respondSyncInterest (const string &name)
 }
 
 void
-SyncLogic::respondSyncData (const std::string &name, const std::string &dataBuffer)
+SyncLogic::respondSyncData (const std::string &name, const char *wireData, size_t len)
 {
   try
     {
@@ -190,13 +190,13 @@ SyncLogic::respondSyncData (const std::string &name, const std::string &dataBuff
 
       if (type == "normal")
         {
-          processSyncData (name, digest, dataBuffer);
+          processSyncData (name, digest, wireData, len);
         }
       else
         {
           // timer is always restarted when we schedule recovery
           m_scheduler.cancel (REEXPRESSING_RECOVERY_INTEREST);
-          processSyncData (name, digest, dataBuffer);
+          processSyncData (name, digest, wireData, len);
         }
     }
   catch (Error::DigestCalculationError &e)
@@ -263,7 +263,7 @@ SyncLogic::processSyncInterest (const std::string &name, DigestConstPtr digest, 
 }
 
 void
-SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, const string &dataBuffer)
+SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, const char *wireData, size_t len)
 {
   DiffStatePtr diffLog = make_shared<DiffState> ();
   bool ownInterestSatisfied = false;
@@ -277,8 +277,14 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
       ownInterestSatisfied = (name == m_outstandingInterestName);
 
       DiffState diff;
-      istringstream ss (dataBuffer);
-      ss >> diff;
+      SyncStateMsg msg;
+      if (!msg.parseFromArray(wireData, len) || !msg.IsInitialized()) 
+      {
+        //Throw
+        BOOST_THROW_EXCEPTION (SyncStateMsgDecodingFailure () << info_str ("Can not decode data"));
+      }
+      msg >> diff;
+
       vector<MissingDataInfo> v;
       BOOST_FOREACH (LeafConstPtr leaf, diff.getLeaves().get<ordered>())
         {
@@ -332,7 +338,7 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
 
       insertToDiffLog (diffLog);
     }
-  catch (Error::SyncXmlDecodingFailure &e)
+  catch (Error::SyncStateMsgDecodingFailure &e)
     {
       _LOG_TRACE ("Something really fishy happened during state decoding " <<
                   diagnostic_information (e));
@@ -486,8 +492,8 @@ SyncLogic::sendSyncInterest ()
                         bind (&SyncLogic::sendSyncInterest, this),
                         REEXPRESSING_INTEREST);
   
-  m_ccnxHandle->sendInterestForString (os.str (),
-                              bind (&SyncLogic::respondSyncData, this, _1, _2));
+  m_ccnxHandle->sendInterest (os.str (),
+                              bind (&SyncLogic::respondSyncData, this, _1, _2, _3));
 }
 
 void
@@ -508,8 +514,8 @@ SyncLogic::sendSyncRecoveryInterests (DigestConstPtr digest)
                             REEXPRESSING_RECOVERY_INTEREST);
     }
 
-  m_ccnxHandle->sendInterestForString (os.str (),
-                              bind (&SyncLogic::respondSyncData, this, _1, _2));
+  m_ccnxHandle->sendInterest (os.str (),
+                              bind (&SyncLogic::respondSyncData, this, _1, _2, _3));
 }
 
 
@@ -518,9 +524,15 @@ SyncLogic::sendSyncData (const std::string &name, DigestConstPtr digest, StateCo
 {
   _LOG_TRACE (">> D " << name);
   // sending
-  m_ccnxHandle->publishStringData (name,
-                             lexical_cast<string> (*state),
+  SyncStateMsg ssm;
+  ssm << (*state);
+  char *wireData = new char[ssm.size()];
+  ssm.SerializedToArray(wireData, ssm.size());
+  m_ccnxHandle->publishRawData (name,
+                             wireData,
+                             ssm.size(),
                              m_syncResponseFreshness); // in NS-3 it doesn't have any effect... yet
+  delete wireData;
 
   // checking if our own interest got satisfied
   bool satisfiedOwnInterest = false;

@@ -1,0 +1,24 @@
+package Sync;
+
+message SyncState
+{
+  required string name = 1;
+  enum ActionType
+  {
+    UPDATE = 0;
+    DELETE = 1;
+    OTHER = 2;
+  }
+  required ActionType type = 2;
+  message SeqNo
+  {
+    required uint32 seq = 1;
+    required uint32 session = 2;
+  }
+  optional SeqNo seqNo = 3;
+}
+
+message SyncStateMsg
+{
+  repeated SyncState ss = 1;
+}

@@ -30,7 +30,6 @@
 #include <boost/throw_exception.hpp>
 #include <boost/lexical_cast.hpp>
 
-#define TIXML_USE_STL
 #include <tinyxml.h>
 
 using namespace std;
@@ -42,12 +41,7 @@ using namespace Sync::Error;
 
 namespace Sync {
 
-#ifdef _DEBUG
-#define DEBUG_ENDL os << "\n";
-#else
-#define DEBUG_ENDL
-#endif
-
+/*
 std::ostream &
 operator << (std::ostream &os, const State &state)
 {
@@ -73,7 +67,40 @@ operator << (std::ostream &os, const State &state)
     }
   os << "</state>";
 }
+*/
 
+SyncStateMsg &
+operator << (SyncStateMsg &ossm, const State &state)
+{
+  BOOST_FOREACH (shared_ptr<const Leaf> leaf, state.getLeaves ().get<ordered> ())
+  {
+    SyncState *oss = ossm->add_ss();
+    shared_ptr<const DiffLeaf> diffLeaf = dynamic_pointer_cast<const DiffLeaf> (leaf);
+    if (diffLeaf != 0 && diffLeaf->getOperation != UPDATE)
+    {
+      oss->set_type(SyncState::DELETE);
+    }
+    else
+    {
+      oss->set_type(SyncState::UPDATE);
+    }
+
+    std::ostringstream os;
+    os << *leaf->getInfo();
+    oss->set_name(os.str());
+
+    if (diffLeaf == 0 || (diffLeaf != 0 && diffLeaf->getOperation () == UPDATE))
+    {
+      SyncState::SeqNo seqNo;
+      seqNo->set_session(leaf->getSeq()->getSession());
+      seqNo->set_seq(leaf->getSeq()->getSeq());
+      oss->set_seqNo(seqNo);
+    }
+  }
+  return ossm;
+}
+
+/*
 std::istream &
 operator >> (std::istream &in, State &state)
 {
@@ -119,6 +146,30 @@ operator >> (std::istream &in, State &state)
     }
 
   return in;
+}
+*/
+
+SyncStateMsg &
+operator >> (SyncStateMsg &issm, const State &state)
+{
+  int n = issm.ss_size();
+  for (int i = 0; i < n; i++)
+  {
+    const SyncState &ss = issm.ss(i);
+    NameInfoConstPtr info = StdNameInfo::FindOrCreate (ss.name());
+    if (ss.type() == SyncState::UPDATE)
+    {
+      state.update(info, SeqNo(
+                                lexical_cast<uint32_t> (ss.seqNo().session()),
+                                lexical_cast<uint32_t> (ss.seqNo().seq()),
+                                ));
+    }
+    else
+    {
+      state.remove(info);
+    }
+  }
+  return issm;
 }
 
 }
