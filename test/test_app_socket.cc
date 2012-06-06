@@ -211,7 +211,7 @@ BOOST_AUTO_TEST_CASE (AppSocketTest)
   s4.publishRaw(p4, 0,(const char *) num, sizeof(num), 10);
   a1.setNum(p4, (const char *) num, sizeof (num));
 
-  this_thread::sleep (posix_time::milliseconds (200));
+  this_thread::sleep (posix_time::milliseconds (1000));
   BOOST_CHECK(a1.sum == a2.sum && a1.sum == 10);
 
   int newNum[5] = {9, 7, 2, 1, 1};
