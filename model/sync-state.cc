@@ -74,9 +74,9 @@ operator << (SyncStateMsg &ossm, const State &state)
 {
   BOOST_FOREACH (shared_ptr<const Leaf> leaf, state.getLeaves ().get<ordered> ())
   {
-    SyncState *oss = ossm->add_ss();
+    SyncState *oss = ossm.add_ss();
     shared_ptr<const DiffLeaf> diffLeaf = dynamic_pointer_cast<const DiffLeaf> (leaf);
-    if (diffLeaf != 0 && diffLeaf->getOperation != UPDATE)
+    if (diffLeaf != 0 && diffLeaf->getOperation() != UPDATE)
     {
       oss->set_type(SyncState::DELETE);
     }
@@ -91,10 +91,9 @@ operator << (SyncStateMsg &ossm, const State &state)
 
     if (diffLeaf == 0 || (diffLeaf != 0 && diffLeaf->getOperation () == UPDATE))
     {
-      SyncState::SeqNo seqNo;
-      seqNo->set_session(leaf->getSeq()->getSession());
-      seqNo->set_seq(leaf->getSeq()->getSeq());
-      oss->set_seqNo(seqNo);
+      SyncState::SeqNo *seqNo = oss->mutable_seqno();
+      seqNo->set_session(leaf->getSeq().getSession());
+      seqNo->set_seq(leaf->getSeq().getSeq());
     }
   }
   return ossm;
@@ -150,7 +149,7 @@ operator >> (std::istream &in, State &state)
 */
 
 SyncStateMsg &
-operator >> (SyncStateMsg &issm, const State &state)
+operator >> (SyncStateMsg &issm, State &state)
 {
   int n = issm.ss_size();
   for (int i = 0; i < n; i++)
@@ -159,10 +158,10 @@ operator >> (SyncStateMsg &issm, const State &state)
     NameInfoConstPtr info = StdNameInfo::FindOrCreate (ss.name());
     if (ss.type() == SyncState::UPDATE)
     {
-      state.update(info, SeqNo(
-                                lexical_cast<uint32_t> (ss.seqNo().session()),
-                                lexical_cast<uint32_t> (ss.seqNo().seq()),
-                                ));
+      uint32_t session = lexical_cast<uint32_t>(ss.seqno().session());
+      uint32_t seq = lexical_cast<uint32_t>(ss.seqno().seq());
+      SeqNo seqNo(session, seq);
+      state.update(info, seqNo);
     }
     else
     {

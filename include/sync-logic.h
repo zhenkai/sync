@@ -101,7 +101,7 @@ public:
    * @param name the data name
    * @param dataBuffer the sync data
    */
-  void respondSyncData (const std::string &name, const std::string &dataBuffer);
+  void respondSyncData (const std::string &name, const char *wireData, size_t len);
 
   /**
    * @brief remove a participant's subtree from the sync tree
@@ -133,7 +133,7 @@ private:
 
   void
   processSyncData (const std::string &name,
-                   DigestConstPtr digest, const std::string &dataBuffer);
+                   DigestConstPtr digest, const char *wireData, size_t len);
   
   void
   processSyncRecoveryInterest (const std::string &name,

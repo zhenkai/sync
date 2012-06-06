@@ -93,7 +93,7 @@ operator << (SyncStateMsg &ossm, const State &state);
  * @returns SyncStateMsg msg
  */
 SyncStateMsg &
-operator >> (SyncStateMsg &issm, const State &state);
+operator >> (SyncStateMsg &issm, State &state);
 
 namespace Error {
 /**

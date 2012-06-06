@@ -13,7 +13,7 @@ def options(opt):
     opt.load('compiler_cxx')
     opt.load('boost')
     opt.load('doxygen')
-    opt.load('ccnx tinyxml ns3', tooldir=["waf-tools"])
+    opt.load('ccnx protobuf ns3', tooldir=["waf-tools"])
 
 def configure(conf):
     conf.load("compiler_cxx")
@@ -61,10 +61,18 @@ def configure(conf):
     except:
         pass
 
-    conf.load('tinyxml')
-    conf.check_tinyxml ()
+    conf.load('protobuf')
+    conf.check_protobuf (path=conf.options.protobuf_dir)
                    
+
+def pre(bld):
+  bld.exec_command('protoc --cpp_out=. sync-state.proto')
+  bld.exec_command('mv sync-state.pb.h include/')
+  bld.exec_command('mv sync-state.pb.cc model/')
+
 def build (bld):
+    bld.add_pre_fun(pre)
+
     if bld.get_define ("NS3_MODULE"):
         sync_ns3 = bld.shlib (
             target = "sync-ns3",
@@ -91,8 +99,9 @@ def build (bld):
                 'model/sync-seq-no.cc',
                 'model/sync-state.cc',
                 'model/sync-std-name-info.cc',
+                'model/sync-state.pb.cc',
                 ],
-            use = 'BOOST BOOST_IOSTREAMS SSL TINYXML ' + ' '.join (['ns3_'+dep for dep in ['core', 'network', 'internet', 'NDNabstraction']]).upper (),
+            use = 'BOOST BOOST_IOSTREAMS SSL PROTOBUF ' + ' '.join (['ns3_'+dep for dep in ['core', 'network', 'internet', 'NDNabstraction']]).upper (),
             includes = ['include', 'include/ns3', 'helper'],
             )
 
@@ -139,8 +148,9 @@ def build (bld):
                 'model/sync-seq-no.cc',
                 'model/sync-state.cc',
                 'model/sync-std-name-info.cc',
+                'model/sync-state.pb.cc',
                 ],
-            use = 'BOOST BOOST_IOSTREAMS BOOST_THREAD SSL TINYXML CCNX',
+            use = 'BOOST BOOST_IOSTREAMS BOOST_THREAD SSL PROTOBUF CCNX',
             includes = ['include', 'helper'],
             )
         

@@ -29,6 +29,7 @@
 #include "sync-diff-leaf.h"
 #include "sync-full-leaf.h"
 #include "sync-log.h"
+#include "sync-state.h"
 
 #include <boost/make_shared.hpp>
 #include <boost/foreach.hpp>
@@ -278,10 +279,10 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
 
       DiffState diff;
       SyncStateMsg msg;
-      if (!msg.parseFromArray(wireData, len) || !msg.IsInitialized()) 
+      if (!msg.ParseFromArray(wireData, len) || !msg.IsInitialized()) 
       {
         //Throw
-        BOOST_THROW_EXCEPTION (SyncStateMsgDecodingFailure () << info_str ("Can not decode data"));
+        BOOST_THROW_EXCEPTION (Error::SyncStateMsgDecodingFailure () );
       }
       msg >> diff;
 
@@ -526,11 +527,12 @@ SyncLogic::sendSyncData (const std::string &name, DigestConstPtr digest, StateCo
   // sending
   SyncStateMsg ssm;
   ssm << (*state);
-  char *wireData = new char[ssm.size()];
-  ssm.SerializedToArray(wireData, ssm.size());
+  int size = ssm.ByteSize();
+  char *wireData = new char[size];
+  ssm.SerializeToArray(wireData, size);
   m_ccnxHandle->publishRawData (name,
                              wireData,
-                             ssm.size(),
+                             size,
                              m_syncResponseFreshness); // in NS-3 it doesn't have any effect... yet
   delete wireData;
 
