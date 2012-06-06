@@ -57,7 +57,15 @@ ChatDialog::ChatDialog(QWidget *parent)
     std::string syncPrefix = BROADCAST_PREFIX_FOR_SYNC_DEMO;
     syncPrefix += "/";
     syncPrefix += m_user.getChatroom().toStdString();
-    m_sock = new Sync::SyncAppSocket(syncPrefix, bind(&ChatDialog::processTreeUpdateWrapper, this, _1, _2), bind(&ChatDialog::processRemove, this, _1));
+    try 
+    {
+      m_sock = new Sync::SyncAppSocket(syncPrefix, bind(&ChatDialog::processTreeUpdateWrapper, this, _1, _2), bind(&ChatDialog::processRemove, this, _1));
+    }
+    catch (Sync::CcnxOperationException ex)
+    {
+      QMessageBox::critical(this, tr("Sync-Demo"), tr("Canno connect to ccnd.\n Have you started your ccnd?"), QMessageBox::Ok);
+      std::exit(1);
+    }
   }
 
   connect(lineEdit, SIGNAL(returnPressed()), this, SLOT(returnPressed()));
@@ -79,6 +87,7 @@ ChatDialog::~ChatDialog()
 void
 ChatDialog::appendMessage(const SyncDemo::ChatMessage msg) 
 {
+  boost::mutex::scoped_lock lock(m_msgMutex);
 
   if (msg.type() != SyncDemo::ChatMessage::CHAT) {
     return;
@@ -125,7 +134,10 @@ ChatDialog::processTreeUpdate(const std::vector<Sync::MissingDataInfo> v)
   }
 
   // reflect the changes on digest tree
-  m_scene->processUpdate(v, m_sock->getRootDigest().c_str());
+  {
+    boost::mutex::scoped_lock lock(m_sceneMutex);
+    m_scene->processUpdate(v, m_sock->getRootDigest().c_str());
+  }
 
   int n = v.size();
   int totalMissingPackets = 0;
@@ -192,7 +204,10 @@ ChatDialog::processData(QString name, const char *buf, size_t len)
 #ifdef __DEBUG
   std::cout <<"<<< updating scene for" << prefix << ": " << msg.from()  << std::endl;
 #endif
-  m_scene->msgReceived(prefix.c_str(), msg.from().c_str());
+  {
+    boost::mutex::scoped_lock lock(m_sceneMutex);
+    m_scene->msgReceived(prefix.c_str(), msg.from().c_str());
+  }
   fitView();
 }
 
@@ -284,8 +299,11 @@ ChatDialog::returnPressed()
   Sync::MissingDataInfo mdi = {m_user.getPrefix().toStdString(), Sync::SeqNo(0), Sync::SeqNo(nextSequence - 1)};
   std::vector<Sync::MissingDataInfo> v;
   v.push_back(mdi);
-  m_scene->processUpdate(v, m_sock->getRootDigest().c_str());
-  m_scene->msgReceived(m_user.getPrefix(), m_user.getNick());
+  {
+    boost::mutex::scoped_lock lock(m_sceneMutex);
+    m_scene->processUpdate(v, m_sock->getRootDigest().c_str());
+    m_scene->msgReceived(m_user.getPrefix(), m_user.getNick());
+  }
   fitView();
 }
 
@@ -295,6 +313,16 @@ ChatDialog::buttonPressed()
   SettingDialog dialog(this, m_user.getNick(), m_user.getChatroom(), m_user.getPrefix());
   connect(&dialog, SIGNAL(updated(QString, QString, QString)), this, SLOT(settingUpdated(QString, QString, QString)));
   dialog.exec();
+  QTimer::singleShot(100, this, SLOT(checkSetting()));
+}
+
+void
+ChatDialog::checkSetting()
+{
+  if (m_user.getPrefix().isEmpty() || m_user.getNick().isEmpty() || m_user.getChatroom().isEmpty())
+  {
+    buttonPressed();
+  }
 }
 
 void
@@ -314,8 +342,11 @@ ChatDialog::settingUpdated(QString nick, QString chatroom, QString prefix)
     m_user.setChatroom(chatroom);
     needWrite = true;
 
-    m_scene->clearAll();
-    m_scene->plot("Empty");
+    {
+      boost::mutex::scoped_lock lock(m_sceneMutex);
+      m_scene->clearAll();
+      m_scene->plot("Empty");
+    }
     // TODO: perhaps need to do a lot. e.g. use a new SyncAppSokcet
     if (m_sock != NULL) 
     {
@@ -325,7 +356,15 @@ ChatDialog::settingUpdated(QString nick, QString chatroom, QString prefix)
     std::string syncPrefix = BROADCAST_PREFIX_FOR_SYNC_DEMO;
     syncPrefix += "/";
     syncPrefix += m_user.getChatroom().toStdString();
-    m_sock = new Sync::SyncAppSocket(syncPrefix, bind(&ChatDialog::processTreeUpdateWrapper, this, _1, _2), bind(&ChatDialog::processRemove, this, _1));
+    try
+    {
+      m_sock = new Sync::SyncAppSocket(syncPrefix, bind(&ChatDialog::processTreeUpdateWrapper, this, _1, _2), bind(&ChatDialog::processRemove, this, _1));
+    }
+    catch (Sync::CcnxOperationException ex)
+    {
+      QMessageBox::critical(this, tr("Sync-Demo"), tr("Canno connect to ccnd.\n Have you started your ccnd?"), QMessageBox::Ok);
+      std::exit(1);
+    }
 
     fitView();
     
@@ -351,6 +390,7 @@ ChatDialog::showEvent(QShowEvent *e)
 void
 ChatDialog::fitView()
 {
+  boost::mutex::scoped_lock lock(m_sceneMutex);
   QRectF rect = m_scene->itemsBoundingRect();
   m_scene->setSceneRect(rect);
   treeViewer->fitInView(m_scene->itemsBoundingRect(), Qt::KeepAspectRatio);
