@@ -66,8 +66,11 @@ public:
     for (i = 0; i < mdi.size(); i++)
     {
       mdic[i].prefix = mdi[i].prefix.c_str();
-      mdic[i].session = mdi[i].low.getSession();
-      mdic[i].low = mdi[i].low.getSeq();
+      mdic[i].session = mdi[i].high.getSession();
+      if (mdi[i].low.getSession() != mdi[i].high.getSession())
+        mdic[i].low = 0;
+      else
+        mdic[i].low = mdi[i].low.getSeq();
       mdic[i].high = mdi[i].high.getSeq();
     }
     if (m_callback != NULL)
