@@ -110,10 +110,9 @@ Scheduler::threadLoop ()
 void
 Scheduler::schedule (const TimeDuration &reltime, Event event, uint32_t label)
 {
-  {
-    lock_guard<mutex> lock (m_eventsMutex);
-    m_events.insert (LogicEvent (boost::get_system_time () + reltime, event, label));
-  }
+  lock_guard<mutex> lock (m_eventsMutex);
+  m_events.insert (LogicEvent (boost::get_system_time () + reltime, event, label));
+
   m_eventsCondition.notify_one ();
   m_thread.interrupt (); // interrupt sleep, if currently sleeping
 }
@@ -121,12 +120,11 @@ Scheduler::schedule (const TimeDuration &reltime, Event event, uint32_t label)
 void
 Scheduler::cancel (uint32_t label)
 {
-  {
-    // cout << "Canceling label " << label << " size: " << m_events.size () << endl;
-    lock_guard<mutex> lock (m_eventsMutex);
-    m_events.get<byLabel> ().erase (label);
-    // cout << "Canceled label " << label << " size: " << m_events.size () << endl;
-  }
+  // cout << "Canceling label " << label << " size: " << m_events.size () << endl;
+  lock_guard<mutex> lock (m_eventsMutex);
+  m_events.get<byLabel> ().erase (label);
+  // cout << "Canceled label " << label << " size: " << m_events.size () << endl;
+
   m_eventsCondition.notify_one ();
   m_thread.interrupt (); // interrupt sleep, if currently sleeping
 }
