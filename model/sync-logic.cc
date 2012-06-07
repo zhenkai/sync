@@ -534,7 +534,7 @@ SyncLogic::sendSyncData (const std::string &name, DigestConstPtr digest, StateCo
                              wireData,
                              size,
                              m_syncResponseFreshness); // in NS-3 it doesn't have any effect... yet
-  delete wireData;
+  delete []wireData;
 
   // checking if our own interest got satisfied
   bool satisfiedOwnInterest = false;
