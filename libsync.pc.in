@@ -6,5 +6,5 @@ Name: libsync
 Description: Chronos library
 Version: @VERSION@
 Libs: -L${libdir} -lsync
-Cflags: -I${includedir}/sync
+Cflags: -I${includedir}
 
