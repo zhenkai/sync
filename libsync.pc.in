@@ -1,0 +1,10 @@
+prefix=@PREFIX@
+libdir=@LIBDIR@
+includedir=@INCLUDEDIR@
+
+Name: libsync 
+Description: Chronos library
+Version: @VERSION@
+Libs: -L${libdir} -lsync
+Cflags: -I${includedir}/sync
+

@@ -3,6 +3,8 @@
 VERSION='0.0.1'
 APPNAME='sync'
 
+from waflib import Build, Logs
+
 def options(opt):
     opt.add_option('--debug',action='store_true',default=False,dest='debug',help='''debugging mode''')
     opt.add_option('--log4cxx', action='store_true',default=False,dest='log4cxx',help='''Compile with log4cxx/native NS3 logging support''')
@@ -13,10 +15,12 @@ def options(opt):
     opt.load('compiler_cxx')
     opt.load('boost')
     opt.load('doxygen')
-    opt.load('ccnx protobuf ns3', tooldir=["waf-tools"])
+    opt.load('gnu_dirs')
+    opt.load('ccnx ns3 protobuf', tooldir=["waf-tools"])
 
 def configure(conf):
     conf.load("compiler_cxx")
+    conf.load('gnu_dirs')
 
     if not conf.check_cfg(package='openssl', args=['--cflags', '--libs'], uselib_store='SSL', mandatory=False):
       libcrypto = conf.check_cc(lib='crypto',
@@ -62,19 +66,22 @@ def configure(conf):
         pass
 
     conf.load('protobuf')
-    conf.check_protobuf (path=conf.options.protobuf_dir)
-                   
-
-def pre(bld):
-  bld.exec_command('protoc --cpp_out=. sync-state.proto')
-  bld.exec_command('mv sync-state.pb.h include/')
-  bld.exec_command('mv sync-state.pb.cc model/')
 
 def build (bld):
-    bld.add_pre_fun(pre)
+    bld.post_mode = Build.POST_LAZY
+
+    bld.add_group ("protobuf")
+
+    x = bld (
+        features = ["protobuf"],
+        source = ["model/sync-state.proto"],
+        target = ["model/sync-state.pb"],
+        )
+
+    bld.add_group ("code")
 
     if bld.get_define ("NS3_MODULE"):
-        sync_ns3 = bld.shlib (
+        libsync = bld.shlib (
             target = "sync-ns3",
             features=['cxx', 'cxxshlib'],
             source =  [
@@ -99,18 +106,20 @@ def build (bld):
                 'model/sync-seq-no.cc',
                 'model/sync-state.cc',
                 'model/sync-std-name-info.cc',
+                ],
+            dynamic_source = [
                 'model/sync-state.pb.cc',
                 ],
             use = 'BOOST BOOST_IOSTREAMS SSL PROTOBUF ' + ' '.join (['ns3_'+dep for dep in ['core', 'network', 'internet', 'NDNabstraction']]).upper (),
-            includes = ['include', 'include/ns3', 'helper'],
+            includes = ['include', 'model', 'include/ns3', 'helper'],
             )
 
         example = bld.program (
             target = "sync-example",
             features=['cxx', 'cxxprogram'],
             source = ['examples/sync-example.cc'],
-            use = 'sync-ns3',
-            includes = ['include', 'include/ns3', 'helper'],
+            use = 'libsync',
+            includes = ['include', 'model', 'include/ns3', 'helper'],
             )
 
         sync_eval = bld.program (
@@ -120,15 +129,15 @@ def build (bld):
                       'evaluation/standard-muc.cc',
                       'evaluation/sync-muc.cc',
                       ],
-            use = 'sync-ns3',
-            includes = ['include', 'include/ns3', 'helper'],
+            use = 'libsync',
+            includes = ['include', 'model', 'include/ns3', 'helper'],
             )
         # from waflib import Utils,Logs,Errors
         # Logs.pprint ('CYAN', program.use)
         
     else:
-        libsync = bld.shlib (
-            target=APPNAME, 
+        libsync = bld (
+            target=APPNAME,
             features=['cxx', 'cxxshlib'],
             source =  [
                 'ccnx/sync-ccnx-wrapper.cc',
@@ -148,10 +157,12 @@ def build (bld):
                 'model/sync-seq-no.cc',
                 'model/sync-state.cc',
                 'model/sync-std-name-info.cc',
+                ],
+            dynamic_source = [
                 'model/sync-state.pb.cc',
                 ],
             use = 'BOOST BOOST_IOSTREAMS BOOST_THREAD SSL PROTOBUF CCNX',
-            includes = ['include', 'helper'],
+            includes = ['include', 'model', 'helper'],
             )
         
         # Unit tests
@@ -161,12 +172,26 @@ def build (bld):
               source = bld.path.ant_glob(['test/**/*.cc']),
               features=['cxx', 'cxxprogram'],
               use = 'BOOST_TEST sync',
-              includes = ['include', 'helper'],
+              includes = ['include', 'model', 'helper'],
               )
 
         if bld.get_define ("HAVE_LOG4CXX"):
             libsync.use += ' LOG4CXX'
             unittests.use += ' LOG4CXX'
+
+        headers = bld.path.ant_glob(['include/*.h'])
+        headers.extend (bld.path.get_bld().ant_glob(['model/sync-state.pb.h']))
+        bld.install_files ("%s/sync" % bld.env['INCLUDEDIR'], headers)
+
+        pc = bld (
+            features = "subst",
+            source='libsync.pc.in',
+            target='libsync.pc',
+            install_path = '${LIBDIR}/pkgconfig',
+            PREFIX       = bld.env['PREFIX'],
+            INCLUDEDIR   = "%s/sync" % bld.env['INCLUDEDIR'],
+            VERSION      = VERSION,
+            )
 
 # doxygen docs
 from waflib.Build import BuildContext
