@@ -155,7 +155,7 @@ enum CallbackType { STRING_FORM, RAW_DATA};
 
 class ClosurePass {
 public:
-  ClosurePass(CallbackType type, int retry): m_type(type), m_retry(retry) {}
+  ClosurePass(CallbackType type, int retry): m_retry(retry), m_type(type) {}
   int getRetry() {return m_retry;}
   void decRetry() { m_retry--;}
   CallbackType getCallbackType() {return m_type;}
