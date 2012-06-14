@@ -118,7 +118,7 @@ public:
   
 private:
   Digest &
-  operator = (Digest &digest) { return *this; }
+  operator = (Digest &digest) { (void)digest; return *this; }
   
   /**
    * @brief Add size bytes of buffer to the hash

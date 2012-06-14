@@ -63,7 +63,7 @@ private:
    * @brief Disabled default
    */
   StdNameInfo () {}
-  StdNameInfo& operator = (const StdNameInfo &info) { return *this; }
+  StdNameInfo& operator = (const StdNameInfo &info) { (void)info; return *this; }
   StdNameInfo (const std::string &name);
   
   std::string m_name;
