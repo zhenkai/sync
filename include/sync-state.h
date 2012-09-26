@@ -35,6 +35,16 @@
  */
 namespace Sync {
 
+/**
+ * \ingroup sync
+ * @brief this prefix will be used for the dummy node which increases its sequence number whenever
+ * a remove operation happens; this is to prevent the reversion of root digest when we prune 
+ * a branch, i.e. help the root digest to be forward only
+ * No corresponding data msg would be published and no attempt would be made to retrieve the 
+ * data msg
+ */
+const string dummyPrefix = "/d0n0t18ak/t0ps8cr8t";
+
 class State;
 typedef boost::shared_ptr<State> StatePtr;
 typedef boost::shared_ptr<State> StateConstPtr;
