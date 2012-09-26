@@ -43,7 +43,7 @@ namespace Sync {
  * No corresponding data msg would be published and no attempt would be made to retrieve the 
  * data msg
  */
-const string dummyPrefix = "/d0n0t18ak/t0ps8cr8t";
+const std::string forwarderPrefix = "/d0n0t18ak/t0ps8cr8t";
 
 class State;
 typedef boost::shared_ptr<State> StatePtr;

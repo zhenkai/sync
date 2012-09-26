@@ -293,7 +293,7 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
           BOOST_ASSERT (diffLeaf != 0);
 
           NameInfoConstPtr info = diffLeaf->getInfo();
-          if (diffLeaf->getOperation() == UPDATE)
+          if (diffLeaf->getOperation() == UPDATE && info->toString() != forwarderPrefix)
             {
               SeqNo seq = diffLeaf->getSeq();
 
@@ -328,7 +328,7 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
             }
           else
             {
-              BOOST_ASSERT (false); // just in case
+              BOOST_ASSERT (info->toString() == forwarderPrefix); // just in case
             }
         }
 
@@ -466,8 +466,19 @@ SyncLogic::remove(const string &prefix)
     NameInfoConstPtr info = StdNameInfo::FindOrCreate(prefix);
     m_state->remove(info);	
 
+    // increment the sequence number for the forwarder node
+    NameInfoConstPtr forwarderInfo = StdNameInfo::FindOrCreate(forwarderPrefix);
+    bool inserted = false;
+    bool updated = false;
+    SeqNo oldSeq;
+    tie (inserted, updated, oldSeq) = m_state->update (forwarderInfo, oldSeq);
+    oldSeq.setSeq(oldSeq.getSeq() + 1);
+    m_state->update(info, oldSeq);
+
+
     diff = make_shared<DiffState>();
     diff->remove(info);
+    diff->update(forwarderInfo, oldSeq);
 
     insertToDiffLog (diff);
   }

@@ -156,6 +156,13 @@ public:
    */
   uint32_t getSeq () const
   { return m_seq; }
+
+  /**
+   * @brief Set sequence number
+   */
+   void
+   setSeq(uint32_t seq)
+   { m_seq = seq; }
   
 private:
   bool m_valid;

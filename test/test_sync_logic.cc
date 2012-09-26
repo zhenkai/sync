@@ -76,6 +76,9 @@ BOOST_AUTO_TEST_CASE (SyncLogicTest)
   Handler h1 ("1");
 
   SyncLogic l1 ("/bcast", bind (&Handler::wrapper, &h1, _1), bind (&Handler::onRemove, &h1, _1));
+
+  std::string oldDigest  = l1.getRootDigest();
+  
   l1.addLocalNames ("/one", 1, 2);
 
   BOOST_CHECK_EQUAL (h1.m_map.size (), 0);
@@ -89,8 +92,9 @@ BOOST_AUTO_TEST_CASE (SyncLogicTest)
   BOOST_CHECK_EQUAL (h1.m_map.size (), 0);
   BOOST_CHECK_EQUAL (h2.m_map.size (), 1);
   
-  // l1.remove ("/one");
+  l1.remove ("/one");
+  sleep(1);
+  std::string newDigest = l1.getRootDigest();
+  BOOST_CHECK(oldDigest != newDigest);
 
-  // sleep (10);
-// l1.  
 }
