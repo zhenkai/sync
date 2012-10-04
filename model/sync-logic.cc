@@ -471,17 +471,19 @@ SyncLogic::remove(const string &prefix)
 
     // increment the sequence number for the forwarder node
     NameInfoConstPtr forwarderInfo = StdNameInfo::FindOrCreate(forwarderPrefix);
-    bool inserted = false;
-    bool updated = false;
-    SeqNo oldSeq;
-    tie (inserted, updated, oldSeq) = m_state->update (forwarderInfo, oldSeq);
-    oldSeq.setSeq(oldSeq.getSeq() + 1);
-    m_state->update(info, oldSeq);
 
+    LeafContainer::iterator item = m_state->getLeaves ().find (forwarderInfo);
+    SeqNo seqNo (0);
+    if (item != m_state->getLeaves ().end ())
+      {
+        seqNo = (*item)->getSeq ();
+        ++seqNo;
+      }
+    m_state->update (forwarderInfo, seqNo);
 
     diff = make_shared<DiffState>();
     diff->remove(info);
-    diff->update(forwarderInfo, oldSeq);
+    diff->update(forwarderInfo, seqNo);
 
     insertToDiffLog (diff);
   }
