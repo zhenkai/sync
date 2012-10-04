@@ -293,7 +293,7 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
           BOOST_ASSERT (diffLeaf != 0);
 
           NameInfoConstPtr info = diffLeaf->getInfo();
-          if (diffLeaf->getOperation() == UPDATE && info->toString() != forwarderPrefix)
+          if (diffLeaf->getOperation() == UPDATE)
             {
               SeqNo seq = diffLeaf->getSeq();
 
@@ -314,8 +314,12 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
                   {
                     ++oldSeq;
                   }
-                  MissingDataInfo mdi = {info->toString(), oldSeq, seq};
-                  v.push_back(mdi);
+                  // there is no need for application to process update on forwarder node
+                  if (info->toString() != forwarderPrefix)
+                  {
+                    MissingDataInfo mdi = {info->toString(), oldSeq, seq};
+                    v.push_back(mdi);
+                  }
                 }
             }
           else if (diffLeaf->getOperation() == REMOVE)
@@ -328,7 +332,6 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
             }
           else
             {
-              BOOST_ASSERT (info->toString() == forwarderPrefix); // just in case
             }
         }
 
