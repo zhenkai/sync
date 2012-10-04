@@ -30,8 +30,6 @@
 #include <boost/throw_exception.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include <tinyxml.h>
-
 using namespace std;
 using namespace boost;
 
