@@ -177,7 +177,8 @@ def build (bld):
 
         if bld.get_define ("HAVE_LOG4CXX"):
             libsync.use += ' LOG4CXX'
-            unittests.use += ' LOG4CXX'
+            if bld.get_define("_TEST"):
+                unittests.use += ' LOG4CXX'
 
         headers = bld.path.ant_glob(['include/*.h'])
         headers.extend (bld.path.get_bld().ant_glob(['model/sync-state.pb.h']))
