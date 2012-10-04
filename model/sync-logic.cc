@@ -577,5 +577,12 @@ SyncLogic::getRootDigest()
   return os.str();
 }
 
+size_t
+SyncLogic::getNumberOfBranches () const
+{
+  recursive_mutex::scoped_lock lock (m_stateMutex);
+  return m_state->getLeaves ().size ();
+}
+
 
 }

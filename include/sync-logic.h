@@ -157,11 +157,14 @@ private:
   void
   sendSyncData (const std::string &name,
                 DigestConstPtr digest, StateConstPtr state);
+
+  size_t
+  getNumberOfBranches () const;
   
 private:
   FullStatePtr m_state;
   DiffStateContainer m_log;
-  boost::recursive_mutex m_stateMutex;
+  mutable boost::recursive_mutex m_stateMutex;
 
   std::string m_outstandingInterestName;
   SyncInterestTable m_syncInterestTable;
