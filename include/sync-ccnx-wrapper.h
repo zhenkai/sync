@@ -162,7 +162,9 @@ private:
   boost::recursive_mutex m_mutex;
   boost::thread m_thread;
   bool m_running;
+  bool m_connected;
   std::map<std::string, InterestCallback> m_registeredInterests;
+  // std::list< std::pair<std::string, InterestCallback> > m_registeredInterests;
 };
 
 typedef boost::shared_ptr<CcnxWrapper> CcnxWrapperPtr;
