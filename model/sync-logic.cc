@@ -586,5 +586,16 @@ SyncLogic::getNumberOfBranches () const
   return m_state->getLeaves ().size ();
 }
 
+void
+SyncLogic::printState () const
+{
+  recursive_mutex::scoped_lock lock (m_stateMutex);
+
+  BOOST_FOREACH (const boost::shared_ptr<Sync::Leaf> leaf, m_state->getLeaves ())
+    {
+      std::cout << *leaf << std::endl;
+    }
+}
+
 
 }

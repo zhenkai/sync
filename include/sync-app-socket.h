@@ -87,6 +87,9 @@ public:
   uint32_t
   getNextSeq (const std::string &prefix, uint32_t session);
 
+  SyncLogic &
+  getLogic () { return m_syncLogic; }
+  
 private:
   void 
   passCallback(const std::vector<MissingDataInfo> &v) {m_newDataCallback(v, this);}

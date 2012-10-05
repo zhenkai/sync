@@ -75,7 +75,7 @@ typedef boost::shared_ptr<const Leaf> LeafConstPtr;
 inline std::ostream &
 operator << (std::ostream &os, const Leaf &leaf)
 {
-  os << leaf.getInfo () << "(" << leaf.getSeq () << ")";
+  os << *leaf.getInfo () << "(" << leaf.getSeq () << ")";
   return os;
 }
 

@@ -123,6 +123,9 @@ public:
   virtual void StopApplication ();
 #endif
   
+  void
+  printState () const;
+
 private:
   void
   delayedChecksLoop ();

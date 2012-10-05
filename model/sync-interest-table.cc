@@ -45,7 +45,6 @@ SyncInterestTable::~SyncInterestTable ()
 Interest
 SyncInterestTable::pop ()
 {
-  expireInterests ();
   recursive_mutex::scoped_lock lock (m_mutex);
 
   if (m_table.size () == 0)
