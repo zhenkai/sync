@@ -61,10 +61,10 @@ public:
 
 
   static
-  CcnxWrapper *
+  boost::shared_ptr<CcnxWrapper>
   Create ()
   {
-    static CcnxWrapper *wrapper = new CcnxWrapper ();
+    static boost::shared_ptr<CcnxWrapper> wrapper (new CcnxWrapper ());
     return wrapper;
   }
   
@@ -80,7 +80,8 @@ private:
 #else
   CcnxWrapper();
 #endif
-public:
+
+public:  
   ~CcnxWrapper();
 
   /**

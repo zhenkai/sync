@@ -175,7 +175,7 @@ private:
   std::string m_syncPrefix;
   LogicUpdateCallback m_onUpdate;
   LogicRemoveCallback m_onRemove;
-  std::auto_ptr<CcnxWrapper> m_ccnxHandle;
+  CcnxWrapperPtr m_ccnxHandle;
 
   Scheduler m_scheduler;
 
