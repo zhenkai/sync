@@ -117,6 +117,9 @@ public:
   publishRawData (const std::string &name, const char *buf, size_t len, int freshness);
 
 private:
+  void
+  connectCcnd();
+
   /// @cond include_hidden 
   void
   createKeyLocator ();

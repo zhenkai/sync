@@ -49,12 +49,29 @@ CcnxWrapper::CcnxWrapper()
 #ifdef _DEBUG_WRAPPER_      
   m_c = c;
 #endif
-  m_handle = ccn_create ();
+  m_handle = ccn_create();
+  connectCcnd();
   initKeyStore ();
   createKeyLocator ();
-  if (ccn_connect(m_handle, NULL) < 0)
-    BOOST_THROW_EXCEPTION (CcnxOperationException() << errmsg_info_str("connection to ccnd failed"));
   m_thread = thread (&CcnxWrapper::ccnLoop, this);
+}
+
+void
+CcnxWrapper::connectCcnd()
+{
+  /*
+  if (m_handle != NULL)
+  {
+    ccn_destroy(&m_handle);
+  }
+  */
+  _LOG_DEBUG("<<< connecting to ccnd");
+  if (ccn_connect(m_handle, NULL) < 0)
+  {
+    //ccn_destroy(&m_handle);
+    _LOG_DEBUG("<<< connecting to ccnd failed");
+    BOOST_THROW_EXCEPTION (CcnxOperationException() << errmsg_info_str("connection to ccnd failed"));
+  }
 }
 
 CcnxWrapper::~CcnxWrapper()
@@ -120,41 +137,69 @@ CcnxWrapper::ccnLoop ()
 {
   _LOG_FUNCTION (this);
 
-  while (m_running)
-    {
-#ifdef _DEBUG_WRAPPER_      
-      std::cout << m_c << flush;
-#endif
-      int res = 0;
+    while (m_running)
       {
-        recursive_mutex::scoped_lock lock (m_mutex);
-        res = ccn_run (m_handle, 0);
-
-      }
-
-      if (!m_running) break;
-      
-      if (res < 0)
-        BOOST_THROW_EXCEPTION (CcnxOperationException()
-                               << errmsg_info_str("ccn_run returned error"));
-
-
-      pollfd pfds[1];
-      {
-        recursive_mutex::scoped_lock lock (m_mutex);
-        
-        pfds[0].fd = ccn_get_connection_fd (m_handle);
-        pfds[0].events = POLLIN;
-        if (ccn_output_is_pending (m_handle))
-          pfds[0].events |= POLLOUT;
-      }
-      
-      int ret = poll (pfds, 1, 1);
-      if (ret < 0)
+        try
         {
-          BOOST_THROW_EXCEPTION (CcnxOperationException() << errmsg_info_str("ccnd socket failed (probably ccnd got stopped)"));
+#ifdef _DEBUG_WRAPPER_      
+          std::cout << m_c << flush;
+#endif
+          int res = 0;
+          {
+            recursive_mutex::scoped_lock lock (m_mutex);
+            res = ccn_run (m_handle, 0);
+          }
+
+          if (!m_running) break;
+        
+          if (res < 0)
+            BOOST_THROW_EXCEPTION (CcnxOperationException()
+                                 << errmsg_info_str("ccn_run returned error"));
+
+
+          pollfd pfds[1];
+          {
+            recursive_mutex::scoped_lock lock (m_mutex);
+          
+            pfds[0].fd = ccn_get_connection_fd (m_handle);
+            pfds[0].events = POLLIN;
+            if (ccn_output_is_pending (m_handle))
+              pfds[0].events |= POLLOUT;
+          }
+        
+          int ret = poll (pfds, 1, 1);
+          if (ret < 0)
+            {
+              BOOST_THROW_EXCEPTION (CcnxOperationException() << errmsg_info_str("ccnd socket failed (probably ccnd got stopped)"));
+            }
         }
-    }
+        catch (CcnxOperationException e)
+        {
+          // probably ccnd has been stoped
+          // try reconnect with sleep
+          int interval = 1;
+          int maxInterval = 32;
+          while (m_running)
+          {
+            try
+            {
+              sleep(1);
+              connectCcnd();
+              _LOG_DEBUG("reconnect to ccnd succeeded");
+              break;
+            }
+            catch (CcnxOperationException e)
+            {
+              sleep(interval);
+              // do exponential backup for reconnect interval
+              if (interval < maxInterval)
+              {
+                interval *= 2;
+              }
+            }
+          }
+        }
+     } 
 }
 
 /// @endcond
@@ -188,10 +233,16 @@ CcnxWrapper::publishRawData (const string &name, const char *buf, size_t len, in
   if(ccn_encode_ContentObject(content, pname, signed_info,
 			   (const unsigned char *)buf, len,
 			   NULL, getPrivateKey()) < 0)
-    BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("encode content failed"));
+  {
+    // BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("encode content failed"));
+    _LOG_ERROR("<<< Encode content failed " << name);
+  }
 
   if (ccn_put(m_handle, content->buf, content->length) < 0)
-    BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("ccnput failed"));
+  {
+    // BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("ccnput failed"));
+    _LOG_ERROR("<<< ccnput content failed " << name);
+  }
 
   ccn_charbuf_destroy (&pname);
   ccn_charbuf_destroy (&signed_info);
@@ -268,7 +319,10 @@ incomingData(ccn_closure *selfp,
   char *pcontent;
   size_t len;
   if (ccn_content_get_value(info->content_ccnb, info->pco->offset[CCN_PCO_E], info->pco, (const unsigned char **)&pcontent, &len) < 0)
-    BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("decode ContentObject failed"));
+  {
+    // BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("decode ContentObject failed"));
+    _LOG_ERROR("<<< Decode content failed ");
+  }
 
   string name;
   for (int i = 0; i < info->content_comps->n - 1; i++)
@@ -313,7 +367,10 @@ int CcnxWrapper::sendInterest (const string &strInterest, void *dataPass)
 
   dataClosure->p = &incomingData;
   if (ccn_express_interest (m_handle, pname, dataClosure, NULL) < 0)
-    BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("express interest failed"));
+  {
+    // BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("express interest failed"));
+    _LOG_ERROR("<<< Express interest failed: " << strInterest);
+  }
 
   ccn_charbuf_destroy (&pname);
   return 0;

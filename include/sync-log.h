@@ -42,6 +42,9 @@
 #define _LOG_FUNCTION_NOARGS \
   LOG4CXX_TRACE(staticModuleLogger, __FUNCTION__ << "()");
 
+#define _LOG_ERROR(x) \
+  LOG4CXX_ERROR(staticModuleLogger, x);
+
 void
 INIT_LOGGERS ();
 
@@ -52,6 +55,7 @@ INIT_LOGGERS ();
 #define _LOG_FUNCTION_NOARGS
 #define _LOG_TRACE(x)
 #define INIT_LOGGERS(x)
+#define _LOG_ERROR(x)
 
 #ifdef _DEBUG
 
