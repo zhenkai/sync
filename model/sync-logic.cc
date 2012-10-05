@@ -90,7 +90,11 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
 
 SyncLogic::~SyncLogic ()
 {
+  m_ccnxHandle->clearInterestFilter (m_syncPrefix);
   m_ccnxHandle.reset ();
+  // m_scheduler.cancel (REEXPRESSING_INTEREST);
+  // m_scheduler.cancel (DELAYED_INTEREST_PROCESSING);
+  // sleep (m_syncInterestReexpress+1);
 }
 
 #ifdef NS3_MODULE

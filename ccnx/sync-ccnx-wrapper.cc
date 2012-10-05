@@ -32,12 +32,15 @@
 typedef boost::error_info<struct tag_errmsg, std::string> errmsg_info_str;
 typedef boost::error_info<struct tag_errmsg, int> errmsg_info_int;
 
+
 using namespace std;
 using namespace boost;
 
 INIT_LOGGER ("CcnxWrapper");
 
 namespace Sync {
+
+boost::shared_ptr<CcnxWrapper> CcnxWrapper::s_wrapper;
 
 #ifdef _DEBUG_WRAPPER_      
 CcnxWrapper::CcnxWrapper(char c)

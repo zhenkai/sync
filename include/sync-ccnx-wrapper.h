@@ -59,13 +59,25 @@ public:
   typedef boost::function<void (std::string, const char *buf, size_t len)> RawDataCallback;
   typedef boost::function<void (std::string)> InterestCallback;
 
+private:
+  static boost::shared_ptr<CcnxWrapper> s_wrapper;
 
+public:
   static
   boost::shared_ptr<CcnxWrapper>
   Create ()
   {
-    static boost::shared_ptr<CcnxWrapper> wrapper (new CcnxWrapper ());
-    return wrapper;
+    if (s_wrapper.get () == 0)
+      s_wrapper = boost::shared_ptr<CcnxWrapper> (new CcnxWrapper ());
+    
+    return s_wrapper;
+  }
+
+  static
+  void
+  Destroy ()
+  {
+    s_wrapper.reset ();
   }
   
 private:

@@ -39,6 +39,7 @@ SyncAppSocket::SyncAppSocket (const string &syncPrefix, NewDataCallback dataCall
 
 SyncAppSocket::~SyncAppSocket()
 {
+  CcnxWrapper::Destroy ();
 }
 
 bool 
