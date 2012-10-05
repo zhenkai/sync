@@ -49,7 +49,6 @@ CcnxWrapper::CcnxWrapper()
 #ifdef _DEBUG_WRAPPER_      
   m_c = c;
 #endif
-  m_handle = ccn_create();
   connectCcnd();
   initKeyStore ();
   createKeyLocator ();
@@ -59,7 +58,12 @@ CcnxWrapper::CcnxWrapper()
 void
 CcnxWrapper::connectCcnd()
 {
-  ccn_disconnect (m_handle);
+  if (m_handle != 0) {
+    ccn_disconnect (m_handle);
+    ccn_destroy (&m_handle);
+  }
+  
+  m_handle = ccn_create ();
   _LOG_DEBUG("<<< connecting to ccnd");
   if (ccn_connect(m_handle, NULL) < 0)
   {
@@ -70,6 +74,7 @@ CcnxWrapper::connectCcnd()
   {
     for (map<std::string, InterestCallback>::const_iterator it = m_registeredInterests.begin(); it != m_registeredInterests.end(); ++it)
     {
+      // clearInterestFilter(it->first);
       setInterestFilter(it->first, it->second);
       _LOG_DEBUG("<<< registering interest filter for: " << it->first);
     }

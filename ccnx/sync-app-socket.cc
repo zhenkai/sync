@@ -29,7 +29,7 @@ namespace Sync
 {
 
 SyncAppSocket::SyncAppSocket (const string &syncPrefix, NewDataCallback dataCallback, RemoveCallback rmCallback )
-	: m_ccnxHandle (new CcnxWrapper())
+  : m_ccnxHandle (CcnxWrapper::Create ())
   , m_newDataCallback(dataCallback)
   , m_syncLogic (syncPrefix,
                  bind(&SyncAppSocket::passCallback, this, _1),

@@ -65,7 +65,7 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   , m_syncPrefix (syncPrefix)
   , m_onUpdate (onUpdate)
   , m_onRemove (onRemove)
-  , m_ccnxHandle(new CcnxWrapper())
+  , m_ccnxHandle(CcnxWrapper::Create ())
   , m_recoveryRetransmissionInterval (m_defaultRecoveryRetransmitInterval)
 #ifndef NS3_MODULE
   , m_randomGenerator (static_cast<unsigned int> (std::time (0)))

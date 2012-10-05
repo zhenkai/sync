@@ -58,7 +58,17 @@ public:
   typedef boost::function<void (std::string, std::string)> StringDataCallback;
   typedef boost::function<void (std::string, const char *buf, size_t len)> RawDataCallback;
   typedef boost::function<void (std::string)> InterestCallback;
+
+
+  static
+  CcnxWrapper *
+  Create ()
+  {
+    static CcnxWrapper *wrapper = new CcnxWrapper ();
+    return wrapper;
+  }
   
+private:
   /**
    * @brief initialize the wrapper; a lot of things needs to be done. 1) init
    * keystore 2) init keylocator 3) start a thread to hold a loop of ccn_run
@@ -69,7 +79,8 @@ public:
   char m_c;
 #else
   CcnxWrapper();
-#endif  
+#endif
+public:
   ~CcnxWrapper();
 
   /**
