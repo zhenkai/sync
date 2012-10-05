@@ -38,6 +38,7 @@ extern "C" {
 #include <boost/function.hpp>
 #include <string>
 #include <sstream>
+#include <map>
 
 /**
  * \defgroup sync SYNC protocol
@@ -150,6 +151,7 @@ private:
   boost::recursive_mutex m_mutex;
   boost::thread m_thread;
   bool m_running;
+  std::map<std::string, InterestCallback> m_registeredInterests;
 };
 
 typedef boost::shared_ptr<CcnxWrapper> CcnxWrapperPtr;

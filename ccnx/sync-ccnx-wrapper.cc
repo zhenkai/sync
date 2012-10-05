@@ -59,18 +59,20 @@ CcnxWrapper::CcnxWrapper()
 void
 CcnxWrapper::connectCcnd()
 {
-  /*
-  if (m_handle != NULL)
-  {
-    ccn_destroy(&m_handle);
-  }
-  */
+  ccn_disconnect (m_handle);
   _LOG_DEBUG("<<< connecting to ccnd");
   if (ccn_connect(m_handle, NULL) < 0)
   {
-    //ccn_destroy(&m_handle);
     _LOG_DEBUG("<<< connecting to ccnd failed");
     BOOST_THROW_EXCEPTION (CcnxOperationException() << errmsg_info_str("connection to ccnd failed"));
+  }
+  if (!m_registeredInterests.empty())
+  {
+    for (map<std::string, InterestCallback>::const_iterator it = m_registeredInterests.begin(); it != m_registeredInterests.end(); ++it)
+    {
+      setInterestFilter(it->first, it->second);
+      _LOG_DEBUG("<<< registering interest filter for: " << it->first);
+    }
   }
 }
 
@@ -283,6 +285,7 @@ incomingInterest(ccn_closure *selfp,
       interest += compStr;
     }
   (*f) (interest);
+  _LOG_DEBUG("<<< processed interest: " << interest);
   return CCN_UPCALL_RESULT_OK;
 }
 
@@ -372,6 +375,8 @@ int CcnxWrapper::sendInterest (const string &strInterest, void *dataPass)
     _LOG_ERROR("<<< Express interest failed: " << strInterest);
   }
 
+  _LOG_DEBUG("<<< Sending interest: " << strInterest);
+
   ccn_charbuf_destroy (&pname);
   return 0;
 }
@@ -394,6 +399,7 @@ int CcnxWrapper::setInterestFilter (const string &prefix, const InterestCallback
       BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("set interest filter failed") << errmsg_info_int (ret));
     }
 
+  m_registeredInterests.insert(pair<std::string, InterestCallback>(prefix, interestCallback));
   ccn_charbuf_destroy(&pname);
 }
 
@@ -414,6 +420,7 @@ CcnxWrapper::clearInterestFilter (const std::string &prefix)
       BOOST_THROW_EXCEPTION(CcnxOperationException() << errmsg_info_str("set interest filter failed") << errmsg_info_int (ret));
     }
 
+  m_registeredInterests.erase(prefix);
   ccn_charbuf_destroy(&pname);
 }
 
