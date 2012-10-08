@@ -463,6 +463,14 @@ CcnxWrapper::clearInterestFilter (const std::string &prefix)
 string
 CcnxWrapper::getLocalPrefix ()
 {
+  struct ccn * tmp_handle = ccn_create ();
+  int res = ccn_connect (tmp_handle, NULL);
+  if (res < 0)
+    {
+      _LOG_ERROR ("connecting to ccnd failed");
+      return "";
+    }
+  
   string retval = "";
   
   struct ccn_charbuf *templ = ccn_charbuf_create();
@@ -477,32 +485,27 @@ CcnxWrapper::getLocalPrefix ()
   ccn_charbuf_append_closer(templ); /* </Interest> */
 
   struct ccn_charbuf *name = ccn_charbuf_create ();
-  int res = ccn_name_from_uri (name, "/local/ndn/prefix");
+  res = ccn_name_from_uri (name, "/local/ndn/prefix");
   if (res < 0) {
     _LOG_ERROR ("Something wrong with `ccn_name_from_uri` call");
   }
   else
     {
-      m_mutex.lock ();
-  
-      struct ccn_fetch *fetch = ccn_fetch_new (m_handle);
-
-      struct ccn_fetch_stream *stream = ccn_fetch_open (fetch, name, "/local/ndn/prefix",
-                                                        templ, 4, CCN_V_HIGHEST, 0);
-      m_mutex.unlock ();
+      struct ccn_fetch *fetch = ccn_fetch_new (tmp_handle);
       
+      struct ccn_fetch_stream *stream = ccn_fetch_open (fetch, name, "/local/ndn/prefix",
+                                                        NULL, 4, CCN_V_HIGHEST, 0);      
       if (stream == NULL) {
         _LOG_ERROR ("Cannot create ccn_fetch_stream");
       }
       else
         {
           ostringstream os;
-          
+
+          int counter = 0;
           char buf[256];
           while (true) {
-            m_mutex.lock ();
             res = ccn_fetch_read (stream, buf, sizeof(buf));
-            m_mutex.unlock ();
             
             if (res == 0) {
               break;
@@ -511,7 +514,15 @@ CcnxWrapper::getLocalPrefix ()
             if (res > 0) {
               os << string(buf, res);
             } else if (res == CCN_FETCH_READ_NONE) {
-              sleep (1);
+              if (counter < 2)
+                {
+                  ccn_run(tmp_handle, 1000);
+                  counter ++;
+                }
+              else
+                {
+                  break;
+                }
             } else if (res == CCN_FETCH_READ_END) {
               break;
             } else if (res == CCN_FETCH_READ_TIMEOUT) {
@@ -522,18 +533,16 @@ CcnxWrapper::getLocalPrefix ()
             }
           }
           retval = os.str ();
-          m_mutex.lock ();
           stream = ccn_fetch_close(stream);
-          m_mutex.unlock ();
-          
         }
-      m_mutex.lock ();
       fetch = ccn_fetch_destroy(fetch);
-      m_mutex.unlock ();
     }
 
   ccn_charbuf_destroy (&name);
 
+  ccn_disconnect (tmp_handle);
+  ccn_destroy (&tmp_handle);
+  
   return retval;
 }
 
