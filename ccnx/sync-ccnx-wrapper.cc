@@ -21,6 +21,11 @@
  */
 
 #include "sync-ccnx-wrapper.h"
+
+extern "C" {
+#include <ccn/fetch.h>
+}
+
 #include "sync-log.h"
 #include <poll.h>
 #include <boost/throw_exception.hpp>
@@ -454,6 +459,76 @@ CcnxWrapper::clearInterestFilter (const std::string &prefix)
   m_registeredInterests.erase(prefix);
   ccn_charbuf_destroy(&pname);
 }
+
+string
+CcnxWrapper::getLocalPrefix ()
+{
+  recursive_mutex::scoped_lock lock(m_mutex);
+
+  string retval = "";
+  
+  struct ccn_charbuf *templ = ccn_charbuf_create();
+  ccn_charbuf_append_tt(templ, CCN_DTAG_Interest, CCN_DTAG);
+  ccn_charbuf_append_tt(templ, CCN_DTAG_Name, CCN_DTAG);
+  ccn_charbuf_append_closer(templ); /* </Name> */
+  // XXX - use pubid if possible
+  ccn_charbuf_append_tt(templ, CCN_DTAG_MaxSuffixComponents, CCN_DTAG);
+  ccnb_append_number(templ, 1);
+  ccn_charbuf_append_closer(templ); /* </MaxSuffixComponents> */
+  ccnb_tagged_putf(templ, CCN_DTAG_Scope, "%d", 2);
+  ccn_charbuf_append_closer(templ); /* </Interest> */
+
+  struct ccn_charbuf *name = ccn_charbuf_create ();
+  int res = ccn_name_from_uri (name, "/local/ndn/prefix");
+  if (res < 0) {
+    _LOG_ERROR ("Something wrong with `ccn_name_from_uri` call");
+  }
+  else
+    {
+      struct ccn_fetch *fetch = ccn_fetch_new (m_handle);
+
+      struct ccn_fetch_stream *stream = ccn_fetch_open (fetch, name, "/local/ndn/prefix",
+                                                        templ, 4, CCN_V_HIGHEST, 0);
+      if (stream == NULL) {
+        _LOG_ERROR ("Cannot create ccn_fetch_stream");
+      }
+      else
+        {
+          ostringstream os;
+          
+          char buf[256];
+          while ((res = ccn_fetch_read (stream, buf, sizeof(buf))) != 0) {
+            if (res > 0) {
+              os << string(buf, res);
+            } else if (res == CCN_FETCH_READ_NONE) {
+              fflush(stdout);
+              if (ccn_run (m_handle, 1000) < 0) {
+                _LOG_ERROR ("error during ccn_run");
+                break;
+              }
+            } else if (res == CCN_FETCH_READ_END) {
+              break;
+            } else if (res == CCN_FETCH_READ_TIMEOUT) {
+              break;
+            } else {
+              _LOG_ERROR ("fatal error. should be reported");
+              break;
+            }
+          }
+          retval = os.str ();
+          stream = ccn_fetch_close(stream);
+        }
+      fetch = ccn_fetch_destroy(fetch);
+    }
+
+  ccn_charbuf_destroy (&name);
+
+  return retval;
+}
+
+
+
+
 
 DataClosurePass::DataClosurePass (CallbackType type, int retry, const CcnxWrapper::StringDataCallback &strDataCallback): ClosurePass(type, retry), m_callback(NULL)
 {

@@ -141,6 +141,9 @@ public:
   int 
   publishRawData (const std::string &name, const char *buf, size_t len, int freshness);
 
+  std::string
+  getLocalPrefix ();
+  
 private:
   void
   connectCcnd();

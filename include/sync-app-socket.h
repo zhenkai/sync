@@ -89,6 +89,9 @@ public:
 
   SyncLogic &
   getLogic () { return m_syncLogic; }
+
+  std::string
+  getLocalPrefix () { return m_ccnxHandle->getLocalPrefix (); }
   
 private:
   void 
