@@ -27,6 +27,7 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/random.hpp>
 #include <memory>
+#include <map>
 
 #include "sync-ccnx-wrapper.h"
 #include "sync-interest-table.h"
@@ -125,6 +126,9 @@ public:
   
   void
   printState () const;
+
+  std::map<std::string, bool>
+  getBranchPrefixes() const;
 
 private:
   void

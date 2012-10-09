@@ -601,5 +601,24 @@ SyncLogic::printState () const
     }
 }
 
+std::map<std::string, bool>
+SyncLogic::getBranchPrefixes() const
+{
+  recursive_mutex::scoped_lock lock (m_stateMutex);
+
+  std::map<std::string, bool> m;
+
+  BOOST_FOREACH (const boost::shared_ptr<Sync::Leaf> leaf, m_state->getLeaves ())
+    {
+      std::string prefix = leaf->getInfo()->toString();
+      // do not return forwarder prefix
+      if (prefix != forwarderPrefix)
+      {
+        m.insert(pair<std::string, bool>(prefix, false));
+      }
+    }
+
+  return m;
+}
 
 }
