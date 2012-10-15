@@ -165,6 +165,10 @@ private:
   sendSyncData (const std::string &name,
                 DigestConstPtr digest, StateConstPtr state);
 
+  void
+  sendSyncData (const std::string &name,
+                DigestConstPtr digest, SyncStateMsg &msg);
+
   size_t
   getNumberOfBranches () const;
   
