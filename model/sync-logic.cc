@@ -64,7 +64,38 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   , m_syncInterestTable (TIME_SECONDS (m_syncInterestReexpress))
   , m_syncPrefix (syncPrefix)
   , m_onUpdate (onUpdate)
+  , m_perBranch (false)
   , m_onRemove (onRemove)
+  , m_ccnxHandle(CcnxWrapper::Create ())
+  , m_recoveryRetransmissionInterval (m_defaultRecoveryRetransmitInterval)
+#ifndef NS3_MODULE
+  , m_randomGenerator (static_cast<unsigned int> (std::time (0)))
+  , m_rangeUniformRandom (m_randomGenerator, uniform_int<> (200,1000))
+  , m_reexpressionJitter (m_randomGenerator, uniform_int<> (100,500))
+#else
+  , m_rangeUniformRandom (200,1000)
+  , m_reexpressionJitter (10,500)
+#endif
+{ 
+#ifndef NS3_MODULE
+  // In NS3 module these functions are moved to StartApplication method
+  
+  m_ccnxHandle->setInterestFilter (m_syncPrefix,
+                                   bind (&SyncLogic::respondSyncInterest, this, _1));
+
+  m_scheduler.schedule (TIME_SECONDS (0), // no need to add jitter
+                        bind (&SyncLogic::sendSyncInterest, this),
+                        REEXPRESSING_INTEREST);
+#endif
+}
+
+SyncLogic::SyncLogic (const std::string &syncPrefix,
+                      LogicPerBranchCallback onUpdateBranch)
+  : m_state (new FullState)
+  , m_syncInterestTable (TIME_SECONDS (m_syncInterestReexpress))
+  , m_syncPrefix (syncPrefix)
+  , m_onUpdateBranch (onUpdateBranch)
+  , m_perBranch(true)
   , m_ccnxHandle(CcnxWrapper::Create ())
   , m_recoveryRetransmissionInterval (m_defaultRecoveryRetransmitInterval)
 #ifndef NS3_MODULE
@@ -309,7 +340,6 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
               if (inserted || updated)
                 {
                   diffLog->update (info, seq);
-                  //m_onUpdate (info->toString (), seq, oldSeq);
                   if (!oldSeq.isValid())
                   {
                     oldSeq = SeqNo(seq.getSession(), 0);
@@ -322,7 +352,16 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
                   if (info->toString() != forwarderPrefix)
                   {
                     MissingDataInfo mdi = {info->toString(), oldSeq, seq};
-                    v.push_back(mdi);
+                    if (m_perBranch)
+                    {
+                       ostringstream interestName;
+                       interestName << mdi.prefix << "/" << mdi.high.getSession() << "/" << mdi.high.getSeq();
+                       m_onUpdateBranch(interestName.str());
+                    }
+                    else
+                    {
+                      v.push_back(mdi);
+                    }
                   }
                 }
             }
@@ -331,7 +370,10 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
               if (m_state->remove (info))
                 {
                   diffLog->remove (info);
-                  m_onRemove (info->toString ());
+                  if (!m_perBranch)
+                  {
+                    m_onRemove (info->toString ());
+                  }
                 }
             }
           else
@@ -341,7 +383,10 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
 
       if (!v.empty()) 
       {
-        m_onUpdate(v);
+        if (!m_perBranch)
+        {
+           m_onUpdate(v);
+        }
       }
 
       insertToDiffLog (diffLog);

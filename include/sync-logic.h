@@ -62,6 +62,7 @@ struct MissingDataInfo {
  * @brief A wrapper for SyncApp, which handles ccnx related things (process
  * interests and data)
  */
+
 class SyncLogic
 #ifdef NS3_MODULE
   : public ns3::Application
@@ -71,6 +72,7 @@ public:
   //typedef boost::function< void ( const std::string &/*prefix*/, const SeqNo &/*newSeq*/, const SeqNo &/*oldSeq*/ ) > LogicUpdateCallback;
   typedef boost::function< void (const std::vector<MissingDataInfo> & ) > LogicUpdateCallback;
   typedef boost::function< void ( const std::string &/*prefix*/ ) > LogicRemoveCallback;
+  typedef boost::function< void (const std::string &)> LogicPerBranchCallback;
 
   /**
    * @brief Constructor
@@ -83,6 +85,9 @@ public:
   SyncLogic (const std::string &syncPrefix,
              LogicUpdateCallback onUpdate,
              LogicRemoveCallback onRemove);
+
+  SyncLogic (const std::string &syncPrefix,
+             LogicPerBranchCallback onUpdateBranch);
 
   ~SyncLogic ();
 
@@ -179,6 +184,8 @@ private:
   std::string m_syncPrefix;
   LogicUpdateCallback m_onUpdate;
   LogicRemoveCallback m_onRemove;
+  LogicPerBranchCallback m_onUpdateBranch;
+  bool m_perBranch;
   CcnxWrapperPtr m_ccnxHandle;
 
   Scheduler m_scheduler;
