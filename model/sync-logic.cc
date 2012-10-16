@@ -247,16 +247,26 @@ SyncLogic::respondSyncData (const std::string &name, const char *wireData, size_
 void
 SyncLogic::processSyncInterest (const std::string &name, DigestConstPtr digest, bool timedProcessing/*=false*/)
 {
-  recursive_mutex::scoped_lock lock (m_stateMutex);
+  DigestConstPtr rootDigest;
+  {
+    recursive_mutex::scoped_lock lock (m_stateMutex);
+    rootDigest = m_state->getDigest();
+  }
 
   // Special case when state is not empty and we have received request with zero-root digest
-  if (digest->isZero () && !m_state->getDigest()->isZero ())
+  if (digest->isZero () && !rootDigest->isZero ())
     {
-      sendSyncData (name, digest, m_state);
+      
+      SyncStateMsg ssm;
+      {
+        recursive_mutex::scoped_lock lock (m_stateMutex);
+        ssm << (*m_state);
+      }
+      sendSyncData (name, digest, ssm);
       return;
     }
 
-  if (*m_state->getDigest() == *digest)
+  if (*rootDigest == *digest)
     {
       _LOG_TRACE ("processSyncInterest (): Same state. Adding to PIT");
       m_syncInterestTable.insert (digest, name, false);
@@ -306,7 +316,6 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
   
   try
     {
-      recursive_mutex::scoped_lock lock (m_stateMutex);
 
       m_syncInterestTable.remove (name); // Remove satisfied interest from PIT
 
@@ -335,7 +344,10 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
               bool inserted = false;
               bool updated = false;
               SeqNo oldSeq;
-              tie (inserted, updated, oldSeq) = m_state->update (info, seq);
+              {
+                recursive_mutex::scoped_lock lock (m_stateMutex);
+                tie (inserted, updated, oldSeq) = m_state->update (info, seq);
+              }
 
               if (inserted || updated)
                 {
@@ -367,6 +379,7 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
             }
           else if (diffLeaf->getOperation() == REMOVE)
             {
+              recursive_mutex::scoped_lock lock (m_stateMutex);
               if (m_state->remove (info))
                 {
                   diffLog->remove (info);
@@ -418,7 +431,6 @@ SyncLogic::processSyncData (const std::string &name, DigestConstPtr digest, cons
 void
 SyncLogic::processSyncRecoveryInterest (const std::string &name, DigestConstPtr digest)
 {
-  recursive_mutex::scoped_lock lock (m_stateMutex);
   
   DiffStateContainer::iterator stateInDiffLog = m_log.find (digest);
 
@@ -428,7 +440,12 @@ SyncLogic::processSyncRecoveryInterest (const std::string &name, DigestConstPtr 
       return;
     }
 
-  sendSyncData (name, digest, m_state);
+  SyncStateMsg ssm;
+  {
+    recursive_mutex::scoped_lock lock (m_stateMutex);
+    ssm << (*m_state);
+  }
+  sendSyncData (name, digest, ssm);
 }
 
 void
@@ -588,10 +605,17 @@ SyncLogic::sendSyncRecoveryInterests (DigestConstPtr digest)
 void
 SyncLogic::sendSyncData (const std::string &name, DigestConstPtr digest, StateConstPtr state)
 {
+  SyncStateMsg msg;
+  msg << (*state);
+  sendSyncData(name, digest, msg);
+}
+
+// pass in state msg instead of state, so that there is no need to lock the state until
+// this function returns
+void
+SyncLogic::sendSyncData (const std::string &name, DigestConstPtr digest, SyncStateMsg &ssm)
+{
   _LOG_TRACE (">> D " << name);
-  // sending
-  SyncStateMsg ssm;
-  ssm << (*state);
   int size = ssm.ByteSize();
   char *wireData = new char[size];
   ssm.SerializeToArray(wireData, size);

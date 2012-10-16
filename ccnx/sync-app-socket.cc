@@ -42,6 +42,14 @@ SyncAppSocket::~SyncAppSocket()
   CcnxWrapper::Destroy ();
 }
 
+std::string
+SyncAppSocket::GetLocalPrefix()
+{
+  // this handle is supposed to be short lived
+  CcnxWrapperPtr handle = CcnxWrapper::Create();
+  return handle->getLocalPrefix();
+}
+
 bool 
 SyncAppSocket::publishString (const string &prefix, uint32_t session, const string &dataBuffer, int freshness)
 {

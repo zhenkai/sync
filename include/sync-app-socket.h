@@ -90,8 +90,10 @@ public:
   SyncLogic &
   getLogic () { return m_syncLogic; }
 
-  std::string
-  getLocalPrefix () { return m_ccnxHandle->getLocalPrefix (); }
+  // make this a static function so we don't have to create socket instance without
+  // knowing the local prefix. it's a wrong place for this function anyway
+  static std::string
+  GetLocalPrefix (); 
   
 private:
   void 
