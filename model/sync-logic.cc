@@ -66,7 +66,7 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   , m_onUpdate (onUpdate)
   , m_perBranch (false)
   , m_onRemove (onRemove)
-  , m_ccnxHandle(CcnxWrapper::Create ())
+  , m_ccnxHandle(new CcnxWrapper ())
   , m_recoveryRetransmissionInterval (m_defaultRecoveryRetransmitInterval)
 #ifndef NS3_MODULE
   , m_randomGenerator (static_cast<unsigned int> (std::time (0)))
@@ -96,7 +96,7 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
   , m_syncPrefix (syncPrefix)
   , m_onUpdateBranch (onUpdateBranch)
   , m_perBranch(true)
-  , m_ccnxHandle(CcnxWrapper::Create ())
+  , m_ccnxHandle(new CcnxWrapper())
   , m_recoveryRetransmissionInterval (m_defaultRecoveryRetransmitInterval)
 #ifndef NS3_MODULE
   , m_randomGenerator (static_cast<unsigned int> (std::time (0)))
@@ -122,10 +122,6 @@ SyncLogic::SyncLogic (const std::string &syncPrefix,
 SyncLogic::~SyncLogic ()
 {
   m_ccnxHandle->clearInterestFilter (m_syncPrefix);
-  m_ccnxHandle.reset ();
-  // m_scheduler.cancel (REEXPRESSING_INTEREST);
-  // m_scheduler.cancel (DELAYED_INTEREST_PROCESSING);
-  // sleep (m_syncInterestReexpress+1);
 }
 
 #ifdef NS3_MODULE

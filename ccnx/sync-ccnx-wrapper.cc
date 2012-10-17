@@ -45,8 +45,6 @@ INIT_LOGGER ("CcnxWrapper");
 
 namespace Sync {
 
-boost::shared_ptr<CcnxWrapper> CcnxWrapper::s_wrapper;
-
 #ifdef _DEBUG_WRAPPER_      
 CcnxWrapper::CcnxWrapper(char c)
 #else
@@ -200,6 +198,9 @@ CcnxWrapper::ccnLoop ()
         }
         catch (CcnxOperationException &e)
         {
+          // do not try reconnect for now
+          throw e;
+          /*
           m_connected = false;
           // probably ccnd has been stopped
           // try reconnect with sleep
@@ -226,6 +227,7 @@ CcnxWrapper::ccnLoop ()
               }
             }
           }
+          */
         }
         catch (const std::exception &exc)
           {

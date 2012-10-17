@@ -59,33 +59,8 @@ public:
   typedef boost::function<void (std::string, const char *buf, size_t len)> RawDataCallback;
   typedef boost::function<void (std::string)> InterestCallback;
 
-private:
-  static boost::shared_ptr<CcnxWrapper> s_wrapper;
-
 public:
-  static
-  boost::shared_ptr<CcnxWrapper>
-  Create ()
-  {
-    if (s_wrapper.get () == 0)
-      s_wrapper = boost::shared_ptr<CcnxWrapper> (new CcnxWrapper ());
-    
-    return s_wrapper;
-  }
 
-  static
-  void
-  Destroy ()
-  {
-    s_wrapper.reset ();
-  }
-  
-private:
-  /**
-   * @brief initialize the wrapper; a lot of things needs to be done. 1) init
-   * keystore 2) init keylocator 3) start a thread to hold a loop of ccn_run
-   *
-   */
 #ifdef _DEBUG_WRAPPER_      
   CcnxWrapper(char c='.');
   char m_c;
@@ -93,7 +68,6 @@ private:
   CcnxWrapper();
 #endif
 
-public:  
   ~CcnxWrapper();
 
   /**

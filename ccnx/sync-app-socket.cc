@@ -29,7 +29,7 @@ namespace Sync
 {
 
 SyncAppSocket::SyncAppSocket (const string &syncPrefix, NewDataCallback dataCallback, RemoveCallback rmCallback )
-  : m_ccnxHandle (CcnxWrapper::Create ())
+  : m_ccnxHandle (new CcnxWrapper())
   , m_newDataCallback(dataCallback)
   , m_syncLogic (syncPrefix,
                  bind(&SyncAppSocket::passCallback, this, _1),
@@ -39,14 +39,13 @@ SyncAppSocket::SyncAppSocket (const string &syncPrefix, NewDataCallback dataCall
 
 SyncAppSocket::~SyncAppSocket()
 {
-  CcnxWrapper::Destroy ();
 }
 
 std::string
 SyncAppSocket::GetLocalPrefix()
 {
   // this handle is supposed to be short lived
-  CcnxWrapperPtr handle = CcnxWrapper::Create();
+  CcnxWrapperPtr handle( new CcnxWrapper());
   return handle->getLocalPrefix();
 }
 
