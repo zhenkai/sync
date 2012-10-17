@@ -118,7 +118,7 @@ public:
   std::string
   getLocalPrefix ();
   
-private:
+protected:
   void
   connectCcnd();
 
@@ -144,7 +144,7 @@ private:
   int 
   sendInterest (const std::string &strInterest, void *dataPass);
   /// @endcond
-private:
+protected:
   ccn* m_handle;
   ccn_keystore *m_keyStore;
   ccn_charbuf *m_keyLoactor;
