@@ -149,6 +149,14 @@ SyncLogic::StopApplication ()
 }
 #endif
 
+void
+SyncLogic::stop()
+{
+  m_ccnxHandle->clearInterestFilter (m_syncPrefix);
+  m_scheduler.cancel (REEXPRESSING_INTEREST);
+  m_scheduler.cancel (DELAYED_INTEREST_PROCESSING);
+}
+
 /**
  * Two types of intersts
  *

@@ -129,6 +129,8 @@ public:
   virtual void StopApplication ();
 #endif
   
+  void stop();
+
   void
   printState () const;
 
